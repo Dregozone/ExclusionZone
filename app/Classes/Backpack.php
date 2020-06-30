@@ -14,8 +14,14 @@ class Backpack
                 wearing
             </section>
             
+            <!-- Physical, Environment protection -->
             <section id="stats" class="stats">
-                Stats: Accuracy 0 | Damage 0 | Alertness 0
+                Health 100
+                Accuracy 0
+                Damage 0
+                Alertness 0
+                PhysProtect 0
+                EnviroProtect 0
             </section>
         ';
     }

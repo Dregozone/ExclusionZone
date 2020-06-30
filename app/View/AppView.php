@@ -32,6 +32,7 @@ class AppView
                 </head>
                 <body>
                     <main>
+                        ' . $this->logoutOptions() . '
         ';
 
         return $html;
@@ -43,6 +44,19 @@ class AppView
                     </main>
                 </body>
             </html>
+        ';
+
+        return $html;
+    }
+
+    private function logoutOptions() {
+
+        $html = '
+            <section id="logout" class="logout">
+                <a>
+                    Logout
+                </a>
+            </section>
         ';
 
         return $html;
