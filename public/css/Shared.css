@@ -87,6 +87,19 @@ section.backpack {
     background: slategrey;
     box-sizing: border-box;
     z-index: 98;
+    font-size: 80%;
+}
+
+.collapse {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1vmin;
+    height: 100%;
+    background: dimgrey;
+    color: black;
+    cursor: pointer;
+    font-size: 70%;
 }
 
 section.wearing {
@@ -99,6 +112,7 @@ section.wearing {
     background: slategrey;
     box-sizing: border-box;
     z-index: 98;
+    font-size: 80%;
 }
 
 section.stats {
@@ -112,5 +126,5 @@ section.stats {
     box-sizing: border-box;
     text-align: center;
     z-index: 98;
-    font-size: 75%;
+    font-size: 80%;
 }

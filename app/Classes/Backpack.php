@@ -7,21 +7,57 @@ class Backpack
     public function __construct() {
         echo '
             <section id="backpack" class="backpack">
-                backpack here...
+                <div id="backpackContent">
+                    backpack here...
+                </div>
+                
+                <div class="collapse" id="backpackSlider" onclick="hideBackpack();"><</div>
             </section>
             
             <section id="wearing" class="wearing">
-                wearing
+                <div id="wearingContent">
+                    wearing
+                </div>
+                
+                <div class="collapse" id="wearingSlider" onclick="hideWearing();"><</div>
             </section>
             
             <!-- Physical, Environment protection -->
             <section id="stats" class="stats">
-                Health 100
-                Accuracy 0
-                Damage 0
-                Alertness 0
-                PhysProtect 0
-                EnviroProtect 0
+                <div id="statsContent">
+                    <table style="font-size: 1.75vmin; line-height: 1.75vmin;">
+                        <tr>
+                            <th>Health</th>
+                            <td>100</td>
+                        </tr>
+                        <tr>
+                            <th>Accuracy</th>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <th>Damage</th>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <th>Range</th>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <th>Alertness</th>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <th>PhysProtect</th>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <th>EnviroProtect</th>
+                            <td>0</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="collapse" id="statsSlider" onclick="hideStats();"><</div>
             </section>
         ';
     }
