@@ -13,6 +13,7 @@ function enlargePDA(type) {
     let pda = document.getElementById("PDA");
     let pdaBlocker = document.getElementById("pdaBlocker");
     let showHide = document.getElementById("showHidePDA");
+    let pdaBackground = document.getElementById("PDABackground");
 
     // Set PDA contents
     ////
@@ -27,6 +28,8 @@ function enlargePDA(type) {
     pda.style.width = "56vmin";
     pda.style.height = "90vmin";
 
+    pdaBackground.style.height = "80vmin";
+
     pdaStatus = "enlarged";
 }
 
@@ -35,6 +38,7 @@ function shrinkPDA() {
     let pda = document.getElementById("PDA");
     let pdaBlocker = document.getElementById("pdaBlocker");
     let showHide = document.getElementById("showHidePDA");
+    let pdaBackground = document.getElementById("PDABackground");
 
     // Hide PDA Blocker
     pdaBlocker.style.visibility = "hidden";
@@ -45,6 +49,8 @@ function shrinkPDA() {
     pda.style.right = "1vmin";
     pda.style.width = "28vmin";
     pda.style.height = "45vmin";
+
+    pdaBackground.style.height = "37vmin";
 
     pdaStatus = "shrunk";
 }

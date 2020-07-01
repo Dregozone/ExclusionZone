@@ -12,19 +12,21 @@ class PDA
             <section id="showHidePDA" class="showHidePDA" onclick="hidePDA();">Hide PDA</section>
 
             <section id="PDA" class="PDA">
-                <p class="gameTime">00:00:00 (Night)</p>
-                <p class="userDetails">(user)\'s PDA</p>
-                
-                <hr />
-                
-                <p class="button" onclick="enlargePDA(\'chat\');">Chat</p> <!-- option to show here instead of HUD -->
-                <p class="button" onclick="enlargePDA(\'messages\');">Messages</p>
-                <p class="button" onclick="enlargePDA(\'map\');">Map</p>
-                <p class="button" onclick="enlargePDA(\'settings\');">Settings</p>
-                <p class="button" onclick="enlargePDA(\'manual\');">Manual</p>
-                <p class="button" onclick="enlargePDA(\'quests\');">Quests</p>
-                <p class="button" onclick="enlargePDA(\'faction\');">Faction</p>
-                <p class="button" onclick="enlargePDA(\'forum\');">Forum</p>
+                <div id="PDABackground" class="PDABackground">
+                    <p class="gameTime">00:00:00 (Night)</p>
+                    <p class="userDetails">(user)\'s PDA</p>
+                    
+                    <hr style="border: 1px solid black;" />
+                    
+                    <p class="button" onclick="enlargePDA(\'chat\');">Chat</p> <!-- option to show here instead of HUD -->
+                    <p class="button" onclick="enlargePDA(\'messages\');">Messages</p>
+                    <p class="button" onclick="enlargePDA(\'map\');">Map</p>
+                    <p class="button" onclick="enlargePDA(\'settings\');">Settings</p>
+                    <p class="button" onclick="enlargePDA(\'manual\');">Manual</p>
+                    <p class="button" onclick="enlargePDA(\'quests\');">Quests</p>
+                    <p class="button" onclick="enlargePDA(\'faction\');">Faction</p>
+                    <p class="button" onclick="enlargePDA(\'forum\');">Forum</p>
+                </div>
             </section>
         ';
 

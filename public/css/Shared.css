@@ -44,11 +44,16 @@ section.pda {
         padding: 0;
         font-size: 85%;
     }
+    .PDABackground {
+        background: #303e40;
+        color: white;
+        padding: 1vmin 0;
+        height: 37vmin;
+        border-radius: 6px;
+    }
     .button {
         padding: 1%;
         margin: 0;
-        border: 1px solid black;
-        background: #303e40;
         color: white;
         cursor: pointer;
     }
