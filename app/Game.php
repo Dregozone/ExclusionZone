@@ -9,4 +9,4 @@
     // Acts as inventory
     $backpack = new Backpack();
 
-    var_dump( $model->getItems() );
+    $action = new Action("shop");

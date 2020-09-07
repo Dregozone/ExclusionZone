@@ -1,6 +1,5 @@
 <?php
 
-
 class Backpack
 {
 
@@ -11,7 +10,7 @@ class Backpack
                     backpack here...
                 </div>
                 
-                <div class="collapse" id="backpackSlider" onclick="hideBackpack();"><</div>
+                <div class="collapseTab" id="backpackSlider" onclick="hideBackpack();"><</div>
             </section>
             
             <section id="wearing" class="wearing">
@@ -19,7 +18,7 @@ class Backpack
                     wearing
                 </div>
                 
-                <div class="collapse" id="wearingSlider" onclick="hideWearing();"><</div>
+                <div class="collapseTab" id="wearingSlider" onclick="hideWearing();"><</div>
             </section>
             
             <!-- Physical, Environment protection -->
@@ -57,7 +56,7 @@ class Backpack
                     </table>
                 </div>
                 
-                <div class="collapse" id="statsSlider" onclick="hideStats();"><</div>
+                <div class="collapseTab" id="statsSlider" onclick="hideStats();"><</div>
             </section>
         ';
     }

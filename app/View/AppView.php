@@ -24,6 +24,9 @@ class AppView
                 <head>
                     <title>' . $page . ' - Exclusion Zone</title>
                     
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css " />
+                    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+                    
                     <link rel="stylesheet" href="public/css/Shared.css" />
                     <link rel="stylesheet" href="public/css/' . $page . '.css" />
                     

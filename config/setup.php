@@ -3,8 +3,12 @@
     // TEMP till autoload
     require_once("app/Model/Debug.php");
     require_once("app/View/AppView.php");
+    require_once("app/Classes/Shared.php");
+
     require_once("app/Classes/PDA.php");
     require_once("app/Classes/Backpack.php");
+    require_once("app/Classes/Action.php");
+
 
     // Define constants here
     //
