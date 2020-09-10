@@ -1,6 +1,6 @@
 <?php
 
-    require_once("config/setup.php");
+    require_once(__DIR__ . "/config/setup.php");
 
     // Check if user is logged in
     //$page = isset($_SESSION["user"]) ? "game" : "login";
@@ -14,9 +14,9 @@
     $vPage = "app\\View\\$page";
 
     // TEMP till autoload
-    require_once("$mPage.php");
-    require_once("$cPage.php");
-    require_once("$vPage.php");
+    require_once(__DIR__ . "/" . str_replace("\\", "/", $mPage) . ".php");
+    require_once(__DIR__ . "/" . str_replace("\\", "/", $cPage) . ".php");
+    require_once(__DIR__ . "/" . str_replace("\\", "/", $vPage) . ".php");
 
     // Set up page specific MVC
     $model = new $mPage();
@@ -24,4 +24,4 @@
     $view = new $vPage($model, $controller, $page);
 
     // Main page logic
-    require_once("app/$page.php");
+    require_once(__DIR__ . "/app/$page.php");
