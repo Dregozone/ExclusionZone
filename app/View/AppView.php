@@ -6,9 +6,10 @@ namespace app\View;
 
 class AppView
 {
+    protected $user;
 
-
-    public function __construct($page) {
+    public function __construct($page, $user) {
+        $this->user = $user;
         echo $this->startHtml($page);
     }
 
@@ -56,7 +57,10 @@ class AppView
 
         $html = '
             <section id="logout" class="logout">
-                <a>
+                
+                Welcome, ' . $this->user . '. 
+            
+                <a href="?p=login">
                     Logout
                 </a>
             </section>

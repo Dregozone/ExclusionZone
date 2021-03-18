@@ -1,24 +1,26 @@
 <?php
 
+    namespace app\Model;
 
-namespace app\Model;
+    class Game
+    {
+        private $skills = array(
+            "Stealth"
+            ,"Gunslinger"
+            ,"Melee"
+            ,"Crafting"
+            ,"Strength"
+        );
 
-
-class Game
-{
-    private $skills = array(
-         "Stealth"
-        ,"Gunslinger"
-        ,"Melee"
-        ,"Crafting"
-        ,"Strength"
-    );
-
-
-    // Start Getters
-        public function getItem($index) {
-
-            return $this->items[$index];
+        public function __construct() {
+            //
         }
-    // End Getters
-}
+
+
+        // Start Getters
+            public function getItem($index) {
+
+                return $this->items[$index];
+            }
+        // End Getters
+    }

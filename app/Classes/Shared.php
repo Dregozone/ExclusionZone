@@ -12,7 +12,7 @@ class Shared
             <div class="itemSmall">
                 <img src="' . $img . '" class="itemSmall" title="' . $name . '" alt="' . $name . '" />
                 
-                <div style="
+                <div class="stat stat1" style="
                     position: absolute;
                     display: block;
                     bottom: 2px;
@@ -21,8 +21,22 @@ class Shared
                     ' . $stat1 . '
                 </div>
                 
-                <div class="stat2">' . $stat2 . '</div>
+                <div class="stat stat2" style="
+                    position: absolute;
+                    display: block;
+                    top: 0;
+                    left: 2px;
+                ">' . $stat2 . '</div>
             </div>
+        ';
+
+        return $html;
+    }
+
+    public static function npcBuilder($name, $img) {
+
+        $html = '
+            <img src="' . $img . '" class="npc" title="' . $name . '" alt="' . $name . '" />
         ';
 
         return $html;

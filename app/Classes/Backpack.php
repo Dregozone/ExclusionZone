@@ -4,10 +4,45 @@ class Backpack
 {
 
     public function __construct() {
+
+        $action = new Action(null);
+        $action->findItems();
+
+        // Array of items in users backpack
+        $items = [
+            "P226 Pistol",
+            "Hiking Boots",
+            "Ballistic Helmet"
+        ];
+
         echo '
             <section id="backpack" class="backpack">
                 <div id="backpackContent">
-                    backpack here...
+        ';
+
+        // Lookup details and display each item in the users backpack
+        foreach ( $items as $item ) {
+
+            if ( 
+                $action->getItems()[$item]["Type"] == "weapon" || 
+                $action->getItems()[$item]["Type"] == "sidearm"
+            ) {
+                $stat1 = "Damage";
+                $stat2 = "Accuracy";
+            } else { // This is armour/misc
+                $stat1 = "PhysProtect";
+                $stat2 = "EnviroProtect";
+            }
+
+            echo Shared::itemBuilder(
+                $action->getItems()[$item]["name"], 
+                $action->getItems()[$item]["Img"], 
+                $action->getItems()[$item][$stat1], 
+                $action->getItems()[$item][$stat2]
+            );
+        }
+
+        echo '
                 </div>
                 
                 <div class="collapseTab" id="backpackSlider" onclick="hideBackpack();"><</div>

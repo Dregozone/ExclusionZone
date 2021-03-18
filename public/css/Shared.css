@@ -95,6 +95,9 @@ section.backpack {
     z-index: 98;
     font-size: 80%;
 }
+    .stat {
+        color: red;
+    }
 
 .collapseTab {
     position: absolute;
@@ -141,9 +144,16 @@ section.npc {
     left: 0;
     width: 15%;
     height: 40%;
-    background: red;
     z-index: 98;
 }
+    img.npc {
+        width: 100%;
+        border: 1px solid darkslategrey;
+        box-shadow: -3px 0 8px 1px darkslategrey;
+    }
+    p.npc {
+        text-align: center;
+    }
 
 section.action {
     position: fixed;
@@ -152,17 +162,26 @@ section.action {
     width: 68%;
     height: 60%;
     padding: 1%;
-    background: purple;
-    z-index: 98;
+    background: grey;
+    border: 1px solid darkslategrey;
+    box-shadow: 0 0 8px 1px darkslategrey;
+    z-index: 97;
     overflow-y: scroll;
+    text-align: center;
 }
+    img.action {
+        width: 80%;
+        margin: 2% 10%;
+        border: 1px solid darkslategrey;
+    }
 
 div.itemSmall {
+    display: inline-block;
     position: relative;
     background: black;
     color: white;
-    width: 80px;
-    height: 80px;
+    width: 7.4vmin;
+    height: 7.4vmin;
 }
     img.itemSmall {
         position: absolute;

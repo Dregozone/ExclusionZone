@@ -2,31 +2,40 @@
 
 class Action
 {
+    public static $validActions = [
+        "shop",
+        "hunting"
+    ];
+
     private $action;
     private $location;
+    private $actions = [];
     private $actionName;
     private $actionType;
     private $actionTimer;
     private $actionExp;
     private $items;
 
+    private $npcName;
+
     public function __construct($action) {
         $this->action = $action;
 
         $this->findLocation();
-        $this->findActionInfo();
+        $this->findActionInfo($action);
 
         if ( $this->actionType == "shop" ) {
-            $this->findItems();
-
-            echo $this->displayNpc();
+            $this->findItems();            
         }
 
-        echo $this->displayAction();
+        if ( $action != null ) { // Backpack etc
+            echo $this->displayNpc();
+            echo $this->displayAction();
+        }
     }
 
 
-    private function findItems() {
+    public function findItems() {
 
         $this->items = array(
              "Hazmat Suit" => array(
@@ -146,7 +155,7 @@ class Action
                 ,"BuyValue" => "2000"
                 ,"SellValue" => "1200"
                 ,"Weight" => "10"
-                ,"Img" => ""
+                ,"Img" => "public/img/BallisticHelmet.png"
                 )
             ,"Damaged Ballistic Helmet" => array(
                 "id" => 8
@@ -180,7 +189,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/HikingBoots.png"
                 )
             ,"Damaged Hiking Boots" => array(
                 "id" => 10
@@ -282,7 +291,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/P226Pistol.png"
                 )
             ,"Damaged P226 Pistol" => array(
                  "id" => 16
@@ -305,27 +314,71 @@ class Action
     }
 
     /** Get users current location */
-    private function findLocation() {
-        $this->location = ''; //// from db, select location where userid=?
+    public static function findLocation() {
+        $location = 'Tutorial location'; //// from db, select location where userid=?
+
+        // Populate list of actions that can be started here
+        if ( $location == 'Tutorial location' ) {
+
+            return [
+                $location,
+                [
+                    "shop",
+                    "hunting"
+                ]
+            ];
+        }
     }
 
     /** Get action info based on user location and action */
-    private function findActionInfo() {
+    private function findActionInfo($action) {
+        
+        switch ( $action ) {
+            case "shop":
+                // DB using $this->location and $this->action
+                $this->actionName = 'Tutorial shop';
+                $this->actionType = 'shop'; ////
+                $this->actionTimer = false;
+                $this->actionExp = false;
+                break;
 
-        // DB using $this->location and $this->action
-        $this->actionName = 'Tutorial shop';
+            case "hunting": 
+                // DB using $this->location and $this->action
+                $this->actionName = 'Wild hunting';
+                $this->actionType = 'hunting'; ////
+                $this->actionTimer = 60;
+                $this->actionExp = 12;
+                break;
 
-        $this->actionType = 'shop'; ////
+            case null:
+                return; // Nothing to be calculated or displayed
 
-        $this->actionTimer = '';
-        $this->actionExp = 0;
+            default: 
+                // Unknown action, log this////
+                break;
+        }
     }
 
     private function displayNpc() {
 
+        if ( $this->action == "shop" ) {
+            $name = "Shop keeper";
+            $img = "public/img/npc/ShopKeeper1.png";
+        } else if ( $this->action == "hunting" ) {
+            $name = "Hunter";
+            $img = "public/img/npc/Stalker1.png";
+        }
+
+        $this->npcName = $name;
+
         $html = '
             <section class="npc">
-                NPC
+                ' . Shared::npcBuilder($name, $img) . '
+                <p class="npc" id="npcText">
+                    <a href="?action=none">
+                        Leave
+                    </a>
+                </p>
             </section>
         ';
 
@@ -336,7 +389,6 @@ class Action
 
         $html = '
             <section class="action">
-                <!-- flexbox for action info: title -->
                 <div style="display: flex;">
                     <h2>' . $this->actionName . '</h2>
                 </div>
@@ -378,6 +430,14 @@ class Action
                     </tbody>
                 </table>
             ';
+        } else {
+            
+            $html .= "
+                You go {$this->actionType} with {$this->npcName}.
+                <img src='public/img/action/{$this->actionType}.png' class='action' title='{$this->actionType}' alt='{$this->actionType}' />
+                This takes you {$this->actionTimer} seconds and you will gain {$this->actionExp} experience in {$this->actionType}. 
+            ";
+
         }
 
 
@@ -392,6 +452,11 @@ class Action
         public function getAction() {
 
             return $this->action;
+        }
+
+        public function getActions() {
+
+            return $this->actions;
         }
 
         public function getLocation() {
@@ -417,6 +482,11 @@ class Action
         public function getActionExp() {
 
             return $this->actionExp;
+        }
+
+        public function getItems() {
+
+            return $this->items;
         }
     // End Getters
 }
