@@ -8,8 +8,24 @@ class Backpack
         $action = new Action(null);
         $action->findItems();
 
+        $health = 100;
+        $accuracy = 0;
+        $damage = 0;
+        $range = 0;
+        $alertness = 0;
+        $physProtect = 0;
+        $enviroProtect = 0;
+
         // Array of items in users backpack
         $items = [
+            "P226 Pistol",
+            "Hiking Boots",
+            "Ballistic Helmet",
+            "P226 Pistol"
+        ];
+
+        $wearings = [
+            "RPD Light Machine Gun",
             "P226 Pistol",
             "Hiking Boots",
             "Ballistic Helmet"
@@ -50,43 +66,82 @@ class Backpack
             
             <section id="wearing" class="wearing">
                 <div id="wearingContent">
-                    wearing
+        ';    
+                
+        // Lookup details and display each item in the users backpack
+        foreach ( $wearings as $wearing ) {
+
+            if ( 
+                $action->getItems()[$wearing]["Type"] == "weapon" || 
+                $action->getItems()[$wearing]["Type"] == "sidearm"
+            ) {
+                $stat1 = "Damage";
+                $stat2 = "Accuracy";
+            } else { // This is armour/misc
+                $stat1 = "PhysProtect";
+                $stat2 = "EnviroProtect";
+            }
+
+            echo Shared::itemBuilder(
+                $action->getItems()[$wearing]["name"], 
+                $action->getItems()[$wearing]["Img"], 
+                $action->getItems()[$wearing][$stat1], 
+                $action->getItems()[$wearing][$stat2]
+            );
+
+            $accuracy += $action->getItems()[$wearing]["Accuracy"];
+            $damage += $action->getItems()[$wearing]["Damage"];
+            $alertness += $action->getItems()[$wearing]["Alertness"];
+            $physProtect += $action->getItems()[$wearing]["PhysProtect"];
+            $enviroProtect += $action->getItems()[$wearing]["EnviroProtect"];
+
+            if ( $action->getItems()[$wearing]["Range"] > $range ) { // Record only the maximum ranged item for this
+                $range = $action->getItems()[$wearing]["Range"];
+            }
+        }
+
+        echo '
                 </div>
                 
                 <div class="collapseTab" id="wearingSlider" onclick="hideWearing();"><</div>
             </section>
-            
+        ';
+
+        // Update DB values for statistics for use elsewhere in the application
+        ////
+
+        echo '
             <!-- Physical, Environment protection -->
             <section id="stats" class="stats">
                 <div id="statsContent">
                     <table style="font-size: 1.75vmin; line-height: 1.75vmin;">
                         <tr>
                             <th>Health</th>
-                            <td>100</td>
+                            <td class="right">' . $health . '</td>
                         </tr>
                         <tr>
                             <th>Accuracy</th>
-                            <td>0</td>
+                            <td class="right">' . $accuracy . '</td>
                         </tr>
                         <tr>
                             <th>Damage</th>
-                            <td>0</td>
+                            <td class="right">' . $damage . '</td>
                         </tr>
                         <tr>
                             <th>Range</th>
-                            <td>0</td>
+                            <td class="right">' . $range . '</td>
                         </tr>
                         <tr>
                             <th>Alertness</th>
-                            <td>0</td>
+                            <td class="right">' . $alertness . '</td>
                         </tr>
                         <tr>
                             <th>PhysProtect</th>
-                            <td>0</td>
+                            <td class="right">' . $physProtect . '</td>
                         </tr>
                         <tr>
                             <th>EnviroProtect</th>
-                            <td>0</td>
+                            <td class="right">' . $enviroProtect . '</td>
                         </tr>
                     </table>
                 </div>

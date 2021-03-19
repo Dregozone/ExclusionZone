@@ -36,7 +36,15 @@ class Shared
     public static function npcBuilder($name, $img) {
 
         $html = '
+            <p style="padding: 0; margin: 0; text-align: center;">
+                ' . $name . '
+            </p>
+
             <img src="' . $img . '" class="npc" title="' . $name . '" alt="' . $name . '" />
+
+            <p style="padding: 0; margin: 0; text-align: center;">
+                npc actions
+            </p>
         ';
 
         return $html;

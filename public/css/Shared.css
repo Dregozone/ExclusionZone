@@ -21,6 +21,10 @@ section.logout {
     font-size: 70%;
 }
 
+th.right, td.right {
+    text-align: right;
+}
+
 section.pda {
     position: fixed;
     bottom: 1vmin;
@@ -96,7 +100,8 @@ section.backpack {
     font-size: 80%;
 }
     .stat {
-        color: red;
+        color: black;
+        font-weight: 700;
     }
 
 .collapseTab {
@@ -173,6 +178,23 @@ section.action {
         width: 80%;
         margin: 2% 10%;
         border: 1px solid darkslategrey;
+    }
+    th.shop, td.shop {
+        text-align: center;
+    }
+    th.item {
+        width: 8%;
+    }
+    th.stock {
+        width: 8%;
+    }
+    th.action {
+        width: 30%;
+    }
+    div.buySell {
+        width: 48%;
+        font-size: 110%;
+        font-weight: 600;
     }
 
 div.itemSmall {

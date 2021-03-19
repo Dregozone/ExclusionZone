@@ -54,6 +54,7 @@ class Action
                 ,"SellValue" => "3500"
                 ,"Weight" => "10"
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Damaged Hazmat Suit" => array(
                  "id" => 2
@@ -71,6 +72,7 @@ class Action
                 ,"SellValue" => "250"
                 ,"Weight" => "10"
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Kevlar" => array(
                  "id" => 3
@@ -88,6 +90,7 @@ class Action
                 ,"SellValue" => "2750"
                 ,"Weight" => "30"
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Damaged Kevlar" => array(
                 "id" => 4
@@ -105,6 +108,7 @@ class Action
                 ,"SellValue" => "700"
                 ,"Weight" => "30"
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"S10 Gas Mask" => array(
                 "id" => 5
@@ -122,6 +126,7 @@ class Action
                 ,"SellValue" => "2250"
                 ,"Weight" => "5"
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Damaged S10 Gas Mask" => array(
                 "id" => 6
@@ -139,6 +144,7 @@ class Action
                 ,"SellValue" => "300"
                 ,"Weight" => "5"
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Ballistic Helmet" => array(
                 "id" => 7
@@ -156,6 +162,7 @@ class Action
                 ,"SellValue" => "1200"
                 ,"Weight" => "10"
                 ,"Img" => "public/img/BallisticHelmet.png"
+                ,"Range" => "0"
                 )
             ,"Damaged Ballistic Helmet" => array(
                 "id" => 8
@@ -173,6 +180,7 @@ class Action
                 ,"SellValue" => "300"
                 ,"Weight" => "10"
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Hiking Boots" => array(
                 "id" => 9
@@ -190,6 +198,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => "public/img/HikingBoots.png"
+                ,"Range" => "0"
                 )
             ,"Damaged Hiking Boots" => array(
                 "id" => 10
@@ -207,6 +216,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Combat Boots" => array(
                 "id" => 11
@@ -224,6 +234,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"Damaged Combat Boots" => array(
                 "id" => 12
@@ -241,6 +252,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => ""
+                ,"Range" => "0"
                 )
             ,"RPD Light Machine Gun" => array(
                 "id" => 13
@@ -258,6 +270,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => ""
+                ,"Range" => "110"
                 )
             ,"Damaged RPD Light Machine Gun" => array(
                 "id" => 14
@@ -275,6 +288,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => ""
+                ,"Range" => "90"
                 )
             ,"P226 Pistol" => array(
                 "id" => 15
@@ -292,6 +306,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => "public/img/P226Pistol.png"
+                ,"Range" => "40"
                 )
             ,"Damaged P226 Pistol" => array(
                  "id" => 16
@@ -309,6 +324,7 @@ class Action
                 ,"SellValue" => ""
                 ,"Weight" => ""
                 ,"Img" => ""
+                ,"Range" => "30"
                 )
             );
     }
@@ -362,11 +378,15 @@ class Action
     private function displayNpc() {
 
         if ( $this->action == "shop" ) {
+
             $name = "Shop keeper";
             $img = "public/img/npc/ShopKeeper1.png";
+
         } else if ( $this->action == "hunting" ) {
+
             $name = "Hunter";
             $img = "public/img/npc/Stalker1.png";
+
         }
 
         $this->npcName = $name;
@@ -400,9 +420,10 @@ class Action
                 <table>
                     <thead>
                         <tr>
-                            <th>Item</th>
-                            <th>Stock</th>
-                            <th>Action</th>
+                            <th class="shop item">Item</th>
+                            <th class="shop stock">Stock</th>
+                            <th class="shop action">Action</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -410,18 +431,35 @@ class Action
 
             foreach ( $this->items as $name => $details ) {
 
+                if ( 
+                    $details["Type"] == "weapon" || 
+                    $details["Type"] == "sidearm"
+                ) {
+                    $stat1 = "Damage";
+                    $stat2 = "Accuracy";
+                } else { // This is armour/misc
+                    $stat1 = "PhysProtect";
+                    $stat2 = "EnviroProtect";
+                }
+
                 $html .= '
                     <tr>
                         <td>
-                            ' . Shared::itemBuilder($details["name"], $details["Img"], 10) . '
+                            ' . Shared::itemBuilder(
+                                $details["name"], 
+                                $details["Img"], 
+                                $details[$stat1],
+                                $details[$stat2]
+                            ) . '
                         </td>
-                        <td>
+                        <td class="shop">
                             1
                         </td>
-                        <td>
-                            <div class="btn btn-light">Buy (' . $details["BuyValue"] . ')</div><br />
-                            <div class="btn btn-light">Sell (' . $details["SellValue"] . ')</div>
+                        <td class="shop">
+                            <div class="btn btn-light buySell">Buy (' . $details["BuyValue"] . ')</div>
+                            <div class="btn btn-light buySell">Sell (' . $details["SellValue"] . ')</div>
                         </td>
+                        <td></td>
                     </tr>
                 ';
             }
