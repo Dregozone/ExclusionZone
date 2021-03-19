@@ -11,15 +11,15 @@
     if ( $isLoggedIn ) {
         if (
             isset($_GET["p"]) &&
-            file_exists("app/{$_GET["p"]}.php")
+            file_exists("app/" . ucfirst($_GET["p"]) . ".php")
         ) {
-            $page = strtolower(htmlspecialchars(trim($_GET["p"])));
+            $page = strtolower(htmlspecialchars(ucfirst(trim($_GET["p"]))));
         } else {
-            $page = "game";
+            $page = "Game";
         }
         
     } else {
-        $page = "login";
+        $page = "Login";
     }
 
     // Prep for MVC

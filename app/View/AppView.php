@@ -60,7 +60,7 @@ class AppView
                 
                 Welcome, ' . $this->user . '. 
             
-                <a href="?p=login">
+                <a href="?p=Login">
                     Logout
                 </a>
             </section>

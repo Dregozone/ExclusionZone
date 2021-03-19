@@ -3,7 +3,7 @@
     echo "Login page";
 
     echo '
-        <a href="?p=game">
+        <a href="?p=Game">
             Login as Dreggie
         </a>
     ';
