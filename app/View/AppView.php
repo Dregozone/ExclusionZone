@@ -36,8 +36,9 @@ class AppView
                 </head>
                 <body>
                     <main>
-                        ' . $this->logoutOptions() . '
         ';
+
+        //$html .= $this->logoutOptions();
 
         return $html;
     }

@@ -1,6 +1,6 @@
 <?php 
 
-    $pda = new PDA(); // array("height" => "50", "width" => "50")
+    $pda = new PDA(array("user" => $user)); // array("height" => "50", "width" => "50")
     $backpack = new Backpack(); // Acts as inventory
 
     if ( isset($_GET["action"]) && in_array($_GET["action"], Action::$validActions) ) {

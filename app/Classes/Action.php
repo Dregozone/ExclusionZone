@@ -53,7 +53,7 @@ class Action
                 ,"BuyValue" => "5000"
                 ,"SellValue" => "3500"
                 ,"Weight" => "10"
-                ,"Img" => ""
+                ,"Img" => "public/img/item/HazmatSuit.png"
                 ,"Range" => "0"
                 )
             ,"Damaged Hazmat Suit" => array(
@@ -71,7 +71,7 @@ class Action
                 ,"BuyValue" => "850"
                 ,"SellValue" => "250"
                 ,"Weight" => "10"
-                ,"Img" => ""
+                ,"Img" => "public/img/item/HazmatSuit.png"
                 ,"Range" => "0"
                 )
             ,"Kevlar" => array(
@@ -89,7 +89,7 @@ class Action
                 ,"BuyValue" => "4000"
                 ,"SellValue" => "2750"
                 ,"Weight" => "30"
-                ,"Img" => ""
+                ,"Img" => "public/img/item/Kevlar.png"
                 ,"Range" => "0"
                 )
             ,"Damaged Kevlar" => array(
@@ -107,7 +107,7 @@ class Action
                 ,"BuyValue" => "1500"
                 ,"SellValue" => "700"
                 ,"Weight" => "30"
-                ,"Img" => ""
+                ,"Img" => "public/img/item/Kevlar.png"
                 ,"Range" => "0"
                 )
             ,"S10 Gas Mask" => array(
@@ -125,7 +125,7 @@ class Action
                 ,"BuyValue" => "3000"
                 ,"SellValue" => "2250"
                 ,"Weight" => "5"
-                ,"Img" => ""
+                ,"Img" => "public/img/item/s10.png"
                 ,"Range" => "0"
                 )
             ,"Damaged S10 Gas Mask" => array(
@@ -143,7 +143,7 @@ class Action
                 ,"BuyValue" => "750"
                 ,"SellValue" => "300"
                 ,"Weight" => "5"
-                ,"Img" => ""
+                ,"Img" => "public/img/item/s10.png"
                 ,"Range" => "0"
                 )
             ,"Ballistic Helmet" => array(
@@ -161,7 +161,7 @@ class Action
                 ,"BuyValue" => "2000"
                 ,"SellValue" => "1200"
                 ,"Weight" => "10"
-                ,"Img" => "public/img/BallisticHelmet.png"
+                ,"Img" => "public/img/item/BallisticHelmet.png"
                 ,"Range" => "0"
                 )
             ,"Damaged Ballistic Helmet" => array(
@@ -179,7 +179,7 @@ class Action
                 ,"BuyValue" => "800"
                 ,"SellValue" => "300"
                 ,"Weight" => "10"
-                ,"Img" => ""
+                ,"Img" => "public/img/item/BallisticHelmet.png"
                 ,"Range" => "0"
                 )
             ,"Hiking Boots" => array(
@@ -197,7 +197,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => "public/img/HikingBoots.png"
+                ,"Img" => "public/img/item/HikingBoots.png"
                 ,"Range" => "0"
                 )
             ,"Damaged Hiking Boots" => array(
@@ -215,7 +215,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/item/HikingBoots.png"
                 ,"Range" => "0"
                 )
             ,"Combat Boots" => array(
@@ -233,7 +233,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/item/CombatBoots.png"
                 ,"Range" => "0"
                 )
             ,"Damaged Combat Boots" => array(
@@ -251,7 +251,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/item/CombatBoots.png"
                 ,"Range" => "0"
                 )
             ,"RPD Light Machine Gun" => array(
@@ -269,7 +269,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/item/RPD.png"
                 ,"Range" => "110"
                 )
             ,"Damaged RPD Light Machine Gun" => array(
@@ -287,7 +287,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/item/RPD.png"
                 ,"Range" => "90"
                 )
             ,"P226 Pistol" => array(
@@ -305,7 +305,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => "public/img/P226Pistol.png"
+                ,"Img" => "public/img/item/P226Pistol.png"
                 ,"Range" => "40"
                 )
             ,"Damaged P226 Pistol" => array(
@@ -323,7 +323,7 @@ class Action
                 ,"BuyValue" => ""
                 ,"SellValue" => ""
                 ,"Weight" => ""
-                ,"Img" => ""
+                ,"Img" => "public/img/item/P226Pistol.png"
                 ,"Range" => "30"
                 )
             );

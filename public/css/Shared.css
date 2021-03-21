@@ -169,6 +169,7 @@ section.action {
     padding: 1%;
     background: grey;
     border: 1px solid darkslategrey;
+    border-radius: 2%;
     box-shadow: 0 0 8px 1px darkslategrey;
     z-index: 97;
     overflow-y: scroll;

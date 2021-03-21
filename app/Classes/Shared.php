@@ -8,6 +8,8 @@ class Shared
 
     public static function itemBuilder($name, $img, $stat1, $stat2=NULL) {
 
+        $broken = strpos($name, "Damaged") !== false ? '<img src="public/img/Damaged.png" style="width: 50%;" />' : "";
+
         $html = '
             <div class="itemSmall">
                 <img src="' . $img . '" class="itemSmall" title="' . $name . '" alt="' . $name . '" />
@@ -17,9 +19,7 @@ class Shared
                     display: block;
                     bottom: 2px;
                     left: 2px;
-                ">
-                    ' . $stat1 . '
-                </div>
+                ">' . $stat1 . '</div>
                 
                 <div class="stat stat2" style="
                     position: absolute;
@@ -27,6 +27,14 @@ class Shared
                     top: 0;
                     left: 2px;
                 ">' . $stat2 . '</div>
+
+                <div class="stat stat2" style="
+                    position: absolute;
+                    display: block;
+                    bottom: 2px;
+                    right: 3px;
+                    text-align: right;
+                ">' . $broken . '</div>
             </div>
         ';
 

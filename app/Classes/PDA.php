@@ -7,13 +7,17 @@ class PDA
 
         echo '
             <section id="pdaBlocker" class="pdaBlocker" onclick="shrinkPDA();"></section>
-
             <section id="showHidePDA" class="showHidePDA" onclick="hidePDA();">Hide PDA</section>
 
             <section id="PDA" class="PDA">
                 <div id="PDABackground" class="PDABackground">
                     <p class="gameTime">00:00:00 (Night)</p>
-                    <p class="userDetails">(user)\'s PDA</p>
+                    <p class="userDetails">
+                        ' . $inputs["user"] . '\'s PDA 
+                        <a href="?p=Login">
+                            <img src="public/img/logout.png" style="width: 12%;" title="Logout" alt="Logout" />
+                        </a>
+                    </p>
                     
                     <hr style="border: 1px solid black;" />
                     

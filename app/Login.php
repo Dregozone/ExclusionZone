@@ -1,6 +1,10 @@
 <?php 
 
-    echo "Login page";
+    echo "
+        <h1>
+            Login page
+        </h1>
+    ";
 
     echo '
         <a href="?p=Game">
