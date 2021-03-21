@@ -13,7 +13,13 @@
     [$locationName, $actions] = Action::findLocation();
 
     // Display base city menu
-    echo "<h1>{$locationName}</h1>";
+    echo "
+        <div>
+            <h1>
+                {$locationName}
+            </h1>
+        </div>
+    ";
 
     echo "
         City menu:

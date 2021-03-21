@@ -3,20 +3,41 @@ var backpackStatus = "show";
 var wearingStatus = "show";
 var statsStatus = "show";
 
+var user = "";
+
 var shrinkIcon = "<";
 var growIcon = ">";
 
+function PDAHome() {
+
+    let pdaContent = document.getElementById("PDAContent");
+
+    // Set PDA contents
+    pdaContent.innerHTML = '                                                \
+        <p class="button" onclick="enlargePDA(\'chat\');">Chat</p>          \
+        <p class="button" onclick="enlargePDA(\'messages\');">Messages</p>  \
+        <p class="button" onclick="enlargePDA(\'map\');">Map</p>            \
+        <p class="button" onclick="enlargePDA(\'settings\');">Settings</p>  \
+        <p class="button" onclick="enlargePDA(\'manual\');">Manual</p>      \
+        <p class="button" onclick="enlargePDA(\'quests\');">Quests</p>      \
+        <p class="button" onclick="enlargePDA(\'faction\');">Faction</p>    \
+        <p class="button" onclick="enlargePDA(\'forum\');">Forum</p>        \
+    ';
+}
+
 function enlargePDA(type) {
 
-    console.log(type);
+    //console.log(type);
 
     let pda = document.getElementById("PDA");
     let pdaBlocker = document.getElementById("pdaBlocker");
     let showHide = document.getElementById("showHidePDA");
     let pdaBackground = document.getElementById("PDABackground");
+    let pdaContent = document.getElementById("PDAContent");
 
     // Set PDA contents
-    ////
+    pdaContent.innerHTML = type + "<span onclick=\"PDAHome()\">(Back)</span>";
+    //// Specific PDA content goes here ////
 
     // Show PDA Blocker
     pdaBlocker.style.visibility = "visible";
@@ -25,10 +46,10 @@ function enlargePDA(type) {
     // Show PDA
     pda.style.bottom = "5vmin";
     pda.style.right = "22vmin";
-    pda.style.width = "56vmin";
-    pda.style.height = "90vmin";
+    pda.style.width = "58vmin";
+    pda.style.height = "90vh"; // was 90vmin
 
-    pdaBackground.style.height = "80vmin";
+    pdaBackground.style.height = "80vh"; // was 80vmin
 
     pdaStatus = "enlarged";
 }
@@ -39,6 +60,9 @@ function shrinkPDA() {
     let pdaBlocker = document.getElementById("pdaBlocker");
     let showHide = document.getElementById("showHidePDA");
     let pdaBackground = document.getElementById("PDABackground");
+
+    // Reset PDA contents
+    ////
 
     // Hide PDA Blocker
     pdaBlocker.style.visibility = "hidden";

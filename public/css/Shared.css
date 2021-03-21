@@ -25,6 +25,10 @@ th.right, td.right {
     text-align: right;
 }
 
+.center {
+    text-align: center;
+}
+
 section.pda {
     position: fixed;
     bottom: 1vmin;
@@ -52,12 +56,12 @@ section.pda {
     .PDABackground {
         background: #303e40;
         color: white;
-        padding: 1vmin 0;
+        padding: 0.2vmin 0;
         height: 37vmin;
         border-radius: 6px;
     }
     .button {
-        padding: 1%;
+        padding: 0;
         margin: 0;
         color: white;
         cursor: pointer;

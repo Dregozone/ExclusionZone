@@ -4,7 +4,9 @@ class Action
 {
     public static $validActions = [
         "shop",
-        "hunting"
+        "hunting",
+        "cooking",
+        "patrol"
     ];
 
     private $action;
@@ -331,19 +333,30 @@ class Action
 
     /** Get users current location */
     public static function findLocation() {
-        $location = 'Tutorial location'; //// from db, select location where userid=?
+
+        $location = 'Tutorial camp'; //// from db, select location where userid=?
+
+        $actions = [];
 
         // Populate list of actions that can be started here
-        if ( $location == 'Tutorial location' ) {
+        if ( $location == 'Tutorial camp' ) {
 
-            return [
-                $location,
-                [
-                    "shop",
-                    "hunting"
-                ]
+            $actions = [
+                "shop",
+                "cooking"
+            ];
+        } else if ( $location == "Camp wall" ) {
+
+            $actions = [
+                "patrol",
+                "hunting"
             ];
         }
+
+        return [
+            $location,
+            $actions
+        ];
     }
 
     /** Get action info based on user location and action */
@@ -364,6 +377,22 @@ class Action
                 $this->actionType = 'hunting'; ////
                 $this->actionTimer = 60;
                 $this->actionExp = 12;
+                break;
+
+            case "cooking": 
+                // DB using $this->location and $this->action
+                $this->actionName = 'Cook over campfire';
+                $this->actionType = 'cooking'; ////
+                $this->actionTimer = 100;
+                $this->actionExp = 10;
+                break;
+
+            case "patrol": 
+                // DB using $this->location and $this->action
+                $this->actionName = 'Patrol the area';
+                $this->actionType = 'combat'; ////
+                $this->actionTimer = 110;
+                $this->actionExp = 26;
                 break;
 
             case null:
@@ -387,13 +416,31 @@ class Action
             $name = "Hunter";
             $img = "public/img/npc/Stalker1.png";
 
+        } else if ( $this->action == "cooking" ) {
+
+            $name = "Cook";
+            $img = "public/img/npc/Stalker1.png";
+
+        } else { // There is no NPC set up for this action
+
+            $name = false;
+            $image = false;
         }
 
-        $this->npcName = $name;
+        if ( $name !== false ) {
+            $this->npcName = $name;
+
+            $spacer = "";
+            $npc = Shared::npcBuilder($name, $img);
+        } else {
+            $spacer = "<br /><br />";
+            $npc = '';
+        }
 
         $html = '
             <section class="npc">
-                ' . Shared::npcBuilder($name, $img) . '
+                ' . $spacer . '
+                ' . $npc . '
                 <p class="npc" id="npcText">
                     <a href="?action=none">
                         Leave
@@ -409,7 +456,7 @@ class Action
 
         $html = '
             <section class="action">
-                <div style="display: flex;">
+                <div style="display: flex; align-items: center; justify-content: center;">
                     <h2>' . $this->actionName . '</h2>
                 </div>
         ';
@@ -469,11 +516,15 @@ class Action
                 </table>
             ';
         } else {
-            
+
+            $doing = $this->npcName !== null ? "You go {$this->actionType} with {$this->npcName}." : "";
+
             $html .= "
-                You go {$this->actionType} with {$this->npcName}.
-                <img src='public/img/action/{$this->actionType}.png' class='action' title='{$this->actionType}' alt='{$this->actionType}' />
-                This takes you {$this->actionTimer} seconds and you will gain {$this->actionExp} experience in {$this->actionType}. 
+                <p>
+                    {$doing}
+                    <img src='public/img/action/{$this->actionType}.png' class='action' title='{$this->actionType}' alt='{$this->actionType}' />
+                    This takes you {$this->actionTimer} seconds and you will gain {$this->actionExp} experience in {$this->actionType}.
+                </p>
             ";
 
         }
