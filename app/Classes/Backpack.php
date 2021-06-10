@@ -21,7 +21,8 @@ class Backpack
             "P226 Pistol",
             "Hiking Boots",
             "Ballistic Helmet",
-            "Damaged P226 Pistol"
+            "Damaged P226 Pistol",
+            "Money"
         ];
 
         $wearings = [

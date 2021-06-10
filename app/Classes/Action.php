@@ -40,6 +40,24 @@ class Action
     public function findItems() {
 
         $this->items = array(
+             "Money" => [
+                "id" => 0
+                ,"name" => "Money"
+                ,"skillToUse" => ""
+                ,"levelToUse" => ""
+                ,"Type" => ""
+                ,"Accuracy" => ""
+                ,"Damage" => ""
+                ,"Alertness" => ""
+                ,"PhysProtect" => ""
+                ,"EnviroProtect" => ""
+                ,"Durability" => "1"
+                ,"BuyValue" => "1"
+                ,"SellValue" => "1"
+                ,"Weight" => "0.1"
+                ,"Img" => "public/img/item/Money.png"
+                ,"Range" => "0"
+             ],
              "Hazmat Suit" => array(
                  "id" => 1
                 ,"name" => "Hazmat Suit"
@@ -196,9 +214,9 @@ class Action
                 ,"PhysProtect" => "5"
                 ,"EnviroProtect" => "7"
                 ,"Durability" => "800"
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"BuyValue" => "700"
+                ,"SellValue" => "450"
+                ,"Weight" => "12"
                 ,"Img" => "public/img/item/HikingBoots.png"
                 ,"Range" => "0"
                 )
@@ -214,9 +232,9 @@ class Action
                 ,"PhysProtect" => "3"
                 ,"EnviroProtect" => "3"
                 ,"Durability" => "500"
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"BuyValue" => "500"
+                ,"SellValue" => "250"
+                ,"Weight" => "12"
                 ,"Img" => "public/img/item/HikingBoots.png"
                 ,"Range" => "0"
                 )
@@ -232,9 +250,9 @@ class Action
                 ,"PhysProtect" => "10"
                 ,"EnviroProtect" => "0"
                 ,"Durability" => "800"
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"BuyValue" => "900"
+                ,"SellValue" => "700"
+                ,"Weight" => "15"
                 ,"Img" => "public/img/item/CombatBoots.png"
                 ,"Range" => "0"
                 )
@@ -250,9 +268,9 @@ class Action
                 ,"PhysProtect" => "7"
                 ,"EnviroProtect" => "0"
                 ,"Durability" => "500"
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"BuyValue" => "700"
+                ,"SellValue" => "450"
+                ,"Weight" => "15"
                 ,"Img" => "public/img/item/CombatBoots.png"
                 ,"Range" => "0"
                 )
@@ -267,10 +285,10 @@ class Action
                 ,"Alertness" => "0"
                 ,"PhysProtect" => "0"
                 ,"EnviroProtect" => "0"
-                ,"Durability" => ""
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"Durability" => "1400"
+                ,"BuyValue" => "4250"
+                ,"SellValue" => "3100"
+                ,"Weight" => "65"
                 ,"Img" => "public/img/item/RPD.png"
                 ,"Range" => "110"
                 )
@@ -285,10 +303,10 @@ class Action
                 ,"Alertness" => "0"
                 ,"PhysProtect" => "0"
                 ,"EnviroProtect" => "0"
-                ,"Durability" => ""
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"Durability" => "230"
+                ,"BuyValue" => "2750"
+                ,"SellValue" => "1100"
+                ,"Weight" => "65"
                 ,"Img" => "public/img/item/RPD.png"
                 ,"Range" => "90"
                 )
@@ -303,10 +321,10 @@ class Action
                 ,"Alertness" => "0"
                 ,"PhysProtect" => "0"
                 ,"EnviroProtect" => "0"
-                ,"Durability" => ""
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"Durability" => "1000"
+                ,"BuyValue" => "800"
+                ,"SellValue" => "600"
+                ,"Weight" => "10"
                 ,"Img" => "public/img/item/P226Pistol.png"
                 ,"Range" => "40"
                 )
@@ -321,10 +339,10 @@ class Action
                 ,"Alertness" => "0"
                 ,"PhysProtect" => "0"
                 ,"EnviroProtect" => "0"
-                ,"Durability" => ""
-                ,"BuyValue" => ""
-                ,"SellValue" => ""
-                ,"Weight" => ""
+                ,"Durability" => "200"
+                ,"BuyValue" => "325"
+                ,"SellValue" => "175"
+                ,"Weight" => "10"
                 ,"Img" => "public/img/item/P226Pistol.png"
                 ,"Range" => "30"
                 )
@@ -477,6 +495,14 @@ class Action
             ';
 
             foreach ( $this->items as $name => $details ) {
+
+                // Skip displaying these items
+                $skipItems = [
+                    "Money"
+                ];
+                if ( in_array( $name, $skipItems ) ) {
+                    continue;
+                }
 
                 if ( 
                     $details["Type"] == "weapon" || 
