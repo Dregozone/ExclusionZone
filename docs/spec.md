@@ -11,7 +11,7 @@ Core pillars:
 
 ## 2. Target Technical Stack
 - Framework: Laravel 13
-- Starter Kit: Laravel Breeze (Livewire stack), using the latest available release at implementation time
+- Starter Kit: Livewire starter kit, using the latest available release at implementation time
 - Components: single-file Livewire v4 + Flux Pro
 - Styling: Tailwind CSS
 - Frontend interactivity: Alpine.js
