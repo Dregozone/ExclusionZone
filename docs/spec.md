@@ -11,7 +11,7 @@ Core pillars:
 
 ## 2. Target Technical Stack
 - Framework: Laravel 13
-- Starter Kit: latest Livewire starter kit
+- Starter Kit: Laravel Breeze (Livewire stack), using the latest available release at implementation time
 - Components: single-file Livewire v4 + Flux Pro
 - Styling: Tailwind CSS
 - Frontend interactivity: Alpine.js
@@ -26,6 +26,7 @@ User types:
 
 Rules:
 - Only admins may change another user’s role.
+- Cosmetic access is premium-entitlement only (staff/admin privileges do not automatically grant premium cosmetics).
 - Required relationship checks:
   - `Users -> roles -> tasks`
   - `Users -> location -> city -> actions`
@@ -67,7 +68,7 @@ Rules:
 | user | view_public_pages, login, chat_send, trade_create, city_action_perform, combat_initiate |
 | premium | all user tasks + equip_cosmetic |
 | moderator | all user tasks + mute_user_temporary, moderate_chat_messages |
-| admin | all tasks including role_change_user, view_admin_dashboard |
+| admin | all user tasks + mute_user_temporary, moderate_chat_messages, role_change_user, view_admin_dashboard |
 
 ### 4.2 World Data
 
@@ -184,7 +185,7 @@ Rules:
 | Chat send | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Trade | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Perform city actions | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Equip cosmetic items/themes | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Equip cosmetic items/themes | ❌ | ❌ | ✅ | ❌ | ❌ |
 | Temporarily mute user | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Change another user role | ❌ | ❌ | ❌ | ❌ | ✅ |
 
