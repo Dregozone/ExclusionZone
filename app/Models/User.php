@@ -82,17 +82,17 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->roleKey() === 'admin';
+        return $this->role_key === 'admin';
     }
 
     public function isModerator(): bool
     {
-        return in_array($this->roleKey(), ['moderator', 'admin'], true);
+        return in_array($this->role_key, ['moderator', 'admin'], true);
     }
 
     public function hasPremiumEntitlement(): bool
     {
-        return $this->premium_active || $this->roleKey() === 'premium';
+        return $this->premium_active || $this->role_key === 'premium';
     }
 
     public function canPerformTask(string $taskKey): bool
