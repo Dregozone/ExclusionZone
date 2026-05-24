@@ -81,7 +81,7 @@
                             class="w-full cursor-pointer"
                             data-test="logout-button"
                         >
-                            {{ __('Log Out') }}
+                            {{ __('Log out') }}
                         </flux:menu.item>
                     </form>
                 </flux:menu>
@@ -89,6 +89,12 @@
         </flux:header>
 
         {{ $slot }}
+
+        @persist('toast')
+            <flux:toast.group>
+                <flux:toast />
+            </flux:toast.group>
+        @endpersist
 
         @fluxScripts
     </body>

@@ -3,12 +3,14 @@
 namespace App\Livewire\Settings;
 
 use App\Concerns\ProfileValidationRules;
+use Flux\Flux;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('Profile settings')]
 class Profile extends Component
 {
     use ProfileValidationRules;
@@ -43,7 +45,7 @@ class Profile extends Component
 
         $user->save();
 
-        $this->dispatch('profile-updated', name: $user->name);
+        Flux::toast(variant: 'success', text: __('Profile updated.'));
     }
 
     /**
@@ -61,7 +63,7 @@ class Profile extends Component
 
         $user->sendEmailVerificationNotification();
 
-        Session::flash('status', 'verification-link-sent');
+        Flux::toast(text: __('A new verification link has been sent to your email address.'));
     }
 
     #[Computed]

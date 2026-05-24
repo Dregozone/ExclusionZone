@@ -3,7 +3,7 @@
         "laravel-boost": {
             "command": "C:\\Users\\aclea\\.config\\herd\\bin\\php85\\php.exe",
             "args": [
-                "C:\\Users\\aclea\\Herd\\exclusion-zone\\artisan",
+                "C:\\Users\\aclea\\Herd\\exclusion-zone-makeover\\artisan",
                 "boost:mcp"
             ]
         }

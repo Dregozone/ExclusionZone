@@ -38,9 +38,8 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
-    if (! Features::canManageTwoFactorAuthentication()) {
-        $this->markTestSkipped('Two-factor authentication is not enabled.');
-    }
+    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
+
     Features::twoFactorAuthentication([
         'confirm' => true,
         'confirmPassword' => true,
@@ -63,5 +62,6 @@ test('users can logout', function () {
     $response = $this->actingAs($user)->post(route('logout'));
 
     $response->assertRedirect(route('home'));
+
     $this->assertGuest();
 });

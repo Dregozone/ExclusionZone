@@ -1,4 +1,4 @@
-<x-layouts::auth>
+<x-layouts::auth :title="__('Forgot password')">
     <div class="flex flex-col gap-6">
         <x-auth-header :title="__('Forgot password')" :description="__('Enter your email to receive a password reset link')" />
 
@@ -11,7 +11,7 @@
             <!-- Email Address -->
             <flux:input
                 name="email"
-                :label="__('Email Address')"
+                :label="__('Email address')"
                 type="email"
                 required
                 autofocus
