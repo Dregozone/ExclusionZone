@@ -10,133 +10,118 @@ new #[Layout('layouts.empty')] class extends Component
 ?>
 
 <div>
-    <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
-      <!-- Hero Section -->
-      <section class="relative h-screen flex items-center justify-center text-center px-4">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1593627178095-920620111045?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center opacity-20"></div>
-          <div class="relative z-10 max-w-3xl">
-              <h1 class="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">
-                  Welcome to <span class="text-green-400">Exclusion Zone</span>
-              </h1>
-              <p class="text-xl mb-8 text-gray-300">
-                  Survive the wasteland, build your legacy, and uncover the secrets of the Zone
-              </p>
-              <div class="space-x-4">
-                  <a href="{{ route('register') }}"
-                     class="inline-flex items-center px-6 py-3 border border-green-500 text-green-400 bg-black hover:bg-green-900 transition duration-300 rounded-lg shadow-lg">
-                      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-                      </svg>
-                      Register
-                  </a>
-                  <a href="{{ route('login') }}"
-                     class="inline-flex items-center px-6 py-3 bg-green-600 text-black hover:bg-green-700 transition duration-30
-                     rounded-lg shadow-lg">
-                      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19m0-24h2m-2 2h6m-6 0v6m0 0h6m-6 0v6m0-6h2m-2 0l-2 2m2-2l2 2"></path>
-                      </svg>
-                      Login
-                  </a>
-              </div>
-          </div>
-      </section>
+    <div class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(74,222,128,0.14),transparent_35%),linear-gradient(180deg,#09090b_0%,#111827_45%,#050816_100%)] text-zinc-100">
+        <section class="border-b border-white/10">
+            <div class="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-8 lg:px-8">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.3em] text-emerald-300/80">Text-based survival MMO</p>
+                        <h1 class="mt-2 text-4xl font-semibold tracking-tight sm:text-6xl">Exclusion Zone</h1>
+                    </div>
 
-      <!-- About Section -->
-      <section class="py-16 px-4">
-          <div class="max-w-4xl mx-auto">
-              <h2 class="text-3xl font-bold mb-8 text-center">About Exclusion Zone</h2>
-              <div class="grid md:grid-cols-2 gap-8 items-center">
-                  <div>
-                      <img src="https://images.unsplash.com/photo-1593627178095-920620111045?auto=format&fit=crop&w=1920&q=80"
-                           alt="Post-apocalyptic wasteland"
-                           class="rounded-lg shadow-lg w-full h-64 object-cover">
-                  </div>
-                  <div>
-                      <p class="text-gray-300 mb-4">
-                          Exclusion Zone is a multiplayer text-based RPG set in a post-nuclear war wasteland.
-                          Players will navigate through dangerous zones, scavenge for resources, and uncover
-                          the mysteries of the Zone while battling other survivors in a harsh, unforgiving world.
-                      </p>
-                      <p class="text-gray-300">
-                          Based on the atmospheric tone of the Stalker games and the existential dread of Roadside Picnic,
-                          this game offers a unique blend of survival mechanics and narrative-driven gameplay.
-                      </p>
-                  </div>
-              </div>
-          </div>
-      </section>
+                    <div class="flex flex-wrap items-center gap-3">
+                        @auth
+                            <a href="{{ route('dashboard') }}" class="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-400/10 px-5 py-2.5 text-sm font-medium text-emerald-200 transition hover:bg-emerald-400/20">
+                                Enter your city menu
+                            </a>
+                        @else
+                            <a href="{{ route('register') }}" class="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-400/10 px-5 py-2.5 text-sm font-medium text-emerald-200 transition hover:bg-emerald-400/20">
+                                Register
+                            </a>
+                            <a href="{{ route('login') }}" class="inline-flex items-center rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300">
+                                Login
+                            </a>
+                        @endauth
+                    </div>
+                </div>
 
-      <!-- Features Section -->
-      <section class="py-16 px-4 bg-gray-800">
-          <div class="max-w-4xl mx-auto">
-              <h2 class="text-3xl font-bold mb-8 text-center">Key Features</h2>
-              <div class="grid md:grid-cols-3 gap-8">
-                  <div class="text-center p-6 bg-gray-700 rounded-lg">
-                      <div class="w-16 h-16 mx-auto mb-4 bg-green-600 rounded-full flex items-center justify-center">
-                          <svg class="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0
-   0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                      </div>
-                      <h3 class="text-xl font-bold mb-2">Multiplayer Survival</h3>
-                      <p class="text-gray-300">Compete with other players in a shared, persistent world</p>
-                  </div>
-                  <div class="text-center p-6 bg-gray-700 rounded-lg">
-                      <div class="w-16 h-16 mx-auto mb-4 bg-green-600 rounded-full flex items-center justify-center">
-                          <svg class="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L18 21H5L13 10zM13 21H21M8 10V3L3 21H10"></path>
-                          </svg>
-                      </div>
-                      <h3 class="text-xl font-bold mb-2">Dynamic World</h3>
-                      <p class="text-gray-300">Explore a procedurally generated wasteland with ever-changing dangers</p>
-                  </div>
-                  <div class="text-center p-6 bg-gray-700 rounded-lg">
-                      <div class="w-16 h-16 mx-auto mb-4 bg-green-600 rounded-full flex items-center justify-center">
-                          <svg class="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2zm7-1a5 5 0 015 5v3h-10v-3a5 5
-  0 015-5z"></path>
-                          </svg>
-                      </div>
-                      <h3 class="text-xl font-bold mb-2">Survival Mechanics</h3>
-                      <p class="text-gray-300">Manage resources, avoid radiation, and survive the harsh environment</p>
-                  </div>
-              </div>
-          </div>
-      </section>
+                <div class="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
+                    <div class="space-y-6">
+                        <p class="max-w-3xl text-lg leading-8 text-zinc-300 sm:text-xl">
+                            Build a survivor in a fractured world of irradiated ruins, fortified hubs, black markets,
+                            dangerous hunts, and long-distance scavenging runs. One click drives one move or one action,
+                            making the MVP fast to learn and easy to demo.
+                        </p>
 
-      <!-- Call to Action Section -->
-      <section class="py-16 px-4">
-          <div class="max-w-3xl mx-auto text-center">
-              <h2 class="text-3xl font-bold mb-6">Ready to Survive the Zone?</h2>
-              <p class="text-gray-300 mb-8">
-                  Join thousands of players in this immersive post-apocalyptic experience.
-                  Your survival depends on your choices.
-              </p>
-              <div class="flex flex-col sm:flex-row justify-center gap-4">
-                  <a href="{{ route('register') }}"
-                     class="inline-flex items-center px-6 py-3 border border-green-500 text-green-400 bg-black hover:bg-green-900 transition duration-300 rounded-lg shadow-lg">
-                      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-                      </svg>
-                      Register Now
-                  </a>
-                  <a href="{{ route('login') }}"
-                     class="inline-flex items-center px-6 py-3 bg-green-600 text-black hover:bg-green-700 transition duration-300 rounded-lg shadow-lg">
-                      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19m0-24h2m-2 2h6m-6 0v6m0 0h6m-6 0v6m0-6h2m-2 0l-2 2m2-2l2 2"></path>
-                      </svg>
-                      Login
-                  </a>
-              </div>
-          </div>
-      </section>
+                        <div class="grid gap-4 sm:grid-cols-3">
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                                <p class="text-sm text-zinc-400">Core loop</p>
+                                <p class="mt-2 text-lg font-medium text-white">Travel, scavenge, level, repeat</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                                <p class="text-sm text-zinc-400">World</p>
+                                <p class="mt-2 text-lg font-medium text-white">12 cities across 6 countries</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                                <p class="text-sm text-zinc-400">Premium</p>
+                                <p class="mt-2 text-lg font-medium text-white">Cosmetic only, never pay-to-win</p>
+                            </div>
+                        </div>
+                    </div>
 
-      <!-- Footer -->
-      <footer class="py-8 px-4 bg-gray-900 border-t border-gray-800">
-          <div class="max-w-4xl mx-auto text-center text-gray-400">
-              <p>&copy; {{ date('Y') }} Exclusion Zone. All rights reserved.</p>
-              <p class="mt-2">This site is a fictional game concept and not affiliated with any real-world entities.</p>
-          </div>
-      </footer>
-  </div>
+                    <div class="rounded-3xl border border-white/10 bg-zinc-950/70 p-6 shadow-2xl shadow-emerald-950/30">
+                        <p class="text-sm uppercase tracking-[0.3em] text-amber-300/80">Field report</p>
+                        <div class="mt-4 space-y-4 text-sm leading-7 text-zinc-300">
+                            <p>“Kyiv sectors are holding. Pripyat is still glowing. Detroit factories are full of broken steel and armed scavengers.”</p>
+                            <p>“Tokyo tech ruins keep producing parts. Manaus pays well if you can survive the jungle edge.”</p>
+                            <p>“Premium backers get style, not strength. Nobody buys victory in the Zone.”</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mx-auto max-w-6xl px-6 py-16 lg:px-8">
+            <div class="grid gap-6 lg:grid-cols-3">
+                <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                    <h2 class="text-xl font-semibold text-white">Survival-driven cities</h2>
+                    <p class="mt-3 text-sm leading-7 text-zinc-300">
+                        Pripyat, Kyiv, Warsaw, Gdansk, Detroit, Seattle, Tokyo, Sapporo, Rio de Janeiro, Manaus,
+                        Johannesburg, and Cape Town all ship with themed actions and travel links.
+                    </p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                    <h2 class="text-xl font-semibold text-white">Action-per-click gameplay</h2>
+                    <p class="mt-3 text-sm leading-7 text-zinc-300">
+                        Every action grants visible experience and salvage. Every move changes the city menu,
+                        allowing the MVP to feel like a living route-planning scavenger run.
+                    </p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                    <h2 class="text-xl font-semibold text-white">Ready for expansion</h2>
+                    <p class="mt-3 text-sm leading-7 text-zinc-300">
+                        Chat, trade, combat, moderation, premium cosmetics, and admin role control are wired in as
+                        authenticated hooks so the concept can expand without replacing the core loop.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="border-y border-white/10 bg-black/20">
+            <div class="mx-auto max-w-6xl px-6 py-16 lg:px-8">
+                <div class="flex flex-col gap-4 text-center">
+                    <p class="text-sm uppercase tracking-[0.3em] text-zinc-400">What the MVP includes</p>
+                    <h2 class="text-3xl font-semibold text-white sm:text-4xl">A working game loop you can play right now</h2>
+                </div>
+
+                <div class="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    @foreach ([
+                        'Register and login straight into your current city menu.',
+                        'Move between connected cities and refresh local actions instantly.',
+                        'Gain skill XP, level up, and watch inventory fill with scavenged loot.',
+                        'Equip cosmetic premium loadouts without any gameplay advantage.',
+                    ] as $feature)
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm leading-7 text-zinc-300">
+                            {{ $feature }}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        <footer class="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-8 text-sm text-zinc-500 lg:px-8">
+            <p>&copy; {{ date('Y') }} Exclusion Zone.</p>
+            <p>The MVP is a fictional post-nuclear game concept focused on survival, atmosphere, and fair progression.</p>
+        </footer>
+    </div>
 </div>

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -55,6 +56,20 @@ class UserFactory extends Factory
             'two_factor_secret' => encrypt('secret'),
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
+        ]);
+    }
+
+    public function premium(): static
+    {
+        return $this->state(fn () => [
+            'premium_active' => true,
+        ]);
+    }
+
+    public function asRole(string $roleKey): static
+    {
+        return $this->state(fn () => [
+            'role_id' => Role::query()->where('key', $roleKey)->value('id'),
         ]);
     }
 }

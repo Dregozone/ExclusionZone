@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -32,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+        Gate::define('perform-task', fn (User $user, string $taskKey): bool => $user->canPerformTask($taskKey));
+        Gate::define('equip-premium-cosmetics', fn (User $user): bool => $user->hasPremiumEntitlement());
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
