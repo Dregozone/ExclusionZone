@@ -4,6 +4,7 @@ namespace App\Actions\Game;
 
 use App\Models\CityAction;
 use App\Models\Item;
+use App\Models\Skill;
 use App\Models\User;
 use App\Models\UserSkill;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -67,7 +68,7 @@ class PerformCityAction
 
     private function createSkillProgress(User $user, string $skillKey): UserSkill
     {
-        $skill = \App\Models\Skill::query()->where('key', $skillKey)->firstOrFail();
+        $skill = Skill::query()->where('key', $skillKey)->firstOrFail();
 
         return $user->skills()->create([
             'skill_id' => $skill->id,

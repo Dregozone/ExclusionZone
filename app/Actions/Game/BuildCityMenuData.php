@@ -5,7 +5,6 @@ namespace App\Actions\Game;
 use App\Models\CityAction;
 use App\Models\PremiumCosmetic;
 use App\Models\User;
-use Illuminate\Support\Collection;
 
 class BuildCityMenuData
 {
