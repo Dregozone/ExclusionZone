@@ -19,6 +19,9 @@
                 <flux:navbar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                     {{ __('Move Player') }}
                 </flux:navbar.item>
+                <flux:navbar.item icon="shield-check" :href="route('admin.change-user-role')" :current="request()->routeIs('admin.change-user-role')" wire:navigate>
+                    {{ __('Change User Role') }}
+                </flux:navbar.item>
             </flux:navbar>
 
             <flux:spacer />
@@ -56,8 +59,14 @@
                     <flux:sidebar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                         {{ __('Landing') }}
                     </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('Admin')">
                     <flux:sidebar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                         {{ __('Move Player') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="shield-check" :href="route('admin.change-user-role')" :current="request()->routeIs('admin.change-user-role')" wire:navigate>
+                        {{ __('Change User Role') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>

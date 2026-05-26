@@ -46,6 +46,12 @@
                 <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Travel routes</h2>
                 <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">One move is one turn. Each destination refreshes the city action list.</p>
 
+                @if (! $can_perform_city_actions && $city_action_restriction)
+                    <p class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                        {{ $city_action_restriction }}
+                    </p>
+                @endif
+
                 <div class="mt-4 grid gap-3">
                     @forelse ($neighbors as $neighbor)
                         <form method="POST" action="{{ route('travel.store') }}" class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
@@ -57,8 +63,8 @@
                                     <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $neighbor->country?->country }} · {{ $neighbor->baseline_loot_tier }} loot</p>
                                 </div>
 
-                                <flux:button type="submit" variant="primary" data-test="travel-{{ Str::slug($neighbor->city) }}">
-                                    Travel
+                                <flux:button type="submit" variant="primary" :disabled="! $can_perform_city_actions" data-test="travel-{{ Str::slug($neighbor->city) }}">
+                                    {{ $can_perform_city_actions ? 'Travel' : 'Unavailable' }}
                                 </flux:button>
                             </div>
                         </form>
@@ -99,7 +105,7 @@
                                     @csrf
                                     <input type="hidden" name="city_action_id" value="{{ $entry['action']->id }}">
                                     <flux:button type="submit" variant="primary" :disabled="! $entry['available']" data-test="action-{{ $entry['action']->action_key }}">
-                                        {{ $entry['available'] ? 'Take action' : 'Locked' }}
+                                        {{ $entry['available'] ? 'Take action' : ($can_perform_city_actions ? 'Locked' : 'Unavailable') }}
                                     </flux:button>
                                 </form>
                             </div>
@@ -165,8 +171,8 @@
                                     <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $hook['description'] }}</p>
                                 </div>
 
-                                <flux:button type="submit" variant="ghost">
-                                    Open
+                                <flux:button type="submit" variant="ghost" :disabled="! $hook['available']">
+                                    {{ $hook['available'] ? 'Open' : 'Unavailable' }}
                                 </flux:button>
                             </div>
                         </form>

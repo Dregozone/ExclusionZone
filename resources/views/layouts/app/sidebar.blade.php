@@ -18,8 +18,14 @@
                         <flux:sidebar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                             {{ __('Landing') }}
                         </flux:sidebar.item>
+                    </flux:sidebar.group>
+
+                    <flux:sidebar.group :heading="__('Admin')" class="grid">
                         <flux:sidebar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                             {{ __('Move Player') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="shield-check" :href="route('admin.change-user-role')" :current="request()->routeIs('admin.change-user-role')" wire:navigate>
+                            {{ __('Change User Role') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 </flux:sidebar.nav>
@@ -91,6 +97,17 @@
         </flux:header>
 
         {{ $slot }}
+
+        @if (session()->has('toast'))
+            @php($toast = session('toast'))
+
+            <div
+                x-data="{ toast: @js($toast) }"
+                x-init="$nextTick(() => $flux.toast(toast))"
+                class="hidden"
+                aria-hidden="true"
+            ></div>
+        @endif
 
         @persist('toast')
             <flux:toast.group>

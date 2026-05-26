@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\ChangeUserRole as ChangeUserRolePage;
 use App\Models\City;
 use App\Models\CityAction;
 use App\Models\Country;
@@ -10,6 +11,7 @@ use App\Models\Skill;
 use App\Models\User;
 use App\Models\UserMute;
 use Illuminate\Support\Carbon;
+use Livewire\Livewire;
 
 test('landing page is available from the home route', function () {
     $this->get(route('home'))
@@ -71,6 +73,44 @@ test('performing a city action grants experience and adds items to inventory', f
 
     expect($user->skillFor('scavenging')?->xp)->toBe(18);
     expect($user->inventoryItems->firstWhere('item.key', 'scrap_metal')?->quantity)->toBe(2);
+});
+
+test('users without city action permissions get a danger toast instead of a 403 page', function () {
+    $user = User::factory()->asRole('guest')->create();
+    $action = CityAction::query()->where('action_key', 'district_patrols')->firstOrFail();
+
+    $this->actingAs($user)
+        ->from(route('dashboard'))
+        ->post(route('city-action.store'), ['city_action_id' => $action->id])
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('toast', fn (array $toast): bool => $toast['heading'] === 'Action unavailable'
+            && $toast['text'] === 'Your current role cannot travel or perform city actions.'
+            && $toast['variant'] === 'danger');
+});
+
+test('wrong-city action attempts redirect back with a danger toast', function () {
+    $user = User::factory()->create();
+    $action = CityAction::query()->where('action_key', 'defensive_wall_building')->firstOrFail();
+
+    $this->actingAs($user)
+        ->from(route('dashboard'))
+        ->post(route('city-action.store'), ['city_action_id' => $action->id])
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('toast', fn (array $toast): bool => $toast['heading'] === 'Action unavailable'
+            && $toast['text'] === 'You can only perform actions in your current city.'
+            && $toast['variant'] === 'danger');
+});
+
+test('feature hook denials redirect back with a danger toast instead of a 403 page', function () {
+    $user = User::factory()->asRole('guest')->create();
+
+    $this->actingAs($user)
+        ->from(route('dashboard'))
+        ->post(route('feature-hook.store', 'trade'))
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('toast', fn (array $toast): bool => $toast['heading'] === 'Action unavailable'
+            && $toast['text'] === 'Your current role cannot access the trade board.'
+            && $toast['variant'] === 'danger');
 });
 
 test('skill thresholds deny and allow access at the documented boundary', function () {
@@ -147,6 +187,57 @@ test('admin can change another user role and non admins cannot', function () {
 
     expect($secondTarget->fresh()->role?->key)->toBe('user');
     expect(RoleChangeAudit::query()->count())->toBe(1);
+});
+
+test('authenticated users can reach the change user role page from navigation', function () {
+    $user = User::factory()->asRole('guest')->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Change User Role')
+        ->assertSee(route('admin.change-user-role', absolute: false));
+
+    $this->get(route('admin.change-user-role'))
+        ->assertOk()
+        ->assertSee('Current Role')
+        ->assertSee('Selected Role Preview');
+});
+
+test('livewire change user role page shows permissions and updates roles without admin restrictions', function () {
+    $actor = User::factory()->create();
+    $target = User::factory()->create();
+
+    $target->load('role.tasks');
+
+    $currentRole = $target->role;
+    $newRole = Role::query()->with('tasks')->where('key', 'moderator')->firstOrFail();
+    $currentPermission = $currentRole?->tasks->sortBy('description')->first()?->description;
+    $newPermission = $newRole->tasks->sortBy('description')->first()?->description;
+
+    expect($currentRole)->not->toBeNull()
+        ->and($currentPermission)->not->toBeNull()
+        ->and($newPermission)->not->toBeNull();
+
+    $this->actingAs($actor);
+
+    Livewire::test(ChangeUserRolePage::class)
+        ->set('selectedUserId', $target->id)
+        ->assertSee($currentRole->name)
+        ->assertSee($currentPermission)
+        ->set('selectedRoleId', $newRole->id)
+        ->assertSee($newRole->name)
+        ->assertSee($newPermission)
+        ->call('changeRole')
+        ->assertHasNoErrors();
+
+    expect($target->fresh()->role?->key)->toBe('moderator')
+        ->and(RoleChangeAudit::query()
+            ->where('actor_user_id', $actor->id)
+            ->where('target_user_id', $target->id)
+            ->where('new_role_id', $newRole->id)
+            ->exists())
+        ->toBeTrue();
 });
 
 test('moderators can temporarily mute users and the mute expires', function () {

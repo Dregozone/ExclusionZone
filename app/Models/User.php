@@ -108,6 +108,22 @@ class User extends Authenticatable
             ->contains('key', $taskKey) ?? false;
     }
 
+    public function denialReasonForTask(string $taskKey): ?string
+    {
+        if ($this->canPerformTask($taskKey)) {
+            return null;
+        }
+
+        return match ($taskKey) {
+            'city_action_perform' => 'Your current role cannot travel or perform city actions.',
+            'chat_send' => 'Your current role cannot access radio chat.',
+            'trade_create' => 'Your current role cannot access the trade board.',
+            'combat_initiate' => 'Your current role cannot scout combat contracts.',
+            'equip_cosmetic' => 'You need premium access to equip cosmetics.',
+            default => 'You cannot perform that action right now.',
+        };
+    }
+
     public function skillFor(string $skillKey): ?UserSkill
     {
         return $this->skills

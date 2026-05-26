@@ -26,6 +26,8 @@ class BuildCityMenuData
         $location = $user->location;
         $city = $location?->city?->loadMissing('country');
         $neighbors = $city?->neighbors()->with('country')->orderBy('city')->get() ?? collect();
+        $cityActionRestriction = $user->denialReasonForTask('city_action_perform');
+        $canPerformCityActions = $cityActionRestriction === null;
         $cityActions = $city === null
             ? collect()
             : CityAction::query()
@@ -40,11 +42,14 @@ class BuildCityMenuData
             'city' => $city,
             'country' => $city?->country,
             'neighbors' => $neighbors,
+            'can_perform_city_actions' => $canPerformCityActions,
+            'city_action_restriction' => $cityActionRestriction,
             'actions' => $cityActions->map(fn (CityAction $action): array => [
                 'action' => $action,
                 'required_level' => $action->min_level,
                 'user_level' => $user->skillFor($action->skill_key)?->level ?? 1,
-                'available' => ($user->skillFor($action->skill_key)?->level ?? 1) >= $action->min_level,
+                'available' => $canPerformCityActions
+                    && ($user->skillFor($action->skill_key)?->level ?? 1) >= $action->min_level,
             ]),
             'skills' => $user->skills->sortBy(fn ($skill) => $skill->skill?->display_name)->values(),
             'inventory' => $user->inventoryItems->sortBy(fn ($item) => $item->item?->name)->values(),
@@ -55,6 +60,9 @@ class BuildCityMenuData
                 ['key' => 'chat_send', 'route' => 'chat', 'label' => 'Open radio chat', 'description' => 'Check survivor chatter and faction rumors.'],
                 ['key' => 'trade_create', 'route' => 'trade', 'label' => 'Review trade board', 'description' => 'Price out scavenged loot and swap supplies.'],
                 ['key' => 'combat_initiate', 'route' => 'combat', 'label' => 'Scout combat contracts', 'description' => 'Preview PvE and PvP danger hooks for the next pass.'],
+            ])->map(fn (array $hook): array => [
+                ...$hook,
+                'available' => $user->canPerformTask($hook['key']),
             ]),
         ];
     }

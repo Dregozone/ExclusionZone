@@ -13,14 +13,16 @@ class ChangeUserRole
     /**
      * @throws AuthorizationException
      */
-    public function __invoke(User $actor, User $target, Role $role): void
+    public function __invoke(User $actor, User $target, Role $role, bool $authorize = true): void
     {
-        if (! $actor->isAdmin()) {
-            throw new AuthorizationException('Only admins may change another user role.');
-        }
+        if ($authorize) {
+            if (! $actor->isAdmin()) {
+                throw new AuthorizationException('Only admins may change another user role.');
+            }
 
-        if ($actor->is($target)) {
-            throw new AuthorizationException('Admins may only change another user role.');
+            if ($actor->is($target)) {
+                throw new AuthorizationException('Admins may only change another user role.');
+            }
         }
 
         DB::transaction(function () use ($actor, $target, $role): void {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -24,4 +25,12 @@ test('new users can register', function () {
         ->assertRedirect(route('dashboard', absolute: false));
 
     $this->assertAuthenticated();
+
+    $user = User::query()
+        ->with('role.tasks:id,key')
+        ->where('email', 'test@example.com')
+        ->firstOrFail();
+
+    expect($user->role?->key)->toBe('user')
+        ->and($user->canPerformTask('city_action_perform'))->toBeTrue();
 });

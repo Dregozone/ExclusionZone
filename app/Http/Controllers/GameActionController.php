@@ -13,17 +13,17 @@ use App\Models\CityAction;
 use App\Models\PremiumCosmetic;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class GameActionController extends Controller
 {
     public function travel(TravelRequest $request, TravelToCity $travelToCity): RedirectResponse
     {
-        $this->authorizeTask($request, 'city_action_perform');
-
         try {
+            $this->authorizeTask($request, 'city_action_perform');
             $travelToCity($request->user(), City::query()->findOrFail($request->integer('city_id')));
         } catch (AuthorizationException $exception) {
-            return back()->with('status', $exception->getMessage());
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
         return to_route('dashboard')->with('status', 'You moved to a new city and refreshed your options.');
@@ -31,12 +31,11 @@ class GameActionController extends Controller
 
     public function performAction(PerformCityActionRequest $request, PerformCityAction $performCityAction): RedirectResponse
     {
-        $this->authorizeTask($request, 'city_action_perform');
-
         try {
+            $this->authorizeTask($request, 'city_action_perform');
             $reward = $performCityAction($request->user(), CityAction::query()->findOrFail($request->integer('city_action_id')));
         } catch (AuthorizationException $exception) {
-            return back()->with('status', $exception->getMessage());
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
         $summary = "Action completed: +{$reward['xp']} XP";
@@ -57,13 +56,13 @@ class GameActionController extends Controller
         try {
             $equipPremiumCosmetic($request->user(), PremiumCosmetic::query()->findOrFail($request->integer('premium_cosmetic_id')));
         } catch (AuthorizationException $exception) {
-            return back()->with('status', $exception->getMessage());
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
         return to_route('dashboard')->with('status', 'Cosmetic equipped. Style updated with no gameplay advantage.');
     }
 
-    public function visitHook(string $feature): RedirectResponse
+    public function visitHook(Request $request, string $feature): RedirectResponse
     {
         $taskKey = match ($feature) {
             'chat' => 'chat_send',
@@ -72,7 +71,11 @@ class GameActionController extends Controller
             default => abort(404),
         };
 
-        abort_unless(request()->user()?->canPerformTask($taskKey), 403);
+        try {
+            $this->authorizeTask($request, $taskKey);
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
 
         $message = match ($feature) {
             'chat' => 'The radio crackles with survivor chatter. Full live chat is the next milestone.',
@@ -83,8 +86,24 @@ class GameActionController extends Controller
         return to_route('dashboard')->with('status', $message);
     }
 
-    private function authorizeTask($request, string $taskKey): void
+    /**
+     * @return array{heading:string,text:string,variant:string}
+     */
+    private function dangerToast(string $message): array
     {
-        abort_unless($request->user()?->canPerformTask($taskKey), 403);
+        return [
+            'heading' => 'Action unavailable',
+            'text' => $message,
+            'variant' => 'danger',
+        ];
+    }
+
+    private function authorizeTask(Request $request, string $taskKey): void
+    {
+        $message = $request->user()?->denialReasonForTask($taskKey);
+
+        if ($message !== null) {
+            throw new AuthorizationException($message);
+        }
     }
 }
