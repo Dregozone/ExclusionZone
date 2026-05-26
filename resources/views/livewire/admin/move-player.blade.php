@@ -9,6 +9,7 @@
             <flux:field>
                 <flux:label>{{ __('Player') }}</flux:label>
                 <flux:select wire:model="selectedUserId" placeholder="{{ __('Select a player…') }}" searchable>
+                    <flux:select.option value="">{{ __('Select a player…') }}</flux:select.option>
                     @foreach ($this->users as $user)
                         <flux:select.option value="{{ $user->id }}">{{ $user->name }} — {{ $user->email }}</flux:select.option>
                     @endforeach
@@ -19,6 +20,7 @@
             <flux:field>
                 <flux:label>{{ __('Destination City') }}</flux:label>
                 <flux:select wire:model="selectedCityId" placeholder="{{ __('Select a city…') }}" searchable>
+                    <flux:select.option value="">{{ __('Select a city…') }}</flux:select.option>
                     @foreach ($this->cities as $city)
                         <flux:select.option value="{{ $city->id }}">{{ $city->city }} — {{ $city->country?->country }}</flux:select.option>
                     @endforeach
