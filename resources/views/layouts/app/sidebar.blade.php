@@ -18,6 +18,9 @@
                         <flux:sidebar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                             {{ __('Landing') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
+                            {{ __('Move Player') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                 </flux:sidebar.nav>
 
