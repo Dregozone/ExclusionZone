@@ -12,14 +12,20 @@
 
             <flux:sidebar.nav>
                     <flux:sidebar.group :heading="__('Zone')" class="grid">
+                        @auth
                         <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                             {{ __('City Menu') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                             {{ __('Landing') }}
                         </flux:sidebar.item>
+                        @endauth
+                        <flux:sidebar.item icon="map" :href="route('world-map')" :current="request()->routeIs('world-map')" wire:navigate>
+                            {{ __('World Map') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
 
+                    @auth
                     <flux:sidebar.group :heading="__('Admin')" class="grid">
                         <flux:sidebar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                             {{ __('Move Player') }}
@@ -27,18 +33,42 @@
                         <flux:sidebar.item icon="shield-check" :href="route('admin.change-user-role')" :current="request()->routeIs('admin.change-user-role')" wire:navigate>
                             {{ __('Change User Role') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="building-office-2" :href="route('admin.locations')" :current="request()->routeIs('admin.locations')" wire:navigate>
+                            {{ __('Locations') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="globe-alt" :href="route('admin.countries')" :current="request()->routeIs('admin.countries')" wire:navigate>
+                            {{ __('Countries') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="bolt" :href="route('admin.city-actions')" :current="request()->routeIs('admin.city-actions')" wire:navigate>
+                            {{ __('City Actions') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="archive-box" :href="route('admin.items')" :current="request()->routeIs('admin.items')" wire:navigate>
+                            {{ __('Items') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="academic-cap" :href="route('admin.skills')" :current="request()->routeIs('admin.skills')" wire:navigate>
+                            {{ __('Skills') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
+                    @endauth
                 </flux:sidebar.nav>
 
                 <flux:spacer />
 
                 <flux:sidebar.nav>
+                    @auth
                     <flux:sidebar.item icon="cog" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate>
                         {{ __('Settings') }}
                     </flux:sidebar.item>
+                    @else
+                    <flux:sidebar.item icon="arrow-right-end-on-rectangle" :href="route('login')" wire:navigate>
+                        {{ __('Log in') }}
+                    </flux:sidebar.item>
+                    @endauth
                 </flux:sidebar.nav>
 
+            @auth
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+            @endauth
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
@@ -47,6 +77,7 @@
 
             <flux:spacer />
 
+            @auth
             <flux:dropdown position="top" align="end">
                 <flux:profile
                     :initials="auth()->user()->initials()"
@@ -94,6 +125,11 @@
                     </form>
                 </flux:menu>
             </flux:dropdown>
+            @else
+            <a href="{{ route('login') }}" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+                {{ __('Log in') }}
+            </a>
+            @endauth
         </flux:header>
 
         {{ $slot }}
