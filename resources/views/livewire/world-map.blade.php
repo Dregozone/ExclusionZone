@@ -10,9 +10,9 @@
     @endphp
 
     <div
-        x-data="worldMap({{ json_encode($mapData) }}, {{ $currentCityId ?? 'null' }})"
+        x-data="worldMap(@js($mapData), @js($currentCityId))"
         x-init="init()"
-        class="rounded-3xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden"
+        class="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
     >
         {{-- Legend --}}
         <div class="flex flex-wrap items-center gap-6 border-b border-zinc-100 px-6 py-4 dark:border-zinc-800 text-sm">
@@ -64,45 +64,8 @@
                     </marker>
                 </defs>
 
-                {{-- Edges --}}
-                <template x-for="edge in edges" :key="`${edge.from}-${edge.to}`">
-                    <line
-                        :x1="edge.x1" :y1="edge.y1"
-                        :x2="edge.x2" :y2="edge.y2"
-                        :class="edge.isCurrent ? 'stroke-emerald-400' : 'stroke-zinc-300 dark:stroke-zinc-600'"
-                        stroke-width="1.5"
-                        :marker-end="edge.isCurrent ? 'url(#arrow-current)' : 'url(#arrow-default)'"
-                    />
-                </template>
-
-                {{-- Nodes --}}
-                <template x-for="node in nodes" :key="node.id">
-                    <g
-                        :transform="`translate(${node.x}, ${node.y})`"
-                        class="cursor-pointer"
-                        @mouseenter="showTooltip(node, $event)"
-                        @mouseleave="hideTooltip()"
-                    >
-                        <circle
-                            :r="node.id === currentCityId ? 14 : 10"
-                            :class="node.id === currentCityId
-                                ? 'fill-emerald-500 stroke-emerald-300 dark:stroke-emerald-700'
-                                : 'fill-zinc-200 stroke-zinc-400 dark:fill-zinc-700 dark:stroke-zinc-500'"
-                            stroke-width="2"
-                        />
-                        <text
-                            text-anchor="middle"
-                            dominant-baseline="middle"
-                            :y="node.id === currentCityId ? 28 : 24"
-                            font-size="11"
-                            :class="node.id === currentCityId
-                                ? 'fill-emerald-600 dark:fill-emerald-400 font-semibold'
-                                : 'fill-zinc-700 dark:fill-zinc-300'"
-                            style="pointer-events:none; user-select:none;"
-                            x-text="node.label"
-                        ></text>
-                    </g>
-                </template>
+                <g x-ref="edgesLayer" data-map-layer="edges"></g>
+                <g x-ref="nodesLayer" data-map-layer="nodes"></g>
             </svg>
         </div>
     </div>
@@ -111,6 +74,7 @@
 <script>
 function worldMap(mapData, currentCityId) {
     return {
+        mapData,
         currentCityId,
         nodes: [],
         edges: [],
@@ -122,8 +86,9 @@ function worldMap(mapData, currentCityId) {
             this.width = this.$refs.container?.offsetWidth || 900;
             this.height = Math.max(500, Math.round(this.width * 0.6));
 
-            this.layoutNodes(mapData.nodes, mapData.edges);
-            this.computeEdges(mapData.edges);
+            this.layoutNodes(this.mapData.nodes, this.mapData.edges);
+            this.computeEdges(this.mapData.edges);
+            this.renderSvg();
 
             this.$nextTick(() => {
                 this.$refs.svg?.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
@@ -243,9 +208,87 @@ function worldMap(mapData, currentCityId) {
             }).filter(Boolean);
         },
 
-        showTooltip(node, event) {
-            const rect = this.$refs.container.getBoundingClientRect();
+        renderSvg() {
+            const edgesLayer = this.$refs.edgesLayer;
+            const nodesLayer = this.$refs.nodesLayer;
+
+            if (!edgesLayer || !nodesLayer) {
+                return;
+            }
+
+            edgesLayer.replaceChildren();
+            nodesLayer.replaceChildren();
+
+            this.edges.forEach(edge => {
+                edgesLayer.append(this.createSvgElement('line', {
+                    x1: edge.x1,
+                    y1: edge.y1,
+                    x2: edge.x2,
+                    y2: edge.y2,
+                    class: edge.isCurrent ? 'stroke-emerald-400' : 'stroke-zinc-300 dark:stroke-zinc-600',
+                    'stroke-width': 1.5,
+                    'marker-end': edge.isCurrent ? 'url(#arrow-current)' : 'url(#arrow-default)',
+                }));
+            });
+
+            this.nodes.forEach(node => {
+                const isCurrent = node.id === this.currentCityId;
+                const group = this.createSvgElement('g', {
+                    transform: `translate(${node.x}, ${node.y})`,
+                    class: 'cursor-pointer',
+                });
+
+                group.addEventListener('mouseenter', () => this.showTooltip(node));
+                group.addEventListener('mouseleave', () => this.hideTooltip());
+
+                group.append(
+                    this.createSvgElement('circle', {
+                        r: isCurrent ? 14 : 10,
+                        class: isCurrent
+                            ? 'fill-emerald-500 stroke-emerald-300 dark:stroke-emerald-700'
+                            : 'fill-zinc-200 stroke-zinc-400 dark:fill-zinc-700 dark:stroke-zinc-500',
+                        'stroke-width': 2,
+                    }),
+                    this.createSvgElement('text', {
+                        'text-anchor': 'middle',
+                        'dominant-baseline': 'middle',
+                        y: isCurrent ? 28 : 24,
+                        'font-size': 11,
+                        class: isCurrent
+                            ? 'fill-emerald-600 dark:fill-emerald-400 font-semibold'
+                            : 'fill-zinc-700 dark:fill-zinc-300',
+                        style: 'pointer-events:none; user-select:none;',
+                    }, node.label)
+                );
+
+                nodesLayer.append(group);
+            });
+        },
+
+        createSvgElement(tagName, attributes, textContent = null) {
+            const element = document.createElementNS('http://www.w3.org/2000/svg', tagName);
+
+            Object.entries(attributes).forEach(([name, value]) => {
+                if (value === null || value === undefined) {
+                    return;
+                }
+
+                element.setAttribute(name, String(value));
+            });
+
+            if (textContent !== null) {
+                element.textContent = textContent;
+            }
+
+            return element;
+        },
+
+        showTooltip(node) {
             const svgEl = this.$refs.svg;
+            if (!svgEl) {
+                return;
+            }
+
             const svgRect = svgEl.getBoundingClientRect();
             const scaleX = svgRect.width / this.width;
             const scaleY = svgRect.height / this.height;
