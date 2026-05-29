@@ -31,6 +31,11 @@ class ManageCountries extends Component
 
     public string $notes = '';
 
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
     #[Computed]
     public function countries(): Collection
     {

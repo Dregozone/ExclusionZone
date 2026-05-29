@@ -35,6 +35,11 @@ class ManageLocations extends Component
     /** @var array<int> */
     public array $neighborIds = [];
 
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
     #[Computed]
     public function cities(): Collection
     {

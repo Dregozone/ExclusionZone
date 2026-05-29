@@ -18,6 +18,11 @@ class ChangeUserRole extends Component
 
     public ?int $selectedRoleId = null;
 
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
     #[Computed]
     public function users(): Collection
     {
@@ -89,7 +94,7 @@ class ChangeUserRole extends Component
         /** @var User $actor */
         $actor = auth()->user();
 
-        $changeUserRole($actor, $target, $role, authorize: false);
+        $changeUserRole($actor, $target, $role);
 
         $this->selectedRoleId = $role->id;
 

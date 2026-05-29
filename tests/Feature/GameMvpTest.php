@@ -164,7 +164,7 @@ test('premium cosmetic equip succeeds and does not change gameplay rewards', fun
 });
 
 test('admin can change another user role and non admins cannot', function () {
-    $admin = User::factory()->asRole('admin')->create();
+    $admin = User::factory()->admin()->create();
     $moderator = User::factory()->asRole('moderator')->create();
     $target = User::factory()->create();
 
@@ -183,16 +183,26 @@ test('admin can change another user role and non admins cannot', function () {
         ->post(route('admin.roles.update'), [
             'target_user_id' => $secondTarget->id,
             'role_key' => 'admin',
-        ])->assertRedirect();
+        ])->assertForbidden();
 
     expect($secondTarget->fresh()->role?->key)->toBe('user');
     expect(RoleChangeAudit::query()->count())->toBe(1);
 });
 
-test('authenticated users can reach the change user role page from navigation', function () {
+test('admin navigation and routes are only available to admin users', function () {
     $user = User::factory()->asRole('guest')->create();
+    $admin = User::factory()->admin()->create();
 
     $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Change User Role')
+        ->assertDontSee(route('admin.change-user-role', absolute: false));
+
+    $this->get(route('admin.change-user-role'))
+        ->assertForbidden();
+
+    $this->actingAs($admin)
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Change User Role')
@@ -204,8 +214,20 @@ test('authenticated users can reach the change user role page from navigation', 
         ->assertSee('Selected Role Preview');
 });
 
-test('livewire change user role page shows permissions and updates roles without admin restrictions', function () {
+test('livewire change user role page enforces admin access', function () {
     $actor = User::factory()->create();
+    $target = User::factory()->create();
+
+    $this->actingAs($actor);
+
+    Livewire::test(ChangeUserRolePage::class)
+        ->assertForbidden();
+
+    expect($target->fresh()->role?->key)->toBe('user');
+});
+
+test('livewire admin can change user role and see role permissions', function () {
+    $actor = User::factory()->admin()->create();
     $target = User::factory()->create();
 
     $target->load('role.tasks');

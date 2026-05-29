@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'password', 'role_id', 'premium_active'])]
+#[Fillable(['name', 'email', 'password', 'role_id', 'is_admin', 'premium_active'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -40,6 +40,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'bool',
             'premium_active' => 'bool',
         ];
     }
@@ -82,12 +83,12 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role_key === 'admin';
+        return (bool) $this->is_admin;
     }
 
     public function isModerator(): bool
     {
-        return in_array($this->role_key, ['moderator', 'admin'], true);
+        return $this->isAdmin() || $this->role_key === 'moderator';
     }
 
     public function hasPremiumEntitlement(): bool
