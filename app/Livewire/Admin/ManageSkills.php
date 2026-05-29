@@ -25,6 +25,11 @@ class ManageSkills extends Component
 
     public string $description = '';
 
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
     #[Computed]
     public function skills(): Collection
     {

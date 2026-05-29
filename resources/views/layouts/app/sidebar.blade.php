@@ -25,7 +25,7 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    @auth
+                    @if (auth()->user()?->isAdmin())
                     <flux:sidebar.group :heading="__('Admin')" class="grid">
                         <flux:sidebar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                             {{ __('Move Player') }}
@@ -49,7 +49,7 @@
                             {{ __('Skills') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
-                    @endauth
+                    @endif
                 </flux:sidebar.nav>
 
                 <flux:spacer />

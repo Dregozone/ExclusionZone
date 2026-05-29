@@ -66,6 +66,13 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'is_admin' => true,
+        ]);
+    }
+
     public function asRole(string $roleKey): static
     {
         return $this->state(fn () => [

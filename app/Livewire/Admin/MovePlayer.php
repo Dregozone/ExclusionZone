@@ -18,6 +18,11 @@ class MovePlayer extends Component
 
     public ?int $selectedCityId = null;
 
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
     #[Computed]
     public function users(): Collection
     {

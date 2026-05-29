@@ -43,6 +43,11 @@ class ManageCityActions extends Component
 
     public string $reward_loot_tier = 'medium';
 
+    public function boot(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
     #[Computed]
     public function actions(): Collection
     {
