@@ -68,8 +68,11 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
+        $adminRoleId = Role::query()->where('key', 'admin')->value('id')
+            ?? throw new \RuntimeException('Admin role not found. Ensure required roles are seeded.');
+
         return $this->state(fn () => [
-            'is_admin' => true,
+            'role_id' => $adminRoleId,
         ]);
     }
 
