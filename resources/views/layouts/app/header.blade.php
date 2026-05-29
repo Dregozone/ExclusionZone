@@ -16,6 +16,9 @@
                 <flux:navbar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                     {{ __('Landing') }}
                 </flux:navbar.item>
+                <flux:navbar.item icon="map" :href="route('world-map')" :current="request()->routeIs('world-map')" wire:navigate>
+                    {{ __('World Map') }}
+                </flux:navbar.item>
                 <flux:navbar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                     {{ __('Move Player') }}
                 </flux:navbar.item>
@@ -59,6 +62,9 @@
                     <flux:sidebar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                         {{ __('Landing') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="map" :href="route('world-map')" :current="request()->routeIs('world-map')" wire:navigate>
+                        {{ __('World Map') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('Admin')">
@@ -67,6 +73,21 @@
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="shield-check" :href="route('admin.change-user-role')" :current="request()->routeIs('admin.change-user-role')" wire:navigate>
                         {{ __('Change User Role') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="building-office-2" :href="route('admin.locations')" :current="request()->routeIs('admin.locations')" wire:navigate>
+                        {{ __('Locations') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="globe-alt" :href="route('admin.countries')" :current="request()->routeIs('admin.countries')" wire:navigate>
+                        {{ __('Countries') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="bolt" :href="route('admin.city-actions')" :current="request()->routeIs('admin.city-actions')" wire:navigate>
+                        {{ __('City Actions') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="archive-box" :href="route('admin.items')" :current="request()->routeIs('admin.items')" wire:navigate>
+                        {{ __('Items') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="academic-cap" :href="route('admin.skills')" :current="request()->routeIs('admin.skills')" wire:navigate>
+                        {{ __('Skills') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
