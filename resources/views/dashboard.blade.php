@@ -6,6 +6,104 @@
             </div>
         @endif
 
+        @if ($active_work)
+            <div
+                x-data="{
+                    remainingSeconds: {{ $active_work['remaining_seconds'] }},
+                    deadline: Date.parse(@js($active_work['available_at_iso'])),
+                    timerId: null,
+                    init() {
+                        this.tick();
+                        this.timerId = window.setInterval(() => this.tick(), 1000);
+                    },
+                    tick() {
+                        this.remainingSeconds = Math.max(0, Math.ceil((this.deadline - Date.now()) / 1000));
+                    },
+                    formattedRemaining() {
+                        const minutes = Math.floor(this.remainingSeconds / 60);
+                        const seconds = String(this.remainingSeconds % 60).padStart(2, '0');
+
+                        return `${minutes}:${seconds}`;
+                    }
+                }"
+                x-init="init()"
+                class="overflow-hidden rounded-[2rem] border border-amber-300/70 bg-linear-to-br from-amber-50 via-orange-50 to-white p-6 shadow-sm dark:border-amber-500/30 dark:from-amber-500/10 dark:via-zinc-900 dark:to-zinc-900"
+            >
+                <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+                    <div class="rounded-[1.75rem] border border-dashed border-amber-300/80 bg-white/70 p-6 dark:border-amber-500/30 dark:bg-zinc-900/70">
+                        <p class="text-xs uppercase tracking-[0.3em] text-amber-700 dark:text-amber-200">Work image</p>
+                        <div class="mt-4 flex min-h-56 items-center justify-center rounded-[1.5rem] bg-zinc-100/80 text-center text-sm text-zinc-500 dark:bg-zinc-800/80 dark:text-zinc-400">
+                            Placeholder image area for your work scene.
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.3em] text-amber-700 dark:text-amber-200">Active timer</p>
+                                <h2 class="mt-3 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $active_work['title'] }}</h2>
+                                <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-300">{{ $active_work['description'] }}</p>
+                            </div>
+
+                            <div class="rounded-[1.5rem] border border-amber-300/70 bg-white/80 px-5 py-4 text-right dark:border-amber-500/30 dark:bg-zinc-900/80">
+                                <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">Time remaining</p>
+                                <p class="mt-2 text-3xl font-semibold text-zinc-900 dark:text-zinc-100" x-text="formattedRemaining()"></p>
+                                <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                                    Server unlocks completion {{ $active_work['available_at_human'] }}.
+                                </p>
+                            </div>
+                        </div>
+
+                        @if ($active_work['skill_name'])
+                            <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 dark:border-zinc-700 dark:bg-zinc-900/80">
+                                <div class="flex flex-wrap items-start justify-between gap-4">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">Training focus</p>
+                                        <p class="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ $active_work['skill_name'] }}</p>
+                                        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Level {{ $active_work['skill_level'] }} · {{ $active_work['skill_xp'] }} / {{ $active_work['skill_next_level_xp'] }} XP</p>
+                                    </div>
+
+                                    <div class="min-w-44 text-right text-sm text-zinc-600 dark:text-zinc-400">
+                                        <p>{{ $active_work['skill_xp_remaining'] }} XP to next level</p>
+                                        <p class="mt-1 font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['duration_seconds'] }}s total duration</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 h-3 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                                    <div class="h-full rounded-full bg-amber-500 transition-all duration-500" style="width: {{ $active_work['skill_progress_percent'] }}%"></div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-300">
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">Travel note:</span>
+                                This route does not grant skill experience. Cancel before arrival if you want to stay in {{ $active_work['from_city'] }}.
+                            </div>
+                        @endif
+
+                        <div class="flex flex-wrap gap-3">
+                            <form method="POST" action="{{ route('work.complete') }}">
+                                @csrf
+                                <flux:button type="submit" variant="primary" x-bind:disabled="remainingSeconds > 0">
+                                    Complete work
+                                </flux:button>
+                            </form>
+
+                            <form method="POST" action="{{ route('work.cancel') }}">
+                                @csrf
+                                <flux:button type="submit" variant="ghost">
+                                    Cancel
+                                </flux:button>
+                            </form>
+
+                            <p class="self-center text-xs text-zinc-500 dark:text-zinc-400">
+                                Completion is always verified on the server, even if the local timer is modified.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
             <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
                 <div class="flex flex-wrap items-start justify-between gap-4">
@@ -64,7 +162,7 @@
                                 </div>
 
                                 <flux:button type="submit" variant="primary" :disabled="! $can_perform_city_actions" data-test="travel-{{ Str::slug($neighbor->city) }}">
-                                    {{ $can_perform_city_actions ? 'Travel' : 'Unavailable' }}
+                                    {{ $can_perform_city_actions ? 'Begin travel' : 'Unavailable' }}
                                 </flux:button>
                             </div>
                         </form>
@@ -105,7 +203,7 @@
                                     @csrf
                                     <input type="hidden" name="city_action_id" value="{{ $entry['action']->id }}">
                                     <flux:button type="submit" variant="primary" :disabled="! $entry['available']" data-test="action-{{ $entry['action']->action_key }}">
-                                        {{ $entry['available'] ? 'Take action' : ($can_perform_city_actions ? 'Locked' : 'Unavailable') }}
+                                        {{ $entry['available'] ? 'Begin work' : ($can_perform_city_actions ? 'Locked' : 'Unavailable') }}
                                     </flux:button>
                                 </form>
                             </div>

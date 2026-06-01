@@ -19,17 +19,7 @@ class PerformCityAction
      */
     public function __invoke(User $user, CityAction $action): array
     {
-        $user->loadMissing('location.city', 'skills.skill');
-
-        if ($user->location?->city_id !== $action->city_id) {
-            throw new AuthorizationException('You can only perform actions in your current city.');
-        }
-
-        $skillProgress = $user->skillFor($action->skill_key) ?? $this->createSkillProgress($user, $action->skill_key);
-
-        if ($skillProgress->level < $action->min_level) {
-            throw new AuthorizationException('Your skill level is too low for that action.');
-        }
+        $skillProgress = $this->authorize($user, $action);
 
         $reward = $action->reward_profile;
         $xp = (int) data_get($reward, 'xp', 10);
@@ -64,6 +54,26 @@ class PerformCityAction
             'quantity' => $quantity,
             'levels_gained' => $levelsGained,
         ];
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function authorize(User $user, CityAction $action): UserSkill
+    {
+        $user->loadMissing('location.city', 'skills.skill');
+
+        if ($user->location?->city_id !== $action->city_id) {
+            throw new AuthorizationException('You can only perform actions in your current city.');
+        }
+
+        $skillProgress = $user->skillFor($action->skill_key) ?? $this->createSkillProgress($user, $action->skill_key);
+
+        if ($skillProgress->level < $action->min_level) {
+            throw new AuthorizationException('Your skill level is too low for that action.');
+        }
+
+        return $skillProgress;
     }
 
     private function createSkillProgress(User $user, string $skillKey): UserSkill

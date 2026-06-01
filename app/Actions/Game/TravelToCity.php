@@ -14,11 +14,7 @@ class TravelToCity
      */
     public function __invoke(User $user, City $destination): void
     {
-        $currentCity = $user->location?->city;
-
-        if ($currentCity === null || ! $currentCity->neighbors()->whereKey($destination->id)->exists()) {
-            throw new AuthorizationException('That route is not available from your current city.');
-        }
+        $this->authorize($user, $destination);
 
         DB::transaction(function () use ($user, $destination): void {
             $user->location()->update([
@@ -27,5 +23,17 @@ class TravelToCity
                 'updated_at' => now(),
             ]);
         });
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function authorize(User $user, City $destination): void
+    {
+        $currentCity = $user->location?->city;
+
+        if ($currentCity === null || ! $currentCity->neighbors()->whereKey($destination->id)->exists()) {
+            throw new AuthorizationException('That route is not available from your current city.');
+        }
     }
 }

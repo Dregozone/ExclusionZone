@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Game\CancelUserWork;
+use App\Actions\Game\CompleteUserWork;
 use App\Actions\Game\EquipPremiumCosmetic;
-use App\Actions\Game\PerformCityAction;
-use App\Actions\Game\TravelToCity;
+use App\Actions\Game\StartUserWork;
 use App\Http\Requests\EquipCosmeticRequest;
 use App\Http\Requests\PerformCityActionRequest;
 use App\Http\Requests\TravelRequest;
@@ -17,38 +18,54 @@ use Illuminate\Http\Request;
 
 class GameActionController extends Controller
 {
-    public function travel(TravelRequest $request, TravelToCity $travelToCity): RedirectResponse
+    public function travel(TravelRequest $request, StartUserWork $startUserWork): RedirectResponse
     {
         try {
             $this->authorizeTask($request, 'city_action_perform');
-            $travelToCity($request->user(), City::query()->findOrFail($request->integer('city_id')));
+            $work = $startUserWork->forTravel($request->user(), City::query()->findOrFail($request->integer('city_id')));
         } catch (AuthorizationException $exception) {
             return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
-        return to_route('dashboard')->with('status', 'You moved to a new city and refreshed your options.');
+        return to_route('dashboard')->with('status', 'Travel started. Arrive in '.max(10, $work->duration_seconds).' seconds or cancel the route.');
     }
 
-    public function performAction(PerformCityActionRequest $request, PerformCityAction $performCityAction): RedirectResponse
+    public function performAction(PerformCityActionRequest $request, StartUserWork $startUserWork): RedirectResponse
     {
         try {
             $this->authorizeTask($request, 'city_action_perform');
-            $reward = $performCityAction($request->user(), CityAction::query()->findOrFail($request->integer('city_action_id')));
+            $work = $startUserWork->forCityAction($request->user(), CityAction::query()->findOrFail($request->integer('city_action_id')));
         } catch (AuthorizationException $exception) {
             return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
-        $summary = "Action completed: +{$reward['xp']} XP";
+        return to_route('dashboard')->with('status', 'Work started. Return when the timer ends in '.max(10, $work->duration_seconds).' seconds.');
+    }
 
-        if ($reward['item_name'] !== null) {
-            $summary .= ", +{$reward['quantity']} {$reward['item_name']}";
+    public function completeWork(Request $request, CompleteUserWork $completeUserWork): RedirectResponse
+    {
+        try {
+            $result = $completeUserWork($request->user());
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
-        if ($reward['levels_gained'] > 0) {
-            $summary .= ", {$reward['levels_gained']} level gained";
+        return to_route('dashboard')->with('status', $result['status']);
+    }
+
+    public function cancelWork(Request $request, CancelUserWork $cancelUserWork): RedirectResponse
+    {
+        try {
+            $work = $cancelUserWork($request->user());
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
-        return to_route('dashboard')->with('status', $summary.'.');
+        $message = $work->isCityAction()
+            ? 'Work canceled. No rewards were granted.'
+            : 'Travel canceled. You stayed in your current city.';
+
+        return to_route('dashboard')->with('status', $message);
     }
 
     public function equipCosmetic(EquipCosmeticRequest $request, EquipPremiumCosmetic $equipPremiumCosmetic): RedirectResponse

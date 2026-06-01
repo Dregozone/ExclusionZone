@@ -69,6 +69,11 @@ class User extends Authenticatable
         return $this->hasOne(UserCosmeticLoadout::class);
     }
 
+    public function activeWork(): HasOne
+    {
+        return $this->hasOne(UserWork::class);
+    }
+
     public function activeMutes(): HasMany
     {
         return $this->hasMany(UserMute::class, 'target_user_id')
@@ -128,6 +133,13 @@ class User extends Authenticatable
     {
         return $this->skills
             ->first(fn (UserSkill $skill) => $skill->skill?->key === $skillKey);
+    }
+
+    public function hasActiveWork(): bool
+    {
+        return $this->relationLoaded('activeWork')
+            ? $this->activeWork !== null
+            : $this->activeWork()->exists();
     }
 
     public function isMuted(): bool

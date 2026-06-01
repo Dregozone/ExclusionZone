@@ -55,9 +55,54 @@ test('city actions are filtered by the current location and movement refreshes t
     $this->post(route('travel.store'), ['city_id' => $warsaw->id])
         ->assertRedirect(route('dashboard'));
 
+    $duration = $user->fresh('activeWork')->activeWork?->duration_seconds;
+
+    expect($duration)->not->toBeNull();
+
+    Carbon::setTestNow(now()->addSeconds($duration + 1));
+
+    $this->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'));
+
     $this->get(route('dashboard'))
         ->assertSee('Defensive wall building')
         ->assertDontSee('District patrols');
+
+    Carbon::setTestNow();
+});
+
+test('starting travel creates an active timer and only moves after completion', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $originCityId = $user->location->city_id;
+    $warsaw = City::query()->where('city', 'Warsaw')->firstOrFail();
+
+    $this->post(route('travel.store'), ['city_id' => $warsaw->id])
+        ->assertRedirect(route('dashboard'));
+
+    expect($user->fresh()->location?->city_id)->toBe($originCityId);
+
+    $this->assertDatabaseHas('user_works', [
+        'user_id' => $user->id,
+        'work_type' => 'travel',
+        'origin_city_id' => $originCityId,
+        'destination_city_id' => $warsaw->id,
+    ]);
+
+    $duration = $user->fresh('activeWork')->activeWork?->duration_seconds;
+
+    expect($duration)->toBe(10);
+
+    Carbon::setTestNow(now()->addSeconds($duration + 1));
+
+    $this->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'));
+
+    expect($user->fresh()->location?->city_id)->toBe($warsaw->id);
+    $this->assertDatabaseMissing('user_works', ['user_id' => $user->id]);
+
+    Carbon::setTestNow();
 });
 
 test('performing a city action grants experience and adds items to inventory', function () {
@@ -69,10 +114,89 @@ test('performing a city action grants experience and adds items to inventory', f
     $this->post(route('city-action.store'), ['city_action_id' => $action->id])
         ->assertRedirect(route('dashboard'));
 
+    $duration = $user->fresh('activeWork')->activeWork?->duration_seconds;
+
+    expect($duration)->not->toBeNull();
+
+    Carbon::setTestNow(now()->addSeconds($duration + 1));
+
+    $this->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'));
+
     $user->refresh()->load('skills.skill', 'inventoryItems.item');
 
     expect($user->skillFor('scavenging')?->xp)->toBe(18);
     expect($user->inventoryItems->firstWhere('item.key', 'scrap_metal')?->quantity)->toBe(2);
+
+    Carbon::setTestNow();
+});
+
+test('starting a city action defers rewards until the timer completes', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $action = CityAction::query()->where('action_key', 'district_patrols')->firstOrFail();
+
+    $this->post(route('city-action.store'), ['city_action_id' => $action->id])
+        ->assertRedirect(route('dashboard'));
+
+    $user->refresh()->load('skills.skill', 'inventoryItems.item');
+
+    expect($user->skillFor('scavenging')?->xp)->toBe(0);
+    expect($user->inventoryItems->firstWhere('item.key', 'scrap_metal'))->toBeNull();
+
+    $this->assertDatabaseHas('user_works', [
+        'user_id' => $user->id,
+        'work_type' => 'city_action',
+        'city_action_id' => $action->id,
+        'skill_key' => 'scavenging',
+    ]);
+
+    $duration = $user->fresh('activeWork')->activeWork?->duration_seconds;
+
+    expect($duration)->toBe(20);
+
+    $this->from(route('dashboard'))
+        ->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('toast', fn (array $toast): bool => $toast['heading'] === 'Action unavailable'
+            && $toast['text'] === 'That work is still in progress. Wait for the timer to finish or cancel it.'
+            && $toast['variant'] === 'danger');
+
+    Carbon::setTestNow(now()->addSeconds($duration + 1));
+
+    $this->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'));
+
+    $user->refresh()->load('skills.skill', 'inventoryItems.item');
+
+    expect($user->skillFor('scavenging')?->xp)->toBe(18);
+    expect($user->inventoryItems->firstWhere('item.key', 'scrap_metal')?->quantity)->toBe(2);
+    $this->assertDatabaseMissing('user_works', ['user_id' => $user->id]);
+
+    Carbon::setTestNow();
+});
+
+test('canceling active work removes the timer without granting rewards or movement', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $originCityId = $user->location->city_id;
+    $action = CityAction::query()->where('action_key', 'district_patrols')->firstOrFail();
+
+    $this->post(route('city-action.store'), ['city_action_id' => $action->id])
+        ->assertRedirect(route('dashboard'));
+
+    $this->post(route('work.cancel'))
+        ->assertRedirect(route('dashboard'));
+
+    $user->refresh()->load('skills.skill', 'inventoryItems.item');
+
+    expect($user->location?->city_id)->toBe($originCityId)
+        ->and($user->skillFor('scavenging')?->xp)->toBe(0)
+        ->and($user->inventoryItems->firstWhere('item.key', 'scrap_metal'))->toBeNull();
+
+    $this->assertDatabaseMissing('user_works', ['user_id' => $user->id]);
 });
 
 test('users without city action permissions get a danger toast instead of a 403 page', function () {
@@ -137,7 +261,18 @@ test('skill thresholds deny and allow access at the documented boundary', functi
     $this->post(route('city-action.store'), ['city_action_id' => $action->id])
         ->assertRedirect(route('dashboard'));
 
+    $duration = $user->fresh('activeWork')->activeWork?->duration_seconds;
+
+    expect($duration)->not->toBeNull();
+
+    Carbon::setTestNow(now()->addSeconds($duration + 1));
+
+    $this->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'));
+
     expect($user->fresh()->inventoryItems()->exists())->toBeTrue();
+
+    Carbon::setTestNow();
 });
 
 test('premium cosmetic equip succeeds and does not change gameplay rewards', function () {
@@ -152,8 +287,37 @@ test('premium cosmetic equip succeeds and does not change gameplay rewards', fun
 
     expect($premium->fresh()->cosmeticLoadout?->outfit_skin_id)->toBe($cosmetic->id);
 
-    $this->actingAs($regular)->post(route('city-action.store'), ['city_action_id' => $action->id]);
-    $this->actingAs($premium)->post(route('city-action.store'), ['city_action_id' => $action->id]);
+    $this->actingAs($regular)
+        ->post(route('city-action.store'), ['city_action_id' => $action->id])
+        ->assertRedirect(route('dashboard'));
+
+    $regularDuration = $regular->fresh('activeWork')->activeWork?->duration_seconds;
+
+    expect($regularDuration)->not->toBeNull();
+
+    Carbon::setTestNow(now()->addSeconds($regularDuration + 1));
+
+    $this->actingAs($regular)
+        ->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'));
+
+    Carbon::setTestNow();
+
+    $this->actingAs($premium)
+        ->post(route('city-action.store'), ['city_action_id' => $action->id])
+        ->assertRedirect(route('dashboard'));
+
+    $premiumDuration = $premium->fresh('activeWork')->activeWork?->duration_seconds;
+
+    expect($premiumDuration)->not->toBeNull();
+
+    Carbon::setTestNow(now()->addSeconds($premiumDuration + 1));
+
+    $this->actingAs($premium)
+        ->post(route('work.complete'))
+        ->assertRedirect(route('dashboard'));
+
+    Carbon::setTestNow();
 
     $regular->refresh()->load('inventoryItems.item');
     $premium->refresh()->load('inventoryItems.item');
