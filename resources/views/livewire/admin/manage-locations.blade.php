@@ -59,6 +59,18 @@
                         <flux:input type="number" wire:model="trouble_chance_pct" min="0" max="100" />
                         <flux:error name="trouble_chance_pct" />
                     </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Latitude') }}</flux:label>
+                        <flux:input type="number" wire:model="lat" step="0.00001" min="-90" max="90" placeholder="-90 to 90" />
+                        <flux:error name="lat" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Longitude') }}</flux:label>
+                        <flux:input type="number" wire:model="lng" step="0.00001" min="-180" max="180" placeholder="-180 to 180" />
+                        <flux:error name="lng" />
+                    </flux:field>
                 </div>
 
                 <flux:field>
@@ -103,6 +115,7 @@
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Country') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Biome') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-xl:hidden">{{ __('Loot') }}</th>
+                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-2xl:hidden">{{ __('Coordinates') }}</th>
                     <th class="px-4 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">{{ __('Actions') }}</th>
                 </tr>
             </thead>
@@ -118,6 +131,13 @@
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden">{{ $location->country?->country }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden">{{ $location->biome }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-xl:hidden">{{ $location->baseline_loot_tier }}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-500 max-2xl:hidden">
+                            @if ($location->lat !== null && $location->lng !== null)
+                                {{ number_format($location->lat, 5) }}, {{ number_format($location->lng, 5) }}
+                            @else
+                                <span class="italic text-zinc-400 dark:text-zinc-600">not set</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-right">
                             @if ($location->deleted_at)
                                 <flux:button size="sm" wire:click="restore({{ $location->id }})" wire:confirm="{{ __('Restore this location?') }}" variant="ghost" icon="arrow-path">{{ __('Restore') }}</flux:button>

@@ -32,6 +32,10 @@ class ManageLocations extends Component
 
     public string $baseline_loot_tier = 'medium';
 
+    public ?float $lat = null;
+
+    public ?float $lng = null;
+
     /** @var array<int> */
     public array $neighborIds = [];
 
@@ -51,7 +55,7 @@ class ManageLocations extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'country_id', 'city', 'biome', 'rain_chance_pct', 'trouble_chance_pct', 'baseline_loot_tier', 'deleted_at']);
+        return $query->get(['id', 'country_id', 'city', 'biome', 'rain_chance_pct', 'trouble_chance_pct', 'baseline_loot_tier', 'lat', 'lng', 'deleted_at']);
     }
 
     #[Computed]
@@ -90,6 +94,8 @@ class ManageLocations extends Component
         $this->rain_chance_pct = $city->rain_chance_pct;
         $this->trouble_chance_pct = $city->trouble_chance_pct;
         $this->baseline_loot_tier = $city->baseline_loot_tier;
+        $this->lat = $city->lat;
+        $this->lng = $city->lng;
         $this->neighborIds = $city->neighbors->pluck('id')->map(fn ($v) => (int) $v)->toArray();
         $this->showForm = true;
     }
@@ -103,30 +109,29 @@ class ManageLocations extends Component
             'rain_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
             'trouble_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
             'baseline_loot_tier' => ['required', 'string', 'max:50'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
             'neighborIds' => ['array'],
             'neighborIds.*' => ['integer', 'exists:cities,id'],
         ]);
 
+        $cityData = [
+            'city' => $validated['city'],
+            'country_id' => $validated['country_id'],
+            'biome' => $validated['biome'],
+            'rain_chance_pct' => $validated['rain_chance_pct'],
+            'trouble_chance_pct' => $validated['trouble_chance_pct'],
+            'baseline_loot_tier' => $validated['baseline_loot_tier'],
+            'lat' => $validated['lat'] ?? null,
+            'lng' => $validated['lng'] ?? null,
+        ];
+
         if ($this->editingId !== null) {
             /** @var City $location */
             $location = City::query()->findOrFail($this->editingId);
-            $location->update([
-                'city' => $validated['city'],
-                'country_id' => $validated['country_id'],
-                'biome' => $validated['biome'],
-                'rain_chance_pct' => $validated['rain_chance_pct'],
-                'trouble_chance_pct' => $validated['trouble_chance_pct'],
-                'baseline_loot_tier' => $validated['baseline_loot_tier'],
-            ]);
+            $location->update($cityData);
         } else {
-            $location = City::query()->create([
-                'city' => $validated['city'],
-                'country_id' => $validated['country_id'],
-                'biome' => $validated['biome'],
-                'rain_chance_pct' => $validated['rain_chance_pct'],
-                'trouble_chance_pct' => $validated['trouble_chance_pct'],
-                'baseline_loot_tier' => $validated['baseline_loot_tier'],
-            ]);
+            $location = City::query()->create($cityData);
         }
 
         $location->neighbors()->sync($validated['neighborIds']);
@@ -166,6 +171,8 @@ class ManageLocations extends Component
         $this->rain_chance_pct = 0;
         $this->trouble_chance_pct = 0;
         $this->baseline_loot_tier = 'medium';
+        $this->lat = null;
+        $this->lng = null;
         $this->neighborIds = [];
         $this->editingId = null;
     }

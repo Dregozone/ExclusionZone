@@ -92,16 +92,19 @@ class BuildCityMenuData
         $edges = [];
 
         $cities = City::query()
-            ->with(['neighbors:id', 'country:id,country'])
+            ->with(['neighbors:id', 'country:id,country,continent'])
             ->orderBy('city')
-            ->get(['id', 'city', 'country_id', 'biome']);
+            ->get(['id', 'city', 'country_id', 'biome', 'lat', 'lng']);
 
         foreach ($cities as $city) {
             $nodes[] = [
                 'id' => $city->id,
                 'label' => $city->city,
                 'country' => $city->country?->country ?? '',
+                'continent' => $city->country?->continent ?? '',
                 'biome' => $city->biome,
+                'lat' => $city->lat,
+                'lng' => $city->lng,
             ];
 
             foreach ($city->neighbors as $neighbor) {

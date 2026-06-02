@@ -19,6 +19,13 @@ class City extends Model
         'rain_chance_pct',
         'trouble_chance_pct',
         'baseline_loot_tier',
+        'lat',
+        'lng',
+    ];
+
+    protected $casts = [
+        'lat' => 'float',
+        'lng' => 'float',
     ];
 
     public function country(): BelongsTo
