@@ -2,6 +2,7 @@
 
 namespace App\Actions\Game;
 
+use App\Models\City;
 use App\Models\CityAction;
 use App\Models\PremiumCosmetic;
 use App\Models\User;
@@ -68,6 +69,8 @@ class BuildCityMenuData
                 ->get()
                 ->mapToGroups(fn (PremiumCosmetic $cosmetic): array => [$cosmetic->cosmetic_type => $cosmetic]),
             'loadout' => $user->cosmeticLoadout,
+            'map_data' => $this->buildMapData(),
+            'current_city_id' => $city?->id,
             'local_event' => $this->localEventFor($city?->rain_chance_pct, $city?->trouble_chance_pct),
             'hooks' => collect([
                 ['key' => 'chat_send', 'route' => 'chat', 'label' => 'Open radio chat', 'description' => 'Check survivor chatter and faction rumors.'],
@@ -78,6 +81,35 @@ class BuildCityMenuData
                 'available' => $user->canPerformTask($hook['key']),
             ]),
         ];
+    }
+
+    /**
+     * @return array{nodes: array<int,array{id:int,label:string,country:string,biome:string}>, edges: array<int,array{from:int,to:int}>}
+     */
+    private function buildMapData(): array
+    {
+        $nodes = [];
+        $edges = [];
+
+        $cities = City::query()
+            ->with(['neighbors:id', 'country:id,country'])
+            ->orderBy('city')
+            ->get(['id', 'city', 'country_id', 'biome']);
+
+        foreach ($cities as $city) {
+            $nodes[] = [
+                'id' => $city->id,
+                'label' => $city->city,
+                'country' => $city->country?->country ?? '',
+                'biome' => $city->biome,
+            ];
+
+            foreach ($city->neighbors as $neighbor) {
+                $edges[] = ['from' => $city->id, 'to' => $neighbor->id];
+            }
+        }
+
+        return ['nodes' => $nodes, 'edges' => $edges];
     }
 
     private function localEventFor(?int $rainChance, ?int $troubleChance): string

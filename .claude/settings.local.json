@@ -5,7 +5,10 @@
       "mcp__laravel-boost__database-schema",
       "mcp__laravel-boost__search-docs",
       "Bash(php artisan *)",
-      "Bash(vendor/bin/pint *)"
+      "Bash(vendor/bin/pint *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\aclea\\\\Herd\\\\exclusion-zone\\\\resources\\\\views\" -Recurse -Include \"*.blade.php\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\aclea\\\\Herd\\\\exclusion-zone\\\\app\\\\Livewire\" -Recurse -Include \"*.php\")"
     ]
   },
   "enableAllProjectMcpServers": true,
