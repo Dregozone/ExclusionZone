@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::livewire('/', 'pages::landing.page')->name('home');
 Route::livewire('/landing', 'pages::landing.page')->name('landing');
 Route::livewire('/world-map', WorldMap::class)->name('world-map');
+Route::livewire('/high-scores', 'pages::high-scores')->name('high-scores');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');

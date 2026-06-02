@@ -1,7 +1,15 @@
 {
+  "skillListingBudgetFraction": 0.05,
+  "permissions": {
+    "allow": [
+      "mcp__laravel-boost__database-schema",
+      "mcp__laravel-boost__search-docs",
+      "Bash(php artisan *)",
+      "Bash(vendor/bin/pint *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "laravel-boost"
-  ],
-  "enableAllProjectMcpServers": true,
-  "skillListingBudgetFraction": 0.05
+  ]
 }

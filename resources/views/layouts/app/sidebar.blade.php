@@ -16,12 +16,17 @@
                         <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                             {{ __('City Menu') }}
                         </flux:sidebar.item>
+                        @endauth
                         <flux:sidebar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                             {{ __('Landing') }}
                         </flux:sidebar.item>
-                        @endauth
+                        
                         <flux:sidebar.item icon="map" :href="route('world-map')" :current="request()->routeIs('world-map')" wire:navigate>
                             {{ __('World Map') }}
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item icon="chart-bar" :href="route('high-scores')" :current="request()->routeIs('high-scores')" wire:navigate>
+                            {{ __('High Scores') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
