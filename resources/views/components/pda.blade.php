@@ -14,8 +14,8 @@
 
 <div
     x-data="{
-        open: false,
-        tab: 'map',
+        open: sessionStorage.getItem('pda_open') === 'true',
+        tab: sessionStorage.getItem('pda_tab') || 'map',
         tabNames: {
             map: 'World Map',
             travel: 'Travel Routes',
@@ -26,6 +26,10 @@
             contracts: 'Contracts',
             premium: 'Cosmetics',
             admin: 'Admin Console',
+        },
+        init() {
+            this.$watch('open', v => sessionStorage.setItem('pda_open', v));
+            this.$watch('tab', v => sessionStorage.setItem('pda_tab', v));
         },
     }"
     @keydown.escape.window="open = false"
@@ -71,12 +75,12 @@
         x-show="open"
         x-cloak
         x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-        x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-        class="fixed inset-x-3 top-3 bottom-3 z-50 mx-auto flex max-w-lg flex-col sm:inset-x-auto sm:inset-y-4 sm:w-[480px]"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="fixed inset-x-2 top-2 bottom-2 z-50 flex flex-col sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-[85dvh] sm:w-auto sm:aspect-[11/20] {{-- sm:max-w-2xl --}}"
     >
         {{-- Outer device body (metallic grey casing) --}}
         <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[2rem] bg-linear-to-b from-zinc-300 via-zinc-400 to-zinc-600 p-3.5 pb-4 pt-2.5 shadow-[0_25px_80px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
