@@ -9,7 +9,8 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\aclea\\\\Herd\\\\exclusion-zone\\\\resources\\\\views\" -Recurse -Include \"*.blade.php\")",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\aclea\\\\Herd\\\\exclusion-zone\\\\app\\\\Livewire\" -Recurse -Include \"*.php\")",
-      "Bash(Get-ChildItem \"C:\\\\Users\\\\aclea\\\\Herd\\\\exclusion-zone\\\\resources\\\\views\\\\components\\\\\" | Select-Object Name *)"
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\aclea\\\\Herd\\\\exclusion-zone\\\\resources\\\\views\\\\components\\\\\" | Select-Object Name *)",
+      "mcp__laravel-boost__database-query"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -74,6 +74,11 @@ class User extends Authenticatable
         return $this->hasOne(UserWork::class);
     }
 
+    public function userQuests(): HasMany
+    {
+        return $this->hasMany(UserQuest::class);
+    }
+
     public function activeMutes(): HasMany
     {
         return $this->hasMany(UserMute::class, 'target_user_id')

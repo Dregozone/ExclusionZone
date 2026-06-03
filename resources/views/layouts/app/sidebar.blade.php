@@ -53,6 +53,9 @@
                         <flux:sidebar.item icon="academic-cap" :href="route('admin.skills')" :current="request()->routeIs('admin.skills')" wire:navigate>
                             {{ __('Skills') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="clipboard-document-list" :href="route('admin.quests')" :current="request()->routeIs('admin.quests')" wire:navigate>
+                            {{ __('Quests') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                     @endif
                 </flux:sidebar.nav>

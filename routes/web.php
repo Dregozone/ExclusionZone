@@ -4,11 +4,13 @@ use App\Http\Controllers\AdminRoleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GameActionController;
 use App\Http\Controllers\ModerationController;
+use App\Http\Controllers\QuestController;
 use App\Livewire\Admin\ChangeUserRole;
 use App\Livewire\Admin\ManageCityActions;
 use App\Livewire\Admin\ManageCountries;
 use App\Livewire\Admin\ManageItems;
 use App\Livewire\Admin\ManageLocations;
+use App\Livewire\Admin\ManageQuests;
 use App\Livewire\Admin\ManageSkills;
 use App\Livewire\Admin\MovePlayer;
 use App\Livewire\WorldMap;
@@ -28,6 +30,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/hooks/{feature}', [GameActionController::class, 'visitHook'])->name('feature-hook.store');
     Route::post('dashboard/cosmetics', [GameActionController::class, 'equipCosmetic'])->name('cosmetics.store');
     Route::post('dashboard/moderation/mutes', [ModerationController::class, 'store'])->name('moderation.mutes.store');
+    Route::post('dashboard/quests/{quest}/accept', [QuestController::class, 'accept'])->name('quest.accept');
+    Route::post('dashboard/quest-steps/{questStep}/interact', [QuestController::class, 'interact'])->name('quest-step.interact');
 
     Route::middleware('admin')->group(function () {
         Route::livewire('admin/change-user-role', ChangeUserRole::class)->name('admin.change-user-role');
@@ -37,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
         Route::livewire('admin/city-actions', ManageCityActions::class)->name('admin.city-actions');
         Route::livewire('admin/items', ManageItems::class)->name('admin.items');
         Route::livewire('admin/skills', ManageSkills::class)->name('admin.skills');
+        Route::livewire('admin/quests', ManageQuests::class)->name('admin.quests');
         Route::post('dashboard/admin/roles', [AdminRoleController::class, 'update'])->name('admin.roles.update');
     });
 });

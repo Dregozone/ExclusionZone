@@ -139,6 +139,41 @@
             </div>
         </div>
 
+        @if ($quest_step_actions->isNotEmpty())
+            <div class="rounded-3xl border border-emerald-200/60 bg-white p-6 dark:border-emerald-800/40 dark:bg-zinc-900">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                        <svg class="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Field contacts</h2>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Active quest objectives available at this location.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-3">
+                    @foreach ($quest_step_actions as $entry)
+                        <div class="rounded-2xl border border-emerald-200/60 bg-emerald-50/50 p-4 dark:border-emerald-800/30 dark:bg-emerald-900/10">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div class="space-y-1">
+                                    <p class="text-xs font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500">{{ $entry['quest_name'] }}</p>
+                                    <h3 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $entry['step']->person_of_interest }}</h3>
+                                </div>
+                                <form method="POST" action="{{ route('quest-step.interact', $entry['step']) }}">
+                                    @csrf
+                                    <flux:button type="submit" variant="primary" size="sm">
+                                        {{ $entry['step']->action_label }}
+                                    </flux:button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
             <div class="flex items-center justify-between gap-4">
                 <div>
@@ -187,6 +222,7 @@
             :currentCityId="$current_city_id"
             :canPerformCityActions="$can_perform_city_actions"
             :cityActionRestriction="$city_action_restriction"
+            :jobs="$jobs"
         />
     </div>
 </x-layouts::app>

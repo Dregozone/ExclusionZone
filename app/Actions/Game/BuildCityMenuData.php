@@ -5,8 +5,12 @@ namespace App\Actions\Game;
 use App\Models\City;
 use App\Models\CityAction;
 use App\Models\PremiumCosmetic;
+use App\Models\Quest;
+use App\Models\QuestStep;
 use App\Models\User;
+use App\Models\UserQuest;
 use App\Models\UserWork;
+use Illuminate\Support\Collection;
 
 class BuildCityMenuData
 {
@@ -27,6 +31,10 @@ class BuildCityMenuData
             'cosmeticLoadout.outfitSkin',
             'cosmeticLoadout.uiTheme',
             'cosmeticLoadout.profileFlair',
+            'userQuests.quest.steps.city',
+            'userQuests.quest.steps.requiredItem',
+            'userQuests.quest.rewardSkill',
+            'userQuests.quest.rewardItem',
         ]);
 
         $location = $user->location;
@@ -63,6 +71,8 @@ class BuildCityMenuData
             ]),
             'skills' => $user->skills->sortBy(fn ($skill) => $skill->skill?->display_name)->values(),
             'inventory' => $user->inventoryItems->sortBy(fn ($item) => $item->item?->name)->values(),
+            'quest_step_actions' => $this->questStepActionsFor($user, $city),
+            'jobs' => $this->jobsDataFor($user),
             'cosmetics' => PremiumCosmetic::query()
                 ->orderBy('cosmetic_type')
                 ->orderBy('name')
@@ -163,5 +173,71 @@ class BuildCityMenuData
             'from_city' => $activeWork->originCity?->city,
             'to_city' => $activeWork->destinationCity?->city,
         ];
+    }
+
+    /**
+     * @return Collection<int, array{step: QuestStep, quest_name: string}>
+     */
+    private function questStepActionsFor(User $user, ?City $city): Collection
+    {
+        if ($city === null) {
+            return collect();
+        }
+
+        return $user->userQuests
+            ->where('status', 'active')
+            ->flatMap(function (UserQuest $userQuest) use ($user, $city): array {
+                $step = $userQuest->quest->steps->get($userQuest->current_step_index);
+
+                if ($step === null || $step->city_id !== $city->id) {
+                    return [];
+                }
+
+                if ($step->required_item_id !== null) {
+                    $hasItem = $user->inventoryItems->contains(
+                        fn ($i) => $i->item_id === $step->required_item_id
+                            && $i->quantity >= $step->required_item_quantity,
+                    );
+
+                    if (! $hasItem) {
+                        return [];
+                    }
+                }
+
+                return [['step' => $step, 'quest_name' => $userQuest->quest->name]];
+            })
+            ->values();
+    }
+
+    /**
+     * @return array{available: array<int, Quest>, active: array<int, array{userQuest: UserQuest, quest: Quest, current_step: ?QuestStep}>, completed: array<int, UserQuest>}
+     */
+    private function jobsDataFor(User $user): array
+    {
+        $acceptedQuestIds = $user->userQuests->pluck('quest_id')->all();
+
+        $available = Quest::query()
+            ->where('is_active', true)
+            ->whereNotIn('id', $acceptedQuestIds)
+            ->orderBy('name')
+            ->get();
+
+        $active = $user->userQuests
+            ->where('status', 'active')
+            ->map(fn (UserQuest $uq) => [
+                'userQuest' => $uq,
+                'quest' => $uq->quest,
+                'current_step' => $uq->quest->steps->get($uq->current_step_index),
+            ])
+            ->values()
+            ->all();
+
+        $completed = $user->userQuests
+            ->where('status', 'completed')
+            ->sortByDesc('completed_at')
+            ->values()
+            ->all();
+
+        return compact('available', 'active', 'completed');
     }
 }

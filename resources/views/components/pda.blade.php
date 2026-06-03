@@ -10,6 +10,7 @@
     'currentCityId',
     'canPerformCityActions',
     'cityActionRestriction',
+    'jobs',
 ])
 
 <div
@@ -261,19 +262,91 @@
                             </div>
                         </div>
 
-                        {{-- CONTRACTS tab (placeholder) --}}
-                        <div x-show="tab === 'contracts'" class="flex min-h-[300px] flex-col items-center justify-center p-6 text-center">
-                            <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
-                                <svg class="h-8 w-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
-                                </svg>
-                            </div>
-                            <p class="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Contracts</p>
-                            <p class="mb-4 font-mono text-xs text-amber-500/50">FACTION NET UNAVAILABLE</p>
-                            <div class="w-full space-y-1 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-                                <p class="font-mono text-xs text-zinc-500">No active contracts found.</p>
-                                <p class="font-mono text-xs text-zinc-700">Field assignments appear here when active.</p>
-                            </div>
+                        {{-- CONTRACTS / JOBS tab --}}
+                        <div x-show="tab === 'contracts'" class="space-y-4 p-4">
+                            <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Jobs</p>
+
+                            {{-- Active quests --}}
+                            @if (count($jobs['active']) > 0)
+                                <div class="space-y-2">
+                                    <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-600/70">Active</p>
+                                    @foreach ($jobs['active'] as $entry)
+                                        <div class="rounded-lg border border-emerald-800/40 bg-emerald-900/20 p-3">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <p class="text-sm font-medium text-zinc-200">{{ $entry['quest']->name }}</p>
+                                                <span class="shrink-0 rounded-full border border-emerald-700/50 bg-emerald-900/60 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-emerald-400">Active</span>
+                                            </div>
+                                            @if ($entry['current_step'] !== null)
+                                                <p class="mt-1.5 text-xs text-zinc-500">
+                                                    Objective: <span class="text-zinc-400">{{ $entry['current_step']->action_label }}</span> in <span class="text-zinc-400">{{ $entry['current_step']->city?->city }}</span>
+                                                </p>
+                                                @if ($entry['current_step']->required_item_id !== null)
+                                                    <p class="mt-1 text-xs text-zinc-600">
+                                                        Requires: <span class="text-amber-500/80">{{ $entry['current_step']->requiredItem?->name }} ×{{ $entry['current_step']->required_item_quantity }}</span>
+                                                    </p>
+                                                @endif
+                                            @endif
+                                            @if (count($entry['userQuest']->notes ?? []) > 0)
+                                                <div class="mt-2 space-y-1 border-t border-zinc-800 pt-2">
+                                                    @foreach ($entry['userQuest']->notes as $note)
+                                                        <p class="font-mono text-[10px] italic leading-relaxed text-zinc-500">"{{ $note }}"</p>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Available quests --}}
+                            @if (count($jobs['available']) > 0)
+                                <div class="space-y-2">
+                                    <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">Available</p>
+                                    @foreach ($jobs['available'] as $quest)
+                                        <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+                                            <p class="text-sm font-medium text-zinc-300">{{ $quest->name }}</p>
+                                            <p class="mt-0.5 text-xs text-zinc-600">{{ $quest->description }}</p>
+                                            @if ($quest->rewardSkill || $quest->rewardItem)
+                                                <p class="mt-1.5 text-xs text-zinc-700">
+                                                    Reward:
+                                                    @if ($quest->rewardSkill && $quest->reward_xp_amount)
+                                                        <span class="text-emerald-600/70">+{{ number_format($quest->reward_xp_amount) }} {{ $quest->rewardSkill->display_name }} XP</span>
+                                                    @endif
+                                                    @if ($quest->rewardItem)
+                                                        <span class="text-emerald-600/70">+{{ $quest->reward_item_quantity }}× {{ $quest->rewardItem->name }}</span>
+                                                    @endif
+                                                </p>
+                                            @endif
+                                            <form method="POST" action="{{ route('quest.accept', $quest) }}" class="mt-2">
+                                                @csrf
+                                                <flux:button type="submit" variant="primary" size="sm" class="w-full">Accept job</flux:button>
+                                            </form>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Completed quests --}}
+                            @if (count($jobs['completed']) > 0)
+                                <div class="space-y-2">
+                                    <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-700">Completed</p>
+                                    @foreach ($jobs['completed'] as $userQuest)
+                                        <div class="rounded-lg border border-zinc-800/50 bg-zinc-900/30 px-3 py-2 opacity-60">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <p class="text-xs font-medium text-zinc-400">{{ $userQuest->quest->name }}</p>
+                                                <span class="shrink-0 rounded-full bg-zinc-800 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-zinc-500">Done</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Empty state --}}
+                            @if (count($jobs['active']) === 0 && count($jobs['available']) === 0 && count($jobs['completed']) === 0)
+                                <div class="flex flex-col items-center justify-center py-10 text-center">
+                                    <p class="font-mono text-xs text-zinc-600">No jobs available right now.</p>
+                                </div>
+                            @endif
                         </div>
 
                         {{-- PREMIUM (cosmetics) tab --}}
@@ -324,6 +397,16 @@
                                 </div>
 
                                 @if ($player->isAdmin())
+                                    <div class="space-y-3">
+                                        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-700">Content Management</p>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <a href="{{ route('admin.quests') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">Jobs / Quests</a>
+                                            <a href="{{ route('admin.city-actions') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">City Actions</a>
+                                            <a href="{{ route('admin.items') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">Items</a>
+                                            <a href="{{ route('admin.locations') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">Locations</a>
+                                        </div>
+                                    </div>
+
                                     <div class="space-y-3">
                                         <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-700">Role Management</p>
                                         <p class="text-xs text-zinc-600">Admins alone can change another user role. Every change is audited.</p>
