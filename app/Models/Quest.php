@@ -20,14 +20,20 @@ class Quest extends Model
         'reward_skill_id',
         'reward_xp_amount',
         'is_active',
+        'quest_type',
+        'sequence_order',
+        'prerequisite_quest_id',
+        'is_repeatable',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'bool',
+            'is_repeatable' => 'bool',
             'reward_xp_amount' => 'integer',
             'reward_item_quantity' => 'integer',
+            'sequence_order' => 'integer',
         ];
     }
 
@@ -44,5 +50,10 @@ class Quest extends Model
     public function rewardSkill(): BelongsTo
     {
         return $this->belongsTo(Skill::class, 'reward_skill_id');
+    }
+
+    public function prerequisite(): BelongsTo
+    {
+        return $this->belongsTo(Quest::class, 'prerequisite_quest_id');
     }
 }

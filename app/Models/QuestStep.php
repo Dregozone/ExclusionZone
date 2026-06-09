@@ -20,6 +20,7 @@ class QuestStep extends Model
         'required_item_id',
         'required_item_quantity',
         'consumes_item',
+        'requirement_variants',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class QuestStep extends Model
         return [
             'consumes_item' => 'bool',
             'required_item_quantity' => 'integer',
+            'requirement_variants' => 'array',
         ];
     }
 

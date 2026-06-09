@@ -4,6 +4,7 @@ namespace App\Actions\Game;
 
 use App\Models\City;
 use App\Models\CityAction;
+use App\Models\Item;
 use App\Models\PremiumCosmetic;
 use App\Models\Quest;
 use App\Models\QuestStep;
@@ -176,7 +177,7 @@ class BuildCityMenuData
     }
 
     /**
-     * @return Collection<int, array{step: QuestStep, quest_name: string}>
+     * @return Collection<int, array{step: QuestStep, quest_name: string, resolved_required_item: ?Item, resolved_required_quantity: int}>
      */
     private function questStepActionsFor(User $user, ?City $city): Collection
     {
@@ -184,19 +185,24 @@ class BuildCityMenuData
             return collect();
         }
 
+        $resolver = new InteractWithQuestStep;
+
         return $user->userQuests
             ->where('status', 'active')
-            ->flatMap(function (UserQuest $userQuest) use ($user, $city): array {
-                $step = $userQuest->quest->steps->get($userQuest->current_step_index);
+            ->flatMap(function (UserQuest $userQuest) use ($user, $city, $resolver): array {
+                $stepIndex = $userQuest->current_step_index;
+                $step = $userQuest->quest->steps->get($stepIndex);
 
                 if ($step === null || $step->city_id !== $city->id) {
                     return [];
                 }
 
-                if ($step->required_item_id !== null) {
+                $requirement = $resolver->resolveRequirement($userQuest, $step, $stepIndex);
+
+                if ($requirement !== null) {
                     $hasItem = $user->inventoryItems->contains(
-                        fn ($i) => $i->item_id === $step->required_item_id
-                            && $i->quantity >= $step->required_item_quantity,
+                        fn ($i) => $i->item_id === $requirement['required_item_id']
+                            && $i->quantity >= $requirement['required_item_quantity'],
                     );
 
                     if (! $hasItem) {
@@ -204,27 +210,89 @@ class BuildCityMenuData
                     }
                 }
 
-                return [['step' => $step, 'quest_name' => $userQuest->quest->name]];
+                $resolvedItem = $requirement !== null
+                    ? Item::find($requirement['required_item_id'])
+                    : null;
+
+                return [[
+                    'step' => $step,
+                    'quest_name' => $userQuest->quest->name,
+                    'resolved_required_item' => $resolvedItem,
+                    'resolved_required_quantity' => $requirement['required_item_quantity'] ?? 1,
+                ]];
             })
             ->values();
     }
 
     /**
-     * @return array{available: array<int, Quest>, active: array<int, array{userQuest: UserQuest, quest: Quest, current_step: ?QuestStep}>, completed: array<int, UserQuest>}
+     * @return array{available: array<int, array{quest: Quest, type: string, completion_count: ?int, userQuest: ?UserQuest}>, active: array<int, array{userQuest: UserQuest, quest: Quest, current_step: ?QuestStep}>, completed: array<int, UserQuest>}
      */
     private function jobsDataFor(User $user): array
     {
-        $acceptedQuestIds = $user->userQuests->pluck('quest_id')->all();
+        $activeOrCompletedQuestIds = $user->userQuests
+            ->whereIn('status', ['active', 'completed'])
+            ->pluck('quest_id')
+            ->all();
 
-        $available = Quest::query()
+        $completedStoryQuestIds = $user->userQuests
+            ->where('status', 'completed')
+            ->filter(fn (UserQuest $uq) => $uq->quest?->quest_type === 'story')
+            ->pluck('quest_id')
+            ->all();
+
+        // Story quests: only show the next unlocked one (prerequisite completed or none)
+        $availableStoryQuests = Quest::query()
             ->where('is_active', true)
-            ->whereNotIn('id', $acceptedQuestIds)
+            ->where('quest_type', 'story')
+            ->whereNotIn('id', $activeOrCompletedQuestIds)
+            ->where(function ($q) use ($completedStoryQuestIds): void {
+                $q->whereNull('prerequisite_quest_id')
+                    ->orWhereIn('prerequisite_quest_id', $completedStoryQuestIds);
+            })
+            ->orderBy('sequence_order')
+            ->get()
+            ->map(fn (Quest $quest): array => [
+                'quest' => $quest,
+                'type' => 'story',
+                'completion_count' => null,
+                'userQuest' => null,
+            ]);
+
+        // Regular non-repeatable jobs not yet started
+        $availableRegularJobs = Quest::query()
+            ->where('is_active', true)
+            ->where('quest_type', 'job')
+            ->where('is_repeatable', false)
+            ->whereNotIn('id', $activeOrCompletedQuestIds)
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(fn (Quest $quest): array => [
+                'quest' => $quest,
+                'type' => 'job',
+                'completion_count' => null,
+                'userQuest' => null,
+            ]);
+
+        // Repeatable jobs ready to run again
+        $availableRepeatableJobs = $user->userQuests
+            ->where('status', 'repeatable')
+            ->map(fn (UserQuest $uq): array => [
+                'quest' => $uq->quest,
+                'type' => 'repeatable_job',
+                'completion_count' => $uq->completion_count,
+                'userQuest' => $uq,
+            ])
+            ->values();
+
+        $available = $availableStoryQuests
+            ->concat($availableRegularJobs)
+            ->concat($availableRepeatableJobs)
+            ->values()
+            ->all();
 
         $active = $user->userQuests
             ->where('status', 'active')
-            ->map(fn (UserQuest $uq) => [
+            ->map(fn (UserQuest $uq): array => [
                 'userQuest' => $uq,
                 'quest' => $uq->quest,
                 'current_step' => $uq->quest->steps->get($uq->current_step_index),

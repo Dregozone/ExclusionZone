@@ -271,16 +271,35 @@
                                 <div class="space-y-2">
                                     <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-600/70">Active</p>
                                     @foreach ($jobs['active'] as $entry)
+                                        @php
+                                            $isRepeatable = $entry['quest']->is_repeatable;
+                                            $isStory = $entry['quest']->quest_type === 'story';
+                                            $stepIdx = $entry['userQuest']->current_step_index;
+                                            $activeReqs = $entry['userQuest']->active_requirements ?? [];
+                                            $resolvedReq = $activeReqs[$stepIdx] ?? null;
+                                        @endphp
                                         <div class="rounded-lg border border-emerald-800/40 bg-emerald-900/20 p-3">
                                             <div class="flex items-start justify-between gap-2">
                                                 <p class="text-sm font-medium text-zinc-200">{{ $entry['quest']->name }}</p>
-                                                <span class="shrink-0 rounded-full border border-emerald-700/50 bg-emerald-900/60 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-emerald-400">Active</span>
+                                                <div class="flex shrink-0 items-center gap-1">
+                                                    @if ($isStory)
+                                                        <span class="rounded-full border border-amber-700/50 bg-amber-900/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-amber-400">Story</span>
+                                                    @elseif ($isRepeatable)
+                                                        <span class="rounded-full border border-sky-700/50 bg-sky-900/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-sky-400">Run #{{ $entry['userQuest']->completion_count + 1 }}</span>
+                                                    @endif
+                                                    <span class="rounded-full border border-emerald-700/50 bg-emerald-900/60 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-emerald-400">Active</span>
+                                                </div>
                                             </div>
                                             @if ($entry['current_step'] !== null)
                                                 <p class="mt-1.5 text-xs text-zinc-500">
                                                     Objective: <span class="text-zinc-400">{{ $entry['current_step']->action_label }}</span> in <span class="text-zinc-400">{{ $entry['current_step']->city?->city }}</span>
                                                 </p>
-                                                @if ($entry['current_step']->required_item_id !== null)
+                                                @if ($resolvedReq !== null)
+                                                    @php $reqItem = \App\Models\Item::find($resolvedReq['required_item_id']); @endphp
+                                                    <p class="mt-1 text-xs text-zinc-600">
+                                                        Requires: <span class="text-amber-500/80">{{ $reqItem?->name }} ×{{ $resolvedReq['required_item_quantity'] }}</span>
+                                                    </p>
+                                                @elseif ($entry['current_step']->required_item_id !== null)
                                                     <p class="mt-1 text-xs text-zinc-600">
                                                         Requires: <span class="text-amber-500/80">{{ $entry['current_step']->requiredItem?->name }} ×{{ $entry['current_step']->required_item_quantity }}</span>
                                                     </p>
@@ -302,9 +321,19 @@
                             @if (count($jobs['available']) > 0)
                                 <div class="space-y-2">
                                     <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">Available</p>
-                                    @foreach ($jobs['available'] as $quest)
+                                    @foreach ($jobs['available'] as $item)
+                                        @php $quest = $item['quest']; @endphp
                                         <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-                                            <p class="text-sm font-medium text-zinc-300">{{ $quest->name }}</p>
+                                            <div class="flex items-start justify-between gap-2">
+                                                <p class="text-sm font-medium text-zinc-300">{{ $quest->name }}</p>
+                                                <div class="flex shrink-0 items-center gap-1">
+                                                    @if ($item['type'] === 'story')
+                                                        <span class="rounded-full border border-amber-700/50 bg-amber-900/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-amber-500">Story</span>
+                                                    @elseif ($item['type'] === 'repeatable_job')
+                                                        <span class="rounded-full border border-sky-700/50 bg-sky-900/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-sky-400">Run #{{ $item['completion_count'] + 1 }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
                                             <p class="mt-0.5 text-xs text-zinc-600">{{ $quest->description }}</p>
                                             @if ($quest->rewardSkill || $quest->rewardItem)
                                                 <p class="mt-1.5 text-xs text-zinc-700">
@@ -319,7 +348,15 @@
                                             @endif
                                             <form method="POST" action="{{ route('quest.accept', $quest) }}" class="mt-2">
                                                 @csrf
-                                                <flux:button type="submit" variant="primary" size="sm" class="w-full">Accept job</flux:button>
+                                                <flux:button type="submit" variant="primary" size="sm" class="w-full">
+                                                    @if ($item['type'] === 'story')
+                                                        Start quest
+                                                    @elseif ($item['type'] === 'repeatable_job')
+                                                        Start run #{{ $item['completion_count'] + 1 }}
+                                                    @else
+                                                        Accept job
+                                                    @endif
+                                                </flux:button>
                                             </form>
                                         </div>
                                     @endforeach
@@ -334,7 +371,12 @@
                                         <div class="rounded-lg border border-zinc-800/50 bg-zinc-900/30 px-3 py-2 opacity-60">
                                             <div class="flex items-center justify-between gap-2">
                                                 <p class="text-xs font-medium text-zinc-400">{{ $userQuest->quest->name }}</p>
-                                                <span class="shrink-0 rounded-full bg-zinc-800 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-zinc-500">Done</span>
+                                                <div class="flex items-center gap-1">
+                                                    @if ($userQuest->quest->quest_type === 'story')
+                                                        <span class="shrink-0 rounded-full bg-amber-900/30 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-amber-700">Story</span>
+                                                    @endif
+                                                    <span class="shrink-0 rounded-full bg-zinc-800 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-zinc-500">Done</span>
+                                                </div>
                                             </div>
                                         </div>
                                     @endforeach

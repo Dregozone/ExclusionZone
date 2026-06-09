@@ -14,6 +14,8 @@ class UserQuest extends Model
         'status',
         'notes',
         'completed_at',
+        'completion_count',
+        'active_requirements',
     ];
 
     protected function casts(): array
@@ -22,6 +24,8 @@ class UserQuest extends Model
             'notes' => 'array',
             'completed_at' => 'datetime',
             'current_step_index' => 'integer',
+            'completion_count' => 'integer',
+            'active_requirements' => 'array',
         ];
     }
 
@@ -38,5 +42,10 @@ class UserQuest extends Model
     public function isCompleted(): bool
     {
         return $this->status === 'completed';
+    }
+
+    public function isRepeatable(): bool
+    {
+        return $this->status === 'repeatable';
     }
 }

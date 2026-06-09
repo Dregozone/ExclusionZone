@@ -20,6 +20,10 @@ class QuestFactory extends Factory
             'reward_skill_id' => null,
             'reward_xp_amount' => null,
             'is_active' => true,
+            'quest_type' => 'job',
+            'is_repeatable' => false,
+            'sequence_order' => null,
+            'prerequisite_quest_id' => null,
         ];
     }
 }

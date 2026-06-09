@@ -24,6 +24,7 @@ class QuestStepFactory extends Factory
             'required_item_id' => null,
             'required_item_quantity' => 1,
             'consumes_item' => false,
+            'requirement_variants' => null,
         ];
     }
 }

@@ -160,6 +160,9 @@
                                 <div class="space-y-1">
                                     <p class="text-xs font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500">{{ $entry['quest_name'] }}</p>
                                     <h3 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $entry['step']->person_of_interest }}</h3>
+                                    @if ($entry['resolved_required_item'] !== null)
+                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Requires: <span class="text-amber-600 dark:text-amber-500">{{ $entry['resolved_required_item']->name }} ×{{ $entry['resolved_required_quantity'] }}</span></p>
+                                    @endif
                                 </div>
                                 <form method="POST" action="{{ route('quest-step.interact', $entry['step']) }}">
                                     @csrf

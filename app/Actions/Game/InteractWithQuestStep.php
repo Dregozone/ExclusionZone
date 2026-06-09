@@ -2,9 +2,11 @@
 
 namespace App\Actions\Game;
 
+use App\Models\Item;
 use App\Models\Quest;
 use App\Models\QuestStep;
 use App\Models\User;
+use App\Models\UserQuest;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -40,22 +42,25 @@ class InteractWithQuestStep
             throw new AuthorizationException('That is not your current quest objective.');
         }
 
-        if ($step->required_item_id !== null) {
-            $inventoryItem = $user->inventoryItems->first(fn ($i) => $i->item_id === $step->required_item_id);
+        $requirement = $this->resolveRequirement($userQuest, $step, $stepIndex);
 
-            if ($inventoryItem === null || $inventoryItem->quantity < $step->required_item_quantity) {
-                throw new AuthorizationException('You need '.$step->required_item_quantity.'x '.$step->requiredItem->name.' to proceed.');
+        if ($requirement !== null) {
+            $inventoryItem = $user->inventoryItems->first(fn ($i) => $i->item_id === $requirement['required_item_id']);
+
+            if ($inventoryItem === null || $inventoryItem->quantity < $requirement['required_item_quantity']) {
+                $item = Item::find($requirement['required_item_id']);
+                throw new AuthorizationException('You need '.$requirement['required_item_quantity'].'x '.($item?->name ?? 'the required item').' to proceed.');
             }
         }
 
-        return DB::transaction(function () use ($user, $step, $userQuest, $stepIndex, $steps): array {
-            if ($step->consumes_item && $step->required_item_id !== null) {
-                $inventoryItem = $user->inventoryItems()->where('item_id', $step->required_item_id)->lockForUpdate()->first();
+        return DB::transaction(function () use ($user, $step, $userQuest, $stepIndex, $steps, $requirement): array {
+            if ($step->consumes_item && $requirement !== null) {
+                $inventoryItem = $user->inventoryItems()->where('item_id', $requirement['required_item_id'])->lockForUpdate()->first();
 
-                if ($inventoryItem->quantity <= $step->required_item_quantity) {
+                if ($inventoryItem->quantity <= $requirement['required_item_quantity']) {
                     $inventoryItem->delete();
                 } else {
-                    $inventoryItem->decrement('quantity', $step->required_item_quantity);
+                    $inventoryItem->decrement('quantity', $requirement['required_item_quantity']);
                 }
             }
 
@@ -65,17 +70,28 @@ class InteractWithQuestStep
             $isLastStep = $stepIndex === $steps->count() - 1;
 
             if ($isLastStep) {
-                $userQuest->update([
-                    'notes' => $notes,
-                    'status' => 'completed',
-                    'completed_at' => now(),
-                ]);
+                if ($step->quest->is_repeatable) {
+                    $userQuest->update([
+                        'notes' => $notes,
+                        'status' => 'repeatable',
+                        'completed_at' => now(),
+                        'completion_count' => $userQuest->completion_count + 1,
+                        'current_step_index' => 0,
+                        'active_requirements' => null,
+                    ]);
+                } else {
+                    $userQuest->update([
+                        'notes' => $notes,
+                        'status' => 'completed',
+                        'completed_at' => now(),
+                    ]);
+                }
 
                 $rewardSummary = $this->grantReward($user, $step->quest);
 
                 return [
                     'completed' => true,
-                    'message' => 'Quest complete: '.$step->quest->name.'.'.$rewardSummary,
+                    'message' => 'Job complete: '.$step->quest->name.'.'.$rewardSummary,
                 ];
             }
 
@@ -89,6 +105,27 @@ class InteractWithQuestStep
                 'message' => $step->interaction_text,
             ];
         });
+    }
+
+    /**
+     * Resolve the effective item requirement for a step, preferring active_requirements for repeatable jobs.
+     *
+     * @return array{required_item_id: int, required_item_quantity: int}|null
+     */
+    public function resolveRequirement(UserQuest $userQuest, QuestStep $step, int $stepIndex): ?array
+    {
+        if ($userQuest->active_requirements !== null && isset($userQuest->active_requirements[$stepIndex])) {
+            return $userQuest->active_requirements[$stepIndex];
+        }
+
+        if ($step->required_item_id !== null) {
+            return [
+                'required_item_id' => $step->required_item_id,
+                'required_item_quantity' => $step->required_item_quantity,
+            ];
+        }
+
+        return null;
     }
 
     private function grantReward(User $user, Quest $quest): string

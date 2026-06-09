@@ -30,6 +30,15 @@
                     </flux:field>
 
                     <flux:field>
+                        <flux:label>{{ __('Quest Type') }}</flux:label>
+                        <flux:select wire:model.live="quest_type">
+                            <flux:select.option value="job">{{ __('Job') }}</flux:select.option>
+                            <flux:select.option value="story">{{ __('Story') }}</flux:select.option>
+                        </flux:select>
+                        <flux:error name="quest_type" />
+                    </flux:field>
+
+                    <flux:field>
                         <flux:label>{{ __('Active') }}</flux:label>
                         <flux:select wire:model="is_active">
                             <flux:select.option value="1">{{ __('Yes — visible on job board') }}</flux:select.option>
@@ -37,6 +46,38 @@
                         </flux:select>
                         <flux:error name="is_active" />
                     </flux:field>
+
+                    @if ($quest_type === 'story')
+                        <flux:field>
+                            <flux:label>{{ __('Sequence Order') }}</flux:label>
+                            <flux:input type="number" wire:model="sequence_order" min="1" placeholder="{{ __('e.g. 1') }}" />
+                            <flux:error name="sequence_order" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>{{ __('Prerequisite Quest') }}</flux:label>
+                            <flux:select wire:model="prerequisite_quest_id">
+                                <flux:select.option value="">{{ __('None (first quest)') }}</flux:select.option>
+                                @foreach ($this->storyQuests as $storyQuest)
+                                    @if ($storyQuest->id !== $editingId)
+                                        <flux:select.option value="{{ $storyQuest->id }}">{{ $storyQuest->name }}</flux:select.option>
+                                    @endif
+                                @endforeach
+                            </flux:select>
+                            <flux:error name="prerequisite_quest_id" />
+                        </flux:field>
+                    @endif
+
+                    @if ($quest_type === 'job')
+                        <flux:field>
+                            <flux:label>{{ __('Repeatable') }}</flux:label>
+                            <flux:select wire:model="is_repeatable">
+                                <flux:select.option value="0">{{ __('No — one-time job') }}</flux:select.option>
+                                <flux:select.option value="1">{{ __('Yes — can be replayed') }}</flux:select.option>
+                            </flux:select>
+                            <flux:error name="is_repeatable" />
+                        </flux:field>
+                    @endif
                 </div>
 
                 {{-- Reward profile --}}
@@ -156,6 +197,16 @@
                                         </flux:select>
                                         <flux:error name="steps.{{ $index }}.consumes_item" />
                                     </flux:field>
+
+                                    @if ($is_repeatable)
+                                        <flux:field class="sm:col-span-2">
+                                            <flux:label>{{ __('Requirement Variants (JSON)') }}</flux:label>
+                                            <flux:textarea wire:model="steps.{{ $index }}.requirement_variants_json" rows="4"
+                                                placeholder='[{"required_item_id": 1, "required_item_quantity": 2}, {"required_item_id": 5, "required_item_quantity": 1}]' />
+                                            <flux:description>{{ __('JSON array of item/quantity options. One is randomly selected per run. Leave blank to use the fixed Required Item above.') }}</flux:description>
+                                            <flux:error name="steps.{{ $index }}.requirement_variants_json" />
+                                        </flux:field>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
@@ -181,6 +232,7 @@
                 <tr class="border-b border-zinc-200 dark:border-zinc-700">
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">{{ __('Name') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-md:hidden">{{ __('Steps') }}</th>
+                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Type') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Status') }}</th>
                     <th class="px-4 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">{{ __('Actions') }}</th>
                 </tr>
@@ -195,9 +247,20 @@
                                     <span class="ml-2 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">{{ __('Deleted') }}</span>
                                 @endif
                             </p>
-                            <p class="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400 max-w-xs">{{ $quest->description }}</p>
+                            <p class="mt-0.5 max-w-xs truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $quest->description }}</p>
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-md:hidden">{{ $quest->steps_count }}</td>
+                        <td class="px-4 py-3 max-lg:hidden">
+                            @if ($quest->quest_type === 'story')
+                                <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                    {{ __('Story') }} #{{ $quest->sequence_order }}
+                                </span>
+                            @elseif ($quest->is_repeatable)
+                                <span class="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">{{ __('Recurring') }}</span>
+                            @else
+                                <span class="inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">{{ __('Job') }}</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 max-lg:hidden">
                             @if ($quest->is_active)
                                 <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{{ __('Active') }}</span>
@@ -216,7 +279,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No quests found.') }}</td>
+                        <td colspan="5" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No quests found.') }}</td>
                     </tr>
                 @endforelse
             </tbody>

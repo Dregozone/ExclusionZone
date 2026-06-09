@@ -452,8 +452,8 @@ test('moderators can temporarily mute users and the mute expires', function () {
 test('reference data from the specification is seeded and bounded', function () {
     expect(Role::query()->count())->toBe(5)
         ->and(Skill::query()->count())->toBe(13)
-        ->and(Country::query()->count())->toBe(6)
-        ->and(City::query()->count())->toBe(12)
+        ->and(Country::query()->count())->toBe(15)
+        ->and(City::query()->count())->toBe(23)
         ->and(Country::query()->whereNotBetween('rain_chance_pct', [0, 100])->count())->toBe(0)
         ->and(City::query()->whereNotBetween('trouble_chance_pct', [0, 100])->count())->toBe(0);
 });
