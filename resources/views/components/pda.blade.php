@@ -446,6 +446,7 @@
                                             <a href="{{ route('admin.city-actions') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">City Actions</a>
                                             <a href="{{ route('admin.items') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">Items</a>
                                             <a href="{{ route('admin.locations') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">Locations</a>
+                                            <a href="{{ route('admin.travel-routes') }}" class="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">Travel Routes</a>
                                         </div>
                                     </div>
 

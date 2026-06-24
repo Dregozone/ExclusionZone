@@ -92,7 +92,7 @@ test('starting travel creates an active timer and only moves after completion', 
 
     $duration = $user->fresh('activeWork')->activeWork?->duration_seconds;
 
-    expect($duration)->toBe(10);
+    expect($duration)->not->toBeNull()->and($duration)->toBeGreaterThanOrEqual(10);
 
     Carbon::setTestNow(now()->addSeconds($duration + 1));
 

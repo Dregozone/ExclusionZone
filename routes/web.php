@@ -12,6 +12,7 @@ use App\Livewire\Admin\ManageItems;
 use App\Livewire\Admin\ManageLocations;
 use App\Livewire\Admin\ManageQuests;
 use App\Livewire\Admin\ManageSkills;
+use App\Livewire\Admin\ManageTravelRoutes;
 use App\Livewire\Admin\MovePlayer;
 use App\Livewire\WorldMap;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
         Route::livewire('admin/items', ManageItems::class)->name('admin.items');
         Route::livewire('admin/skills', ManageSkills::class)->name('admin.skills');
         Route::livewire('admin/quests', ManageQuests::class)->name('admin.quests');
+        Route::livewire('admin/travel-routes', ManageTravelRoutes::class)->name('admin.travel-routes');
         Route::post('dashboard/admin/roles', [AdminRoleController::class, 'update'])->name('admin.roles.update');
     });
 });

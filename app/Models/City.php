@@ -40,6 +40,7 @@ class City extends Model
 
     public function neighbors(): BelongsToMany
     {
-        return $this->belongsToMany(self::class, 'city_connections', 'city_id', 'neighbor_city_id');
+        return $this->belongsToMany(self::class, 'city_connections', 'city_id', 'neighbor_city_id')
+            ->withPivot('duration_seconds');
     }
 }

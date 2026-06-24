@@ -18,12 +18,14 @@ class CityAction extends Model
         'skill_key',
         'min_level',
         'risk_level',
+        'base_duration_seconds',
         'reward_profile',
     ];
 
     protected function casts(): array
     {
         return [
+            'base_duration_seconds' => 'integer',
             'reward_profile' => 'array',
         ];
     }

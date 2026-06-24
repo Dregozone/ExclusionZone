@@ -35,6 +35,8 @@ class ManageCityActions extends Component
 
     public string $risk_level = 'medium';
 
+    public int $base_duration_seconds = 30;
+
     public int $reward_xp = 20;
 
     public string $reward_item_key = '';
@@ -59,7 +61,7 @@ class ManageCityActions extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'city_id', 'action_key', 'label', 'description', 'skill_key', 'min_level', 'risk_level', 'reward_profile', 'deleted_at']);
+        return $query->get(['id', 'city_id', 'action_key', 'label', 'description', 'skill_key', 'min_level', 'risk_level', 'base_duration_seconds', 'reward_profile', 'deleted_at']);
     }
 
     #[Computed]
@@ -93,6 +95,7 @@ class ManageCityActions extends Component
         $this->skill_key = $action->skill_key;
         $this->min_level = $action->min_level;
         $this->risk_level = $action->risk_level;
+        $this->base_duration_seconds = $action->base_duration_seconds;
         $this->reward_xp = $reward['xp'] ?? 20;
         $this->reward_item_key = $reward['item_key'] ?? '';
         $this->reward_quantity = $reward['quantity'] ?? 1;
@@ -110,6 +113,7 @@ class ManageCityActions extends Component
             'skill_key' => ['required', 'string', 'max:100'],
             'min_level' => ['required', 'integer', 'min:1', 'max:100'],
             'risk_level' => ['required', 'string', 'in:low,medium,high,extreme'],
+            'base_duration_seconds' => ['required', 'integer', 'min:10'],
             'reward_xp' => ['required', 'integer', 'min:1'],
             'reward_item_key' => ['required', 'string', 'max:100'],
             'reward_quantity' => ['required', 'integer', 'min:1'],
@@ -124,6 +128,7 @@ class ManageCityActions extends Component
             'skill_key' => $validated['skill_key'],
             'min_level' => $validated['min_level'],
             'risk_level' => $validated['risk_level'],
+            'base_duration_seconds' => $validated['base_duration_seconds'],
             'reward_profile' => [
                 'xp' => $validated['reward_xp'],
                 'item_key' => $validated['reward_item_key'],
@@ -175,6 +180,7 @@ class ManageCityActions extends Component
         $this->skill_key = '';
         $this->min_level = 1;
         $this->risk_level = 'medium';
+        $this->base_duration_seconds = 30;
         $this->reward_xp = 20;
         $this->reward_item_key = '';
         $this->reward_quantity = 1;
