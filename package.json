@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "node -e \"require('fs').rmSync('public/hot', { force: true })\" && vite build",
         "dev": "vite"
     },
     "dependencies": {
