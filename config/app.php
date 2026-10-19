@@ -69,6 +69,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Admin Notification Email
+    |--------------------------------------------------------------------------
+    |
+    | When set, this address is emailed whenever a new player signs up.
+    | Leave it empty to turn sign-up notifications off.
+    |
+    */
+
+    'admin_notify_email' => env('ADMIN_NOTIFY_EMAIL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |
