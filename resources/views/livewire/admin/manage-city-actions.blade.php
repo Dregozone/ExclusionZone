@@ -67,7 +67,7 @@
 
                     <flux:field>
                         <flux:label>{{ __('Base Duration (seconds)') }}</flux:label>
-                        <flux:input type="number" wire:model="base_duration_seconds" min="10" />
+                        <flux:input type="number" wire:model="base_duration_seconds" min="10" max="65535" />
                         <flux:description>{{ __('Minimum 10 s. Reduced by skill level — 1% per level above 1.') }}</flux:description>
                         <flux:error name="base_duration_seconds" />
                     </flux:field>
@@ -133,7 +133,7 @@
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-md:hidden">{{ __('City') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Skill') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-xl:hidden">{{ __('Risk') }}</th>
-                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-2xl:hidden">{{ __('Duration') }}</th>
+                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">{{ __('Duration') }}</th>
                     <th class="px-4 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">{{ __('Actions') }}</th>
                 </tr>
             </thead>
@@ -149,7 +149,7 @@
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-md:hidden">{{ $action->city?->city }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden">{{ $action->skill_key }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-xl:hidden">{{ $action->risk_level }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-2xl:hidden">{{ $action->base_duration_seconds }}s</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $action->base_duration_seconds }}s</td>
                         <td class="px-4 py-3 text-right">
                             @if ($action->deleted_at)
                                 <flux:button size="sm" wire:click="restore({{ $action->id }})" wire:confirm="{{ __('Restore this action?') }}" variant="ghost" icon="arrow-path">{{ __('Restore') }}</flux:button>
@@ -161,7 +161,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No actions found.') }}</td>
+                        <td colspan="6" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No actions found.') }}</td>
                     </tr>
                 @endforelse
             </tbody>

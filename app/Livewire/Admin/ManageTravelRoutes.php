@@ -52,7 +52,7 @@ class ManageTravelRoutes extends Component
     public function save(): void
     {
         $validated = $this->validate([
-            'editingDuration' => ['required', 'integer', 'min:10'],
+            'editingDuration' => ['required', 'integer', 'min:10', 'max:65535'],
         ]);
 
         DB::table('city_connections')
