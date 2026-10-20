@@ -58,10 +58,21 @@ class CompleteUserWork
             throw new AuthorizationException('That action is no longer available.');
         }
 
+        $missingItems = $this->performCityAction->missingRequiredItems($user, $action);
+
+        if ($missingItems !== []) {
+            return [
+                'type' => 'city_action',
+                'status' => 'Action failed: you no longer have '.$this->performCityAction->describeRequiredItems($missingItems).'. No rewards were granted.',
+            ];
+        }
+
         $weather = $work->weather;
         $reward = ($this->performCityAction)($user, $action, $weather);
 
-        $summary = "Action completed: +{$reward['xp']} XP";
+        $summary = $reward['items_used'] === ''
+            ? "Action completed: +{$reward['xp']} XP"
+            : "Action completed: used {$reward['items_used']}, +{$reward['xp']} XP";
 
         if ($weather->isBad()) {
             $summary .= " (+{$weather->experienceBonusPercent()}% {$weather->label()} bonus)";

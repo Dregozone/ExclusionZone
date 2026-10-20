@@ -20,6 +20,7 @@ class CityAction extends Model
         'risk_level',
         'base_duration_seconds',
         'reward_profile',
+        'required_items',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class CityAction extends Model
         return [
             'base_duration_seconds' => 'integer',
             'reward_profile' => 'array',
+            'required_items' => 'array',
         ];
     }
 

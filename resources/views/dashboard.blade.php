@@ -216,13 +216,24 @@
                                 <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-500">
                                     {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ data_get($entry['action']->reward_profile, 'item_key') }}
                                 </p>
+                                @if (count($entry['required_items']) > 0)
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="required-items-{{ $entry['action']->action_key }}">
+                                        Uses:
+                                        @foreach ($entry['required_items'] as $requiredItem)
+                                            <span @class([
+                                                'text-emerald-600 dark:text-emerald-500' => $requiredItem['owned'] >= $requiredItem['quantity'],
+                                                'text-amber-600 dark:text-amber-500' => $requiredItem['owned'] < $requiredItem['quantity'],
+                                            ])>{{ $requiredItem['item']->name }} ×{{ $requiredItem['quantity'] }} ({{ $requiredItem['owned'] }} carried)</span>@if (! $loop->last), @endif
+                                        @endforeach
+                                    </p>
+                                @endif
                             </div>
 
                             <form method="POST" action="{{ route('city-action.store') }}">
                                 @csrf
                                 <input type="hidden" name="city_action_id" value="{{ $entry['action']->id }}">
                                 <flux:button type="submit" variant="primary" :disabled="! $entry['available']" data-test="action-{{ $entry['action']->action_key }}">
-                                    {{ $entry['available'] ? 'Begin work' : ($can_perform_city_actions ? 'Locked' : 'Unavailable') }}
+                                    {{ $entry['available'] ? 'Begin work' : (! $can_perform_city_actions ? 'Unavailable' : ($entry['user_level'] < $entry['required_level'] ? 'Locked' : 'Missing items')) }}
                                 </flux:button>
                             </form>
                         </div>
