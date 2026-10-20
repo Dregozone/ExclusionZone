@@ -65,13 +65,23 @@ class BuildCityMenuData
             'can_perform_city_actions' => $canPerformCityActions,
             'city_action_restriction' => $cityActionRestriction,
             'active_work' => $activeWork === null ? null : $this->activeWorkData($user, $activeWork),
-            'actions' => $cityActions->map(fn (CityAction $action): array => [
-                'action' => $action,
-                'required_level' => $action->min_level,
-                'user_level' => $user->skillFor($action->skill_key)?->level ?? 1,
-                'available' => $canPerformCityActions
-                    && ($user->skillFor($action->skill_key)?->level ?? 1) >= $action->min_level,
-            ]),
+            'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions): array {
+                $requiredItems = (new PerformCityAction)->requiredItemsFor($user, $action);
+                $hasRequiredItems = collect($requiredItems)->every(
+                    fn (array $requiredItem): bool => $requiredItem['owned'] >= $requiredItem['quantity'],
+                );
+
+                return [
+                    'action' => $action,
+                    'required_level' => $action->min_level,
+                    'user_level' => $user->skillFor($action->skill_key)?->level ?? 1,
+                    'required_items' => $requiredItems,
+                    'has_required_items' => $hasRequiredItems,
+                    'available' => $canPerformCityActions
+                        && $hasRequiredItems
+                        && ($user->skillFor($action->skill_key)?->level ?? 1) >= $action->min_level,
+                ];
+            }),
             'skills' => $user->skills->sortBy(fn ($skill) => $skill->skill?->display_name)->values(),
             'inventory' => $user->inventoryItems->sortBy(fn ($item) => $item->item?->name)->values(),
             'quest_step_actions' => $this->questStepActionsFor($user, $city),

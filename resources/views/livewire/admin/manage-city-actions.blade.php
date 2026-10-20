@@ -112,6 +112,43 @@
                     </div>
                 </div>
 
+                <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                    <div class="mb-3 flex items-center justify-between gap-4">
+                        <div>
+                            <flux:heading size="sm">{{ __('Required Items') }}</flux:heading>
+                            <flux:text class="mt-1 text-xs">{{ __('Items the player must carry to start this action. They are used up when the work completes.') }}</flux:text>
+                        </div>
+                        <flux:button wire:click="addRequiredItem" variant="ghost" size="sm" icon="plus">{{ __('Add Item') }}</flux:button>
+                    </div>
+
+                    <div class="space-y-3">
+                        @forelse ($required_items as $index => $requiredItem)
+                            <div wire:key="required-item-{{ $index }}" class="grid items-start gap-4 sm:grid-cols-[1fr_8rem_auto]">
+                                <flux:field>
+                                    <flux:label>{{ __('Item') }}</flux:label>
+                                    <flux:select wire:model="required_items.{{ $index }}.item_key" placeholder="{{ __('Select an item…') }}" searchable>
+                                        <flux:select.option value="">{{ __('Select an item…') }}</flux:select.option>
+                                        @foreach ($this->items as $item)
+                                            <flux:select.option value="{{ $item->key }}">{{ $item->name }}</flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+                                    <flux:error name="required_items.{{ $index }}.item_key" />
+                                </flux:field>
+
+                                <flux:field>
+                                    <flux:label>{{ __('Quantity') }}</flux:label>
+                                    <flux:input type="number" wire:model="required_items.{{ $index }}.quantity" min="1" />
+                                    <flux:error name="required_items.{{ $index }}.quantity" />
+                                </flux:field>
+
+                                <flux:button wire:click="removeRequiredItem({{ $index }})" variant="ghost" size="sm" icon="trash" class="text-red-500 hover:text-red-600 sm:mt-7">{{ __('Remove') }}</flux:button>
+                            </div>
+                        @empty
+                            <flux:text class="text-sm">{{ __('No items needed.') }}</flux:text>
+                        @endforelse
+                    </div>
+                </div>
+
                 <div class="flex gap-3">
                     <flux:button type="submit" variant="primary">{{ $editingId ? __('Update Action') : __('Create Action') }}</flux:button>
                     <flux:button wire:click="cancel" variant="ghost">{{ __('Cancel') }}</flux:button>

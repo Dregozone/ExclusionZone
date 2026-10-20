@@ -15,13 +15,14 @@ use Illuminate\Support\Lottery;
 class PerformCityAction
 {
     /**
-     * @return array{xp:int,item_name:?string,quantity:int,levels_gained:int,item_lost:bool}
+     * @return array{xp:int,item_name:?string,quantity:int,levels_gained:int,item_lost:bool,items_used:string}
      *
      * @throws AuthorizationException
      */
     public function __invoke(User $user, CityAction $action, Weather $weather = Weather::Clear): array
     {
         $skillProgress = $this->authorize($user, $action);
+        $requiredItems = $this->requiredItemsFor($user, $action);
 
         $reward = $action->reward_profile;
         $xp = (int) ceil((int) data_get($reward, 'xp', 10) * (100 + $weather->experienceBonusPercent()) / 100);
@@ -31,7 +32,9 @@ class PerformCityAction
         $itemName = null;
         $itemLost = false;
 
-        DB::transaction(function () use ($user, $skillProgress, $xp, $quantity, $itemKey, $weather, &$levelsGained, &$itemName, &$itemLost): void {
+        DB::transaction(function () use ($user, $requiredItems, $skillProgress, $xp, $quantity, $itemKey, $weather, &$levelsGained, &$itemName, &$itemLost): void {
+            $this->consumeRequiredItems($user, $requiredItems);
+
             $levelsGained = $this->applyExperience($skillProgress, $xp);
 
             if ($itemKey !== null && $quantity > 0) {
@@ -60,6 +63,7 @@ class PerformCityAction
             'quantity' => $quantity,
             'levels_gained' => $levelsGained,
             'item_lost' => $itemLost,
+            'items_used' => $this->describeRequiredItems($requiredItems),
         ];
     }
 
@@ -80,7 +84,86 @@ class PerformCityAction
             throw new AuthorizationException('Your skill level is too low for that action.');
         }
 
+        $missingItems = $this->missingRequiredItems($user, $action);
+
+        if ($missingItems !== []) {
+            throw new AuthorizationException('You need '.$this->describeRequiredItems($missingItems).' to do that.');
+        }
+
         return $skillProgress;
+    }
+
+    /**
+     * The items an action uses up, with how many of each the player is carrying.
+     *
+     * @return array<int, array{item: Item, quantity: int, owned: int}>
+     */
+    public function requiredItemsFor(User $user, CityAction $action): array
+    {
+        $quantitiesByItemKey = collect($action->required_items ?? [])
+            ->mapWithKeys(fn (array $requiredItem): array => [$requiredItem['item_key'] => (int) $requiredItem['quantity']]);
+
+        if ($quantitiesByItemKey->isEmpty()) {
+            return [];
+        }
+
+        $items = Item::query()->whereIn('key', $quantitiesByItemKey->keys())->get();
+        $ownedByItemId = $user->inventoryItems()->whereIn('item_id', $items->modelKeys())->pluck('quantity', 'item_id');
+
+        return $items
+            ->map(fn (Item $item): array => [
+                'item' => $item,
+                'quantity' => $quantitiesByItemKey[$item->key],
+                'owned' => (int) ($ownedByItemId[$item->id] ?? 0),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{item: Item, quantity: int, owned: int}>
+     */
+    public function missingRequiredItems(User $user, CityAction $action): array
+    {
+        return array_values(array_filter(
+            $this->requiredItemsFor($user, $action),
+            fn (array $requiredItem): bool => $requiredItem['owned'] < $requiredItem['quantity'],
+        ));
+    }
+
+    /**
+     * @param  array<int, array{item: Item, quantity: int, owned: int}>  $requiredItems
+     */
+    public function describeRequiredItems(array $requiredItems): string
+    {
+        return collect($requiredItems)
+            ->map(fn (array $requiredItem): string => $requiredItem['quantity'].'x '.$requiredItem['item']->name)
+            ->implode(', ');
+    }
+
+    /**
+     * @param  array<int, array{item: Item, quantity: int, owned: int}>  $requiredItems
+     *
+     * @throws AuthorizationException
+     */
+    private function consumeRequiredItems(User $user, array $requiredItems): void
+    {
+        foreach ($requiredItems as $requiredItem) {
+            $inventoryItem = $user->inventoryItems()
+                ->where('item_id', $requiredItem['item']->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($inventoryItem === null || $inventoryItem->quantity < $requiredItem['quantity']) {
+                throw new AuthorizationException('You need '.$this->describeRequiredItems([$requiredItem]).' to do that.');
+            }
+
+            if ($inventoryItem->quantity <= $requiredItem['quantity']) {
+                $inventoryItem->delete();
+            } else {
+                $inventoryItem->decrement('quantity', $requiredItem['quantity']);
+            }
+        }
     }
 
     private function isItemLostToWeather(Weather $weather): bool

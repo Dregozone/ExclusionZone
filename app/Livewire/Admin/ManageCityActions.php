@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\City;
 use App\Models\CityAction;
+use App\Models\Item;
 use App\Models\Skill;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -45,6 +46,11 @@ class ManageCityActions extends Component
 
     public string $reward_loot_tier = 'medium';
 
+    /**
+     * @var array<int, array{item_key: string, quantity: int}>
+     */
+    public array $required_items = [];
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -76,6 +82,12 @@ class ManageCityActions extends Component
         return Skill::query()->orderBy('display_name')->get(['id', 'key', 'display_name']);
     }
 
+    #[Computed]
+    public function items(): Collection
+    {
+        return Item::query()->orderBy('name')->get(['id', 'key', 'name']);
+    }
+
     public function create(): void
     {
         $this->resetForm();
@@ -100,6 +112,7 @@ class ManageCityActions extends Component
         $this->reward_item_key = $reward['item_key'] ?? '';
         $this->reward_quantity = $reward['quantity'] ?? 1;
         $this->reward_loot_tier = $reward['loot_tier'] ?? 'medium';
+        $this->required_items = $action->required_items ?? [];
         $this->showForm = true;
     }
 
@@ -118,6 +131,9 @@ class ManageCityActions extends Component
             'reward_item_key' => ['required', 'string', 'max:100'],
             'reward_quantity' => ['required', 'integer', 'min:1'],
             'reward_loot_tier' => ['required', 'string', 'max:50'],
+            'required_items' => ['array'],
+            'required_items.*.item_key' => ['required', 'string', 'distinct', 'exists:items,key'],
+            'required_items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
         $data = [
@@ -135,6 +151,12 @@ class ManageCityActions extends Component
                 'quantity' => $validated['reward_quantity'],
                 'loot_tier' => $validated['reward_loot_tier'],
             ],
+            'required_items' => ($validated['required_items'] ?? []) === []
+                ? null
+                : array_map(fn (array $requiredItem): array => [
+                    'item_key' => $requiredItem['item_key'],
+                    'quantity' => (int) $requiredItem['quantity'],
+                ], array_values($validated['required_items'] ?? [])),
         ];
 
         if ($this->editingId !== null) {
@@ -148,6 +170,16 @@ class ManageCityActions extends Component
         $this->showForm = false;
         $this->resetForm();
         unset($this->actions);
+    }
+
+    public function addRequiredItem(): void
+    {
+        $this->required_items[] = ['item_key' => '', 'quantity' => 1];
+    }
+
+    public function removeRequiredItem(int $index): void
+    {
+        array_splice($this->required_items, $index, 1);
     }
 
     public function delete(int $id): void
@@ -185,5 +217,6 @@ class ManageCityActions extends Component
         $this->reward_item_key = '';
         $this->reward_quantity = 1;
         $this->reward_loot_tier = 'medium';
+        $this->required_items = [];
     }
 }
