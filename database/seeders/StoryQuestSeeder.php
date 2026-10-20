@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\City;
+use App\Models\CityAction;
 use App\Models\Item;
 use App\Models\Quest;
 use App\Models\Skill;
@@ -15,6 +16,7 @@ class StoryQuestSeeder extends Seeder
         $cities = City::all()->keyBy('city');
         $items = Item::all()->keyBy('key');
         $skills = Skill::all()->keyBy('key');
+        $cityActions = CityAction::all()->keyBy('action_key');
 
         $engineering = $skills['engineering'] ?? null;
         $survival = $skills['survival'] ?? null;
@@ -222,10 +224,21 @@ class StoryQuestSeeder extends Seeder
         $q8->steps()->firstOrCreate(['step_order' => 1], [
             'city_id' => $cities['Gdansk']->id,
             'person_of_interest' => 'Captain Halvorsen',
+            'action_label' => 'Help Halvorsen\'s crew stock the galley',
+            'interaction_text' => 'Good haul. That\'s eighteen bellies fed for the crossing — the crew will remember it. Now the ammo: three crates, and a couple of sealed rations for the long nights on the water. Bring them and we sail at first tide.',
+            'required_city_action_id' => $cityActions['harbor_fishing']->id,
+            'required_action_count' => 3,
+        ]);
+        $q8->steps()->firstOrCreate(['step_order' => 2], [
+            'city_id' => $cities['Gdansk']->id,
+            'person_of_interest' => 'Captain Halvorsen',
             'action_label' => 'Pay Halvorsen with ammo for the crossing',
             'interaction_text' => 'Now we\'re in business. Two days north to Copenhagen. Keep your head down, don\'t touch anything that isn\'t yours, and if we run into a patrol boat, you were never here. Halvorsen slips you a folded note before you board: "Find Ingrid. She runs the only clean operation left in Copenhagen. Don\'t mention the shipment."',
             'required_item_id' => $items['ammo_crates']->id,
-            'required_item_quantity' => 1,
+            'required_item_quantity' => 3,
+            'required_items' => [
+                ['required_item_id' => $items['sealed_rations']->id, 'required_item_quantity' => 2],
+            ],
             'consumes_item' => true,
         ]);
 
@@ -269,6 +282,14 @@ class StoryQuestSeeder extends Seeder
             'interaction_text' => 'Someone\'s been skimming from our supply routes — intercepted a cache in the old warehouse sector. It\'s sitting there, unguarded for now, but it won\'t stay that way. Recover it and bring it back here. It\'s not just supplies — there\'s documentation in there we need. Do that and I\'ll get you to Oslo personally.',
         ]);
         $q10->steps()->firstOrCreate(['step_order' => 1], [
+            'city_id' => $cities['Copenhagen']->id,
+            'person_of_interest' => 'Ingrid Larssen',
+            'action_label' => 'Sweep the freight terminals around the warehouse',
+            'interaction_text' => 'The terminals are clear and my people have eyes on the warehouse now. Whoever skimmed our routes hasn\'t come back for the cache — yet. Recover it and bring it here before they do.',
+            'required_city_action_id' => $cityActions['copenhagen_harbour_freight']->id,
+            'required_action_count' => 2,
+        ]);
+        $q10->steps()->firstOrCreate(['step_order' => 2], [
             'city_id' => $cities['Copenhagen']->id,
             'person_of_interest' => 'Ingrid Larssen',
             'action_label' => 'Return the contraband cache to Ingrid',
@@ -324,7 +345,7 @@ class StoryQuestSeeder extends Seeder
             'action_label' => 'Power the NORDVAULT terminal with fuel cells',
             'interaction_text' => 'Strand\'s name still opens doors. Sublevel three — I\'ll take you down myself. The archive is clear. DAWNWATCH\'s Phase II override was authorised from a server cluster registered in Helsinki. The access logs are signed by a single operator identity: ARBITER. I\'ve never seen this designation before. Strand\'s credentials confirm it — this isn\'t a programme name. It\'s a person. Or something acting like one.',
             'required_item_id' => $items['fuel_cells']->id,
-            'required_item_quantity' => 1,
+            'required_item_quantity' => 3,
             'consumes_item' => true,
         ]);
 
@@ -474,6 +495,9 @@ class StoryQuestSeeder extends Seeder
             'interaction_text' => 'The junction crackles and the turrets go dark. The upper floors are clear. On floor 47 — the penthouse server room — you find the full scale of it: an entire server farm, running cold and quiet in the dark. In the centre, a single terminal with one blinking line: ARBITER SECONDARY NODE — AWAITING INSTRUCTION. The Phase Two counter is visible in the corner of the screen. Still counting.',
             'required_item_id' => $items['weapon_scraps']->id,
             'required_item_quantity' => 2,
+            'required_items' => [
+                ['required_item_id' => $items['circuit_boards']->id, 'required_item_quantity' => 1],
+            ],
             'consumes_item' => true,
         ]);
 

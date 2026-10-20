@@ -19,8 +19,11 @@ class QuestStep extends Model
         'interaction_text',
         'required_item_id',
         'required_item_quantity',
+        'required_items',
         'consumes_item',
         'requirement_variants',
+        'required_city_action_id',
+        'required_action_count',
     ];
 
     protected function casts(): array
@@ -28,7 +31,9 @@ class QuestStep extends Model
         return [
             'consumes_item' => 'bool',
             'required_item_quantity' => 'integer',
+            'required_items' => 'array',
             'requirement_variants' => 'array',
+            'required_action_count' => 'integer',
         ];
     }
 
@@ -45,5 +50,10 @@ class QuestStep extends Model
     public function requiredItem(): BelongsTo
     {
         return $this->belongsTo(Item::class, 'required_item_id');
+    }
+
+    public function requiredCityAction(): BelongsTo
+    {
+        return $this->belongsTo(CityAction::class, 'required_city_action_id');
     }
 }

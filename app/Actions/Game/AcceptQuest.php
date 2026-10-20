@@ -25,6 +25,7 @@ class AcceptQuest
                 $existing->update([
                     'status' => 'active',
                     'current_step_index' => 0,
+                    'step_action_progress' => 0,
                     'notes' => null,
                     'active_requirements' => $this->generateActiveRequirements($quest),
                 ]);
@@ -46,7 +47,9 @@ class AcceptQuest
     /**
      * Randomly select one requirement variant per step that has variants defined.
      *
-     * @return array<int, array{required_item_id: int, required_item_quantity: int}>
+     * A variant is either a single requirement or a list of requirements.
+     *
+     * @return array<int, array{required_item_id: int, required_item_quantity: int}|array<int, array{required_item_id: int, required_item_quantity: int}>>
      */
     private function generateActiveRequirements(Quest $quest): array
     {

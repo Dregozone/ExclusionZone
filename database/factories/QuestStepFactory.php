@@ -23,8 +23,11 @@ class QuestStepFactory extends Factory
             'interaction_text' => $this->faker->paragraph(),
             'required_item_id' => null,
             'required_item_quantity' => 1,
+            'required_items' => null,
             'consumes_item' => false,
             'requirement_variants' => null,
+            'required_city_action_id' => null,
+            'required_action_count' => null,
         ];
     }
 }

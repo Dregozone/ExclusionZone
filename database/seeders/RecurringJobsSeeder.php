@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\City;
+use App\Models\CityAction;
 use App\Models\Item;
 use App\Models\Quest;
 use App\Models\Skill;
@@ -15,6 +16,7 @@ class RecurringJobsSeeder extends Seeder
         $cities = City::all()->keyBy('city');
         $items = Item::all()->keyBy('key');
         $skills = Skill::all()->keyBy('key');
+        $cityActions = CityAction::all()->keyBy('action_key');
 
         // Job 1: Supply Run — Kyiv
         $job1 = Quest::firstOrCreate(
@@ -44,6 +46,14 @@ class RecurringJobsSeeder extends Seeder
                 ['required_item_id' => $items['clean_water']->id, 'required_item_quantity' => 3],
                 ['required_item_id' => $items['ration_tokens']->id, 'required_item_quantity' => 3],
                 ['required_item_id' => $items['scrap_metal']->id, 'required_item_quantity' => 3],
+                [
+                    ['required_item_id' => $items['sealed_rations']->id, 'required_item_quantity' => 1],
+                    ['required_item_id' => $items['clean_water']->id, 'required_item_quantity' => 2],
+                ],
+                [
+                    ['required_item_id' => $items['scrap_metal']->id, 'required_item_quantity' => 2],
+                    ['required_item_id' => $items['ration_tokens']->id, 'required_item_quantity' => 2],
+                ],
             ],
             'consumes_item' => true,
         ]);
@@ -67,6 +77,14 @@ class RecurringJobsSeeder extends Seeder
             'interaction_text' => 'Got a buyer on the outside who pays premium for Zone material — certified samples, mutant derivatives, hot components. One run, clean handoff. You look like someone who knows the Zone. Interested?',
         ]);
         $job2->steps()->firstOrCreate(['step_order' => 1], [
+            'city_id' => $cities['Pripyat']->id,
+            'person_of_interest' => 'Trader Pavel',
+            'action_label' => 'Chart the hot zone for Pavel',
+            'interaction_text' => 'Readings check out. Now I know where the good material is sitting — and so do you. Bring me what the buyer wants and we\'re square.',
+            'required_city_action_id' => $cityActions['radiation_sampling']->id,
+            'required_action_count' => 2,
+        ]);
+        $job2->steps()->firstOrCreate(['step_order' => 2], [
             'city_id' => $cities['Pripyat']->id,
             'person_of_interest' => 'Trader Pavel',
             'action_label' => 'Deliver the salvage to Pavel',
@@ -172,6 +190,10 @@ class RecurringJobsSeeder extends Seeder
                 ['required_item_id' => $items['circuit_boards']->id, 'required_item_quantity' => 2],
                 ['required_item_id' => $items['server_cores']->id, 'required_item_quantity' => 1],
                 ['required_item_id' => $items['secure_data']->id, 'required_item_quantity' => 1],
+                [
+                    ['required_item_id' => $items['drone_parts']->id, 'required_item_quantity' => 1],
+                    ['required_item_id' => $items['circuit_boards']->id, 'required_item_quantity' => 1],
+                ],
             ],
             'consumes_item' => true,
         ]);
