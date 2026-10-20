@@ -54,6 +54,15 @@
                             </div>
                         </div>
 
+                        @if ($active_work['weather']->isBad())
+                            <div class="rounded-[1.5rem] border border-sky-300/70 bg-sky-50/80 p-5 text-sm text-zinc-600 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-zinc-300" data-test="active-work-weather">
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['weather']->label() }}:</span>
+                                {{ $active_work['type'] === 'travel'
+                                    ? "This route takes {$active_work['weather']->timerIncreasePercent()}% longer in the {$active_work['weather']->value}."
+                                    : $active_work['weather']->effectsSummary() }}
+                            </div>
+                        @endif
+
                         @if ($active_work['skill_name'])
                             <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 dark:border-zinc-700 dark:bg-zinc-900/80">
                                 <div class="flex flex-wrap items-start justify-between gap-4">
@@ -119,7 +128,16 @@
                 </div>
             </div>
 
-            <div class="mt-6 grid gap-4 md:grid-cols-3">
+            <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div @class([
+                    'rounded-2xl p-4',
+                    'bg-zinc-50 dark:bg-zinc-800/70' => ! $weather?->isBad(),
+                    'border border-sky-300/70 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/10' => $weather?->isBad(),
+                ]) data-test="current-weather">
+                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Current weather</p>
+                    <p class="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $weather?->label() }}</p>
+                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ $weather?->effectsSummary() }}</p>
+                </div>
                 <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70">
                     <p class="text-sm text-zinc-500 dark:text-zinc-400">Average temperature</p>
                     <p class="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $country?->avg_temp_c }}°C</p>

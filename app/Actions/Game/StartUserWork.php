@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\CityAction;
 use App\Models\User;
 use App\Models\UserWork;
+use App\Weather;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,7 @@ class StartUserWork
             'destination_city_id' => null,
             'skill_key' => $action->skill_key,
             'duration_seconds' => $this->calculateWorkDuration->forCityAction($user, $action, $skillProgress),
+            'weather' => $this->calculateWorkDuration->currentWeather($user),
         ]);
     }
 
@@ -56,6 +58,7 @@ class StartUserWork
             'destination_city_id' => $destination->id,
             'skill_key' => null,
             'duration_seconds' => $this->calculateWorkDuration->forTravel($user, $destination),
+            'weather' => $this->calculateWorkDuration->currentWeather($user),
         ]);
     }
 
@@ -70,7 +73,7 @@ class StartUserWork
     }
 
     /**
-     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,skill_key:?string,duration_seconds:int}  $attributes
+     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
      *
      * @throws AuthorizationException
      */

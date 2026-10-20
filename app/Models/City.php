@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Weather;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,12 +13,17 @@ class City extends Model
 {
     use SoftDeletes;
 
+    protected $attributes = [
+        'weather' => 'clear',
+    ];
+
     protected $fillable = [
         'country_id',
         'city',
         'biome',
         'rain_chance_pct',
         'trouble_chance_pct',
+        'weather',
         'baseline_loot_tier',
         'lat',
         'lng',
@@ -26,6 +32,7 @@ class City extends Model
     protected $casts = [
         'lat' => 'float',
         'lng' => 'float',
+        'weather' => Weather::class,
     ];
 
     public function country(): BelongsTo

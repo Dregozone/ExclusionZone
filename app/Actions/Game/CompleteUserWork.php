@@ -58,12 +58,19 @@ class CompleteUserWork
             throw new AuthorizationException('That action is no longer available.');
         }
 
-        $reward = ($this->performCityAction)($user, $action);
+        $weather = $work->weather;
+        $reward = ($this->performCityAction)($user, $action, $weather);
 
         $summary = "Action completed: +{$reward['xp']} XP";
 
+        if ($weather->isBad()) {
+            $summary .= " (+{$weather->experienceBonusPercent()}% {$weather->label()} bonus)";
+        }
+
         if ($reward['item_name'] !== null) {
-            $summary .= ", +{$reward['quantity']} {$reward['item_name']}";
+            $summary .= $reward['item_lost']
+                ? ", {$reward['quantity']} {$reward['item_name']} lost to the {$weather->value}"
+                : ", +{$reward['quantity']} {$reward['item_name']}";
         }
 
         if ($reward['levels_gained'] > 0) {

@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use App\Weather;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserWork extends Model
 {
+    protected $attributes = [
+        'weather' => 'clear',
+    ];
+
     protected $fillable = [
         'user_id',
         'work_type',
@@ -15,6 +20,7 @@ class UserWork extends Model
         'destination_city_id',
         'skill_key',
         'duration_seconds',
+        'weather',
         'available_at',
     ];
 
@@ -22,6 +28,7 @@ class UserWork extends Model
     {
         return [
             'available_at' => 'immutable_datetime',
+            'weather' => Weather::class,
         ];
     }
 

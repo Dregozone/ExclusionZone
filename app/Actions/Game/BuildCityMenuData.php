@@ -11,6 +11,7 @@ use App\Models\QuestStep;
 use App\Models\User;
 use App\Models\UserQuest;
 use App\Models\UserWork;
+use App\Weather;
 use Illuminate\Support\Collection;
 
 class BuildCityMenuData
@@ -83,7 +84,8 @@ class BuildCityMenuData
             'loadout' => $user->cosmeticLoadout,
             'map_data' => $this->buildMapData(),
             'current_city_id' => $city?->id,
-            'local_event' => $this->localEventFor($city?->rain_chance_pct, $city?->trouble_chance_pct),
+            'weather' => $city?->weather,
+            'local_event' => $this->localEventFor($city?->weather, $city?->trouble_chance_pct),
             'hooks' => collect([
                 ['key' => 'chat_send', 'route' => 'chat', 'label' => 'Open radio chat', 'description' => 'Check survivor chatter and faction rumors.'],
                 ['key' => 'trade_create', 'route' => 'trade', 'label' => 'Review trade board', 'description' => 'Price out scavenged loot and swap supplies.'],
@@ -127,15 +129,16 @@ class BuildCityMenuData
         return ['nodes' => $nodes, 'edges' => $edges];
     }
 
-    private function localEventFor(?int $rainChance, ?int $troubleChance): string
+    private function localEventFor(?Weather $weather, ?int $troubleChance): string
     {
-        if ($rainChance === null || $troubleChance === null) {
+        if ($weather === null || $troubleChance === null) {
             return 'No scout report available.';
         }
 
         return match (true) {
+            $weather === Weather::Storm => 'A storm is tearing through the district; loose loot will not survive the trip back.',
             $troubleChance >= 70 => 'Hostile movement reported in nearby districts.',
-            $rainChance >= 60 => 'Heavy rain is soaking the route and slowing travel.',
+            $weather === Weather::Rain => 'Heavy rain is soaking the route and slowing travel.',
             $troubleChance >= 45 => 'Tension is rising; keep your pack tight and your exits clear.',
             default => 'Scouts report a steady window for salvage and movement.',
         };
@@ -161,6 +164,7 @@ class BuildCityMenuData
                 ? ($activeWork->cityAction?->description ?? 'Stay focused until the work window closes.')
                 : 'Movement is locked in until you arrive or cancel the route.',
             'duration_seconds' => $activeWork->duration_seconds,
+            'weather' => $activeWork->weather,
             'available_at_iso' => $activeWork->available_at->toIso8601String(),
             'available_at_human' => $activeWork->available_at->diffForHumans(),
             'remaining_seconds' => max(0, now()->diffInSeconds($activeWork->available_at, false)),
