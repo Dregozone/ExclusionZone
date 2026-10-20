@@ -34,6 +34,7 @@ class BuildCityMenuData
             'cosmeticLoadout.profileFlair',
             'userQuests.quest.steps.city',
             'userQuests.quest.steps.requiredItem',
+            'userQuests.quest.steps.requiredCityAction',
             'userQuests.quest.rewardSkill',
             'userQuests.quest.rewardItem',
         ]);
@@ -177,7 +178,7 @@ class BuildCityMenuData
     }
 
     /**
-     * @return Collection<int, array{step: QuestStep, quest_name: string, resolved_required_item: ?Item, resolved_required_quantity: int}>
+     * @return Collection<int, array{step: QuestStep, quest_name: string, requirements: array<int, array{item: ?Item, quantity: int}>}>
      */
     private function questStepActionsFor(User $user, ?City $city): Collection
     {
@@ -185,47 +186,79 @@ class BuildCityMenuData
             return collect();
         }
 
-        $resolver = new InteractWithQuestStep;
-
         return $user->userQuests
             ->where('status', 'active')
-            ->flatMap(function (UserQuest $userQuest) use ($user, $city, $resolver): array {
-                $stepIndex = $userQuest->current_step_index;
-                $step = $userQuest->quest->steps->get($stepIndex);
+            ->flatMap(function (UserQuest $userQuest) use ($user, $city): array {
+                $step = $userQuest->quest->steps->get($userQuest->current_step_index);
 
                 if ($step === null || $step->city_id !== $city->id) {
                     return [];
                 }
 
-                $requirement = $resolver->resolveRequirement($userQuest, $step, $stepIndex);
+                $actionProgress = $this->actionProgressFor($userQuest, $step);
 
-                if ($requirement !== null) {
-                    $hasItem = $user->inventoryItems->contains(
-                        fn ($i) => $i->item_id === $requirement['required_item_id']
-                            && $i->quantity >= $requirement['required_item_quantity'],
-                    );
-
-                    if (! $hasItem) {
-                        return [];
-                    }
+                if ($actionProgress !== null && $actionProgress['progress'] < $actionProgress['count']) {
+                    return [];
                 }
 
-                $resolvedItem = $requirement !== null
-                    ? Item::find($requirement['required_item_id'])
-                    : null;
+                $requirements = $this->requirementsFor($userQuest, $step);
+
+                $hasAllItems = collect($requirements)->every(
+                    fn (array $requirement): bool => $user->inventoryItems->contains(
+                        fn ($i) => $i->item_id === $requirement['item']?->id
+                            && $i->quantity >= $requirement['quantity'],
+                    ),
+                );
+
+                if (! $hasAllItems) {
+                    return [];
+                }
 
                 return [[
                     'step' => $step,
                     'quest_name' => $userQuest->quest->name,
-                    'resolved_required_item' => $resolvedItem,
-                    'resolved_required_quantity' => $requirement['required_item_quantity'] ?? 1,
+                    'requirements' => $requirements,
                 ]];
             })
             ->values();
     }
 
     /**
-     * @return array{available: array<int, array{quest: Quest, type: string, completion_count: ?int, userQuest: ?UserQuest}>, active: array<int, array{userQuest: UserQuest, quest: Quest, current_step: ?QuestStep}>, completed: array<int, UserQuest>}
+     * @return array<int, array{item: ?Item, quantity: int}>
+     */
+    private function requirementsFor(UserQuest $userQuest, QuestStep $step): array
+    {
+        $requirements = (new InteractWithQuestStep)->resolveRequirements($userQuest, $step, $userQuest->current_step_index);
+
+        $items = Item::query()
+            ->whereIn('id', array_column($requirements, 'required_item_id'))
+            ->get()
+            ->keyBy('id');
+
+        return array_map(fn (array $requirement): array => [
+            'item' => $items->get($requirement['required_item_id']),
+            'quantity' => $requirement['required_item_quantity'],
+        ], $requirements);
+    }
+
+    /**
+     * @return array{action: ?CityAction, progress: int, count: int}|null
+     */
+    private function actionProgressFor(UserQuest $userQuest, QuestStep $step): ?array
+    {
+        if ($step->required_city_action_id === null) {
+            return null;
+        }
+
+        return [
+            'action' => $step->requiredCityAction,
+            'progress' => $userQuest->step_action_progress,
+            'count' => (int) $step->required_action_count,
+        ];
+    }
+
+    /**
+     * @return array{available: array<int, array{quest: Quest, type: string, completion_count: ?int, userQuest: ?UserQuest}>, active: array<int, array{userQuest: UserQuest, quest: Quest, current_step: ?QuestStep, requirements: array<int, array{item: ?Item, quantity: int}>, action_progress: ?array{action: ?CityAction, progress: int, count: int}}>, completed: array<int, UserQuest>}
      */
     private function jobsDataFor(User $user): array
     {
@@ -292,11 +325,17 @@ class BuildCityMenuData
 
         $active = $user->userQuests
             ->where('status', 'active')
-            ->map(fn (UserQuest $uq): array => [
-                'userQuest' => $uq,
-                'quest' => $uq->quest,
-                'current_step' => $uq->quest->steps->get($uq->current_step_index),
-            ])
+            ->map(function (UserQuest $uq): array {
+                $currentStep = $uq->quest->steps->get($uq->current_step_index);
+
+                return [
+                    'userQuest' => $uq,
+                    'quest' => $uq->quest,
+                    'current_step' => $currentStep,
+                    'requirements' => $currentStep === null ? [] : $this->requirementsFor($uq, $currentStep),
+                    'action_progress' => $currentStep === null ? null : $this->actionProgressFor($uq, $currentStep),
+                ];
+            })
             ->values()
             ->all();
 

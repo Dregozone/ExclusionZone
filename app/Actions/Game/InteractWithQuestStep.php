@@ -42,9 +42,16 @@ class InteractWithQuestStep
             throw new AuthorizationException('That is not your current quest objective.');
         }
 
-        $requirement = $this->resolveRequirement($userQuest, $step, $stepIndex);
+        if ($step->required_city_action_id !== null && $userQuest->step_action_progress < $step->required_action_count) {
+            $remaining = $step->required_action_count - $userQuest->step_action_progress;
+            $step->loadMissing('requiredCityAction');
 
-        if ($requirement !== null) {
+            throw new AuthorizationException('You need to complete '.($step->requiredCityAction?->label ?? 'the required action').' '.$remaining.' more '.($remaining === 1 ? 'time' : 'times').' to proceed.');
+        }
+
+        $requirements = $this->resolveRequirements($userQuest, $step, $stepIndex);
+
+        foreach ($requirements as $requirement) {
             $inventoryItem = $user->inventoryItems->first(fn ($i) => $i->item_id === $requirement['required_item_id']);
 
             if ($inventoryItem === null || $inventoryItem->quantity < $requirement['required_item_quantity']) {
@@ -53,14 +60,16 @@ class InteractWithQuestStep
             }
         }
 
-        return DB::transaction(function () use ($user, $step, $userQuest, $stepIndex, $steps, $requirement): array {
-            if ($step->consumes_item && $requirement !== null) {
-                $inventoryItem = $user->inventoryItems()->where('item_id', $requirement['required_item_id'])->lockForUpdate()->first();
+        return DB::transaction(function () use ($user, $step, $userQuest, $stepIndex, $steps, $requirements): array {
+            if ($step->consumes_item) {
+                foreach ($requirements as $requirement) {
+                    $inventoryItem = $user->inventoryItems()->where('item_id', $requirement['required_item_id'])->lockForUpdate()->first();
 
-                if ($inventoryItem->quantity <= $requirement['required_item_quantity']) {
-                    $inventoryItem->delete();
-                } else {
-                    $inventoryItem->decrement('quantity', $requirement['required_item_quantity']);
+                    if ($inventoryItem->quantity <= $requirement['required_item_quantity']) {
+                        $inventoryItem->delete();
+                    } else {
+                        $inventoryItem->decrement('quantity', $requirement['required_item_quantity']);
+                    }
                 }
             }
 
@@ -77,6 +86,7 @@ class InteractWithQuestStep
                         'completed_at' => now(),
                         'completion_count' => $userQuest->completion_count + 1,
                         'current_step_index' => 0,
+                        'step_action_progress' => 0,
                         'active_requirements' => null,
                     ]);
                 } else {
@@ -84,6 +94,7 @@ class InteractWithQuestStep
                         'notes' => $notes,
                         'status' => 'completed',
                         'completed_at' => now(),
+                        'step_action_progress' => 0,
                     ]);
                 }
 
@@ -98,6 +109,7 @@ class InteractWithQuestStep
             $userQuest->update([
                 'notes' => $notes,
                 'current_step_index' => $stepIndex + 1,
+                'step_action_progress' => 0,
             ]);
 
             return [
@@ -108,24 +120,41 @@ class InteractWithQuestStep
     }
 
     /**
-     * Resolve the effective item requirement for a step, preferring active_requirements for repeatable jobs.
+     * Resolve every item a step needs, preferring active_requirements for repeatable jobs.
      *
-     * @return array{required_item_id: int, required_item_quantity: int}|null
+     * A requirement variant may be a single requirement or a list of them, and the step's
+     * required_items are always needed on top. Quantities of the same item are summed.
+     *
+     * @return array<int, array{required_item_id: int, required_item_quantity: int}>
      */
-    public function resolveRequirement(UserQuest $userQuest, QuestStep $step, int $stepIndex): ?array
+    public function resolveRequirements(UserQuest $userQuest, QuestStep $step, int $stepIndex): array
     {
-        if ($userQuest->active_requirements !== null && isset($userQuest->active_requirements[$stepIndex])) {
-            return $userQuest->active_requirements[$stepIndex];
-        }
+        $requirements = [];
 
-        if ($step->required_item_id !== null) {
-            return [
+        if ($userQuest->active_requirements !== null && isset($userQuest->active_requirements[$stepIndex])) {
+            $variant = $userQuest->active_requirements[$stepIndex];
+            $requirements = array_is_list($variant) ? $variant : [$variant];
+        } elseif ($step->required_item_id !== null) {
+            $requirements[] = [
                 'required_item_id' => $step->required_item_id,
                 'required_item_quantity' => $step->required_item_quantity,
             ];
         }
 
-        return null;
+        $quantitiesByItem = [];
+
+        foreach ([...$requirements, ...($step->required_items ?? [])] as $requirement) {
+            $itemId = (int) $requirement['required_item_id'];
+            $quantitiesByItem[$itemId] = ($quantitiesByItem[$itemId] ?? 0) + (int) $requirement['required_item_quantity'];
+        }
+
+        return collect($quantitiesByItem)
+            ->map(fn (int $quantity, int $itemId): array => [
+                'required_item_id' => $itemId,
+                'required_item_quantity' => $quantity,
+            ])
+            ->values()
+            ->all();
     }
 
     private function grantReward(User $user, Quest $quest): string

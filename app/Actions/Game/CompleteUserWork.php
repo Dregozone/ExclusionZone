@@ -12,6 +12,7 @@ class CompleteUserWork
     public function __construct(
         public PerformCityAction $performCityAction,
         public TravelToCity $travelToCity,
+        public RecordQuestActionProgress $recordQuestActionProgress,
     ) {}
 
     /**
@@ -69,9 +70,17 @@ class CompleteUserWork
             $summary .= ", {$reward['levels_gained']} level gained";
         }
 
+        $summary .= '.';
+
+        $questProgress = ($this->recordQuestActionProgress)($user, $action);
+
+        if ($questProgress !== []) {
+            $summary .= ' Job progress: '.implode(', ', $questProgress).'.';
+        }
+
         return [
             'type' => 'city_action',
-            'status' => $summary.'.',
+            'status' => $summary,
         ];
     }
 

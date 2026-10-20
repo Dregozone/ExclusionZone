@@ -198,12 +198,38 @@
                                         <flux:error name="steps.{{ $index }}.consumes_item" />
                                     </flux:field>
 
+                                    <flux:field class="sm:col-span-2">
+                                        <flux:label>{{ __('Additional Required Items (JSON)') }}</flux:label>
+                                        <flux:textarea wire:model="steps.{{ $index }}.required_items_json" rows="3"
+                                            placeholder='[{"required_item_id": 1, "required_item_quantity": 2}, {"required_item_id": 5, "required_item_quantity": 1}]' />
+                                        <flux:description>{{ __('JSON array of extra items the player must also hand in for this step. Leave blank for none.') }}</flux:description>
+                                        <flux:error name="steps.{{ $index }}.required_items_json" />
+                                    </flux:field>
+
+                                    <flux:field>
+                                        <flux:label>{{ __('Required City Action') }}</flux:label>
+                                        <flux:select wire:model="steps.{{ $index }}.required_city_action_id" searchable>
+                                            <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                                            @foreach ($this->cityActions as $cityAction)
+                                                <flux:select.option value="{{ $cityAction->id }}">{{ $cityAction->label }} ({{ $cityAction->city?->city }})</flux:select.option>
+                                            @endforeach
+                                        </flux:select>
+                                        <flux:description>{{ __('The player must complete this action a number of times while on this step.') }}</flux:description>
+                                        <flux:error name="steps.{{ $index }}.required_city_action_id" />
+                                    </flux:field>
+
+                                    <flux:field>
+                                        <flux:label>{{ __('Required Action Count') }}</flux:label>
+                                        <flux:input type="number" wire:model="steps.{{ $index }}.required_action_count" min="1" placeholder="{{ __('e.g. 3') }}" />
+                                        <flux:error name="steps.{{ $index }}.required_action_count" />
+                                    </flux:field>
+
                                     @if ($is_repeatable)
                                         <flux:field class="sm:col-span-2">
                                             <flux:label>{{ __('Requirement Variants (JSON)') }}</flux:label>
                                             <flux:textarea wire:model="steps.{{ $index }}.requirement_variants_json" rows="4"
-                                                placeholder='[{"required_item_id": 1, "required_item_quantity": 2}, {"required_item_id": 5, "required_item_quantity": 1}]' />
-                                            <flux:description>{{ __('JSON array of item/quantity options. One is randomly selected per run. Leave blank to use the fixed Required Item above.') }}</flux:description>
+                                                placeholder='[{"required_item_id": 1, "required_item_quantity": 2}, [{"required_item_id": 5, "required_item_quantity": 1}, {"required_item_id": 7, "required_item_quantity": 3}]]' />
+                                            <flux:description>{{ __('JSON array of item/quantity options; an option can itself be a list of items. One is randomly selected per run. Leave blank to use the fixed Required Item above.') }}</flux:description>
                                             <flux:error name="steps.{{ $index }}.requirement_variants_json" />
                                         </flux:field>
                                     @endif

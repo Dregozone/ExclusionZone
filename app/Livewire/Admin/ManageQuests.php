@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\City;
+use App\Models\CityAction;
 use App\Models\Item;
 use App\Models\Quest;
 use App\Models\QuestStep;
@@ -47,7 +48,7 @@ class ManageQuests extends Component
     public ?int $prerequisite_quest_id = null;
 
     /**
-     * @var array<int, array{id: ?int, step_order: int, city_id: ?int, person_of_interest: string, action_label: string, interaction_text: string, required_item_id: ?int, required_item_quantity: int, consumes_item: bool, requirement_variants_json: string}>
+     * @var array<int, array{id: ?int, step_order: int, city_id: ?int, person_of_interest: string, action_label: string, interaction_text: string, required_item_id: ?int, required_item_quantity: int, required_items_json: string, consumes_item: bool, requirement_variants_json: string, required_city_action_id: ?int, required_action_count: ?int}>
      */
     public array $steps = [];
 
@@ -91,6 +92,12 @@ class ManageQuests extends Component
     }
 
     #[Computed]
+    public function cityActions(): Collection
+    {
+        return CityAction::query()->with('city:id,city')->orderBy('label')->get(['id', 'city_id', 'label']);
+    }
+
+    #[Computed]
     public function storyQuests(): Collection
     {
         return Quest::query()
@@ -131,10 +138,15 @@ class ManageQuests extends Component
             'interaction_text' => $step->interaction_text,
             'required_item_id' => $step->required_item_id,
             'required_item_quantity' => $step->required_item_quantity,
+            'required_items_json' => $step->required_items !== null
+                ? json_encode($step->required_items, JSON_PRETTY_PRINT)
+                : '',
             'consumes_item' => $step->consumes_item,
             'requirement_variants_json' => $step->requirement_variants !== null
                 ? json_encode($step->requirement_variants, JSON_PRETTY_PRINT)
                 : '',
+            'required_city_action_id' => $step->required_city_action_id,
+            'required_action_count' => $step->required_action_count,
         ])->values()->all();
 
         $this->showForm = true;
@@ -151,8 +163,11 @@ class ManageQuests extends Component
             'interaction_text' => '',
             'required_item_id' => null,
             'required_item_quantity' => 1,
+            'required_items_json' => '',
             'consumes_item' => false,
             'requirement_variants_json' => '',
+            'required_city_action_id' => null,
+            'required_action_count' => null,
         ];
     }
 
@@ -186,8 +201,11 @@ class ManageQuests extends Component
             'steps.*.interaction_text' => ['required', 'string', 'max:2000'],
             'steps.*.required_item_id' => ['nullable', 'integer', 'exists:items,id'],
             'steps.*.required_item_quantity' => ['required', 'integer', 'min:1'],
+            'steps.*.required_items_json' => ['nullable', 'string'],
             'steps.*.consumes_item' => ['required', 'boolean'],
             'steps.*.requirement_variants_json' => ['nullable', 'string'],
+            'steps.*.required_city_action_id' => ['nullable', 'integer', 'exists:city_actions,id'],
+            'steps.*.required_action_count' => ['nullable', 'required_with:steps.*.required_city_action_id', 'integer', 'min:1'],
         ]);
 
         DB::transaction(function () use ($validated): void {
@@ -218,14 +236,9 @@ class ManageQuests extends Component
             $quest->steps()->whereNotIn('id', $incomingIds)->delete();
 
             foreach ($this->steps as $index => $stepData) {
-                $variants = null;
-                $variantsJson = trim($stepData['requirement_variants_json'] ?? '');
-                if ($variantsJson !== '') {
-                    $decoded = json_decode($variantsJson, true);
-                    if (is_array($decoded)) {
-                        $variants = $decoded;
-                    }
-                }
+                $variants = $this->decodeJsonList($stepData['requirement_variants_json'] ?? '');
+                $requiredItems = $this->decodeJsonList($stepData['required_items_json'] ?? '');
+                $requiredCityActionId = $stepData['required_city_action_id'] ?: null;
 
                 $stepPayload = [
                     'step_order' => $index,
@@ -235,8 +248,11 @@ class ManageQuests extends Component
                     'interaction_text' => $stepData['interaction_text'],
                     'required_item_id' => $stepData['required_item_id'] ?: null,
                     'required_item_quantity' => $stepData['required_item_quantity'],
+                    'required_items' => $requiredItems,
                     'consumes_item' => $stepData['consumes_item'],
                     'requirement_variants' => $variants,
+                    'required_city_action_id' => $requiredCityActionId,
+                    'required_action_count' => $requiredCityActionId !== null ? $stepData['required_action_count'] : null,
                 ];
 
                 if ($stepData['id'] !== null) {
@@ -270,6 +286,22 @@ class ManageQuests extends Component
     {
         $this->showForm = false;
         $this->resetForm();
+    }
+
+    /**
+     * @return array<int, mixed>|null
+     */
+    private function decodeJsonList(string $json): ?array
+    {
+        $json = trim($json);
+
+        if ($json === '') {
+            return null;
+        }
+
+        $decoded = json_decode($json, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function resetForm(): void

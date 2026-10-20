@@ -11,6 +11,7 @@ class UserQuest extends Model
         'user_id',
         'quest_id',
         'current_step_index',
+        'step_action_progress',
         'status',
         'notes',
         'completed_at',
@@ -24,6 +25,7 @@ class UserQuest extends Model
             'notes' => 'array',
             'completed_at' => 'datetime',
             'current_step_index' => 'integer',
+            'step_action_progress' => 'integer',
             'completion_count' => 'integer',
             'active_requirements' => 'array',
         ];

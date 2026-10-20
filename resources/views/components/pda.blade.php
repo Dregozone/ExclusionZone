@@ -274,9 +274,7 @@
                                         @php
                                             $isRepeatable = $entry['quest']->is_repeatable;
                                             $isStory = $entry['quest']->quest_type === 'story';
-                                            $stepIdx = $entry['userQuest']->current_step_index;
-                                            $activeReqs = $entry['userQuest']->active_requirements ?? [];
-                                            $resolvedReq = $activeReqs[$stepIdx] ?? null;
+                                            $stepCount = $entry['quest']->steps->count();
                                         @endphp
                                         <div class="rounded-lg border border-emerald-800/40 bg-emerald-900/20 p-3">
                                             <div class="flex items-start justify-between gap-2">
@@ -292,16 +290,19 @@
                                             </div>
                                             @if ($entry['current_step'] !== null)
                                                 <p class="mt-1.5 text-xs text-zinc-500">
+                                                    @if ($stepCount > 2)
+                                                        <span class="font-mono text-[10px] text-zinc-600">Step {{ $entry['userQuest']->current_step_index + 1 }}/{{ $stepCount }} ·</span>
+                                                    @endif
                                                     Objective: <span class="text-zinc-400">{{ $entry['current_step']->action_label }}</span> in <span class="text-zinc-400">{{ $entry['current_step']->city?->city }}</span>
                                                 </p>
-                                                @if ($resolvedReq !== null)
-                                                    @php $reqItem = \App\Models\Item::find($resolvedReq['required_item_id']); @endphp
+                                                @if ($entry['action_progress'] !== null)
                                                     <p class="mt-1 text-xs text-zinc-600">
-                                                        Requires: <span class="text-amber-500/80">{{ $reqItem?->name }} ×{{ $resolvedReq['required_item_quantity'] }}</span>
+                                                        Task: <span class="text-sky-400/80">{{ $entry['action_progress']['action']?->label }} {{ $entry['action_progress']['progress'] }}/{{ $entry['action_progress']['count'] }}</span>
                                                     </p>
-                                                @elseif ($entry['current_step']->required_item_id !== null)
+                                                @endif
+                                                @if (count($entry['requirements']) > 0)
                                                     <p class="mt-1 text-xs text-zinc-600">
-                                                        Requires: <span class="text-amber-500/80">{{ $entry['current_step']->requiredItem?->name }} ×{{ $entry['current_step']->required_item_quantity }}</span>
+                                                        Requires: <span class="text-amber-500/80">{{ collect($entry['requirements'])->map(fn ($requirement) => $requirement['item']?->name.' ×'.$requirement['quantity'])->implode(', ') }}</span>
                                                     </p>
                                                 @endif
                                             @endif
