@@ -47,6 +47,7 @@ Progress rule:
 | Skill thresholds | Below-min-level denied; boundary level allowed | `tests/Feature/GameMvpTest.php` (`skill thresholds deny and allow access...`) | Done |
 | Premium non-P2W | Premium can equip cosmetics only; outcomes stay parity | `tests/Feature/GameMvpTest.php` (`premium cosmetic equip succeeds...`) | Done |
 | Moderator controls | Moderator mute allowed and expiration works | `tests/Feature/GameMvpTest.php` (`moderators can temporarily mute users and the mute expires`) | Done |
+| Dynamic weather | Hourly per-city weather roll; bad weather lengthens work/travel timers, grants bonus XP, and can lose loot; weather is locked when work starts | `tests/Feature/WeatherTest.php` | Done |
 | Seed/reference integrity | Roles/skills/countries/cities seeded; percentages bounded | `tests/Feature/GameMvpTest.php` (`reference data from the specification is seeded and bounded`) | Done |
 | Auth starter-kit flows | Registration/login/reset/verification/2FA/profile/security | `tests/Feature/Auth/*`, `tests/Feature/Settings/*` | Done |
 
@@ -78,4 +79,4 @@ Progress rule:
 ## 7. Risks and Open Decisions
 - Premium representation (role vs subscription overlay) still influences longer-term entitlement tests.
 - PvP policy choice can expand/reshape combat and moderation scenarios.
-- Dynamic weather/trouble systems may require simulation-style tests in later phases.
+- Dynamic trouble events may require simulation-style tests in later phases (weather rolls are covered with `Lottery` fakes).
