@@ -113,7 +113,7 @@ class ManageCityActions extends Component
             'skill_key' => ['required', 'string', 'max:100'],
             'min_level' => ['required', 'integer', 'min:1', 'max:100'],
             'risk_level' => ['required', 'string', 'in:low,medium,high,extreme'],
-            'base_duration_seconds' => ['required', 'integer', 'min:10'],
+            'base_duration_seconds' => ['required', 'integer', 'min:10', 'max:65535'],
             'reward_xp' => ['required', 'integer', 'min:1'],
             'reward_item_key' => ['required', 'string', 'max:100'],
             'reward_quantity' => ['required', 'integer', 'min:1'],

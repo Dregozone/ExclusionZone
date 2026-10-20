@@ -29,6 +29,7 @@
                                         type="number"
                                         wire:model="editingDuration"
                                         min="10"
+                                        max="65535"
                                         class="w-28"
                                     />
                                     <span class="text-zinc-500 dark:text-zinc-400">s</span>

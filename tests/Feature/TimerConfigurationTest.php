@@ -211,6 +211,19 @@ test('manage travel routes rejects duration below 10 seconds', function () {
         ->assertHasErrors(['editingDuration']);
 });
 
+test('manage travel routes rejects duration above the column limit', function () {
+    $admin = User::factory()->admin()->create();
+    $kyiv = City::query()->where('city', 'Kyiv')->firstOrFail();
+    $warsaw = City::query()->where('city', 'Warsaw')->firstOrFail();
+
+    Livewire::actingAs($admin)
+        ->test(ManageTravelRoutes::class)
+        ->call('edit', $kyiv->id, $warsaw->id, 30)
+        ->set('editingDuration', 65536)
+        ->call('save')
+        ->assertHasErrors(['editingDuration']);
+});
+
 test('manage travel routes cancel clears the editing state', function () {
     $admin = User::factory()->admin()->create();
     $kyiv = City::query()->where('city', 'Kyiv')->firstOrFail();
@@ -249,6 +262,18 @@ test('manage city actions rejects base_duration_seconds below 10', function () {
         ->test(ManageCityActions::class)
         ->call('edit', $action->id)
         ->set('base_duration_seconds', 5)
+        ->call('save')
+        ->assertHasErrors(['base_duration_seconds']);
+});
+
+test('manage city actions rejects base_duration_seconds above the column limit', function () {
+    $admin = User::factory()->admin()->create();
+    $action = CityAction::query()->where('action_key', 'district_patrols')->firstOrFail();
+
+    Livewire::actingAs($admin)
+        ->test(ManageCityActions::class)
+        ->call('edit', $action->id)
+        ->set('base_duration_seconds', 65536)
         ->call('save')
         ->assertHasErrors(['base_duration_seconds']);
 });
