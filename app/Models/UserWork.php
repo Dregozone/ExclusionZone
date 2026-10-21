@@ -18,6 +18,8 @@ class UserWork extends Model
         'city_action_id',
         'origin_city_id',
         'destination_city_id',
+        'offered_item_id',
+        'offered_quantity',
         'skill_key',
         'duration_seconds',
         'weather',
@@ -28,6 +30,7 @@ class UserWork extends Model
     {
         return [
             'available_at' => 'immutable_datetime',
+            'offered_quantity' => 'integer',
             'weather' => Weather::class,
         ];
     }
@@ -52,6 +55,11 @@ class UserWork extends Model
         return $this->belongsTo(City::class, 'destination_city_id')->withTrashed();
     }
 
+    public function offeredItem(): BelongsTo
+    {
+        return $this->belongsTo(Item::class, 'offered_item_id')->withTrashed();
+    }
+
     public function skill(): BelongsTo
     {
         return $this->belongsTo(Skill::class, 'skill_key', 'key');
@@ -65,5 +73,10 @@ class UserWork extends Model
     public function isTravel(): bool
     {
         return $this->work_type === 'travel';
+    }
+
+    public function isBrainScorcher(): bool
+    {
+        return $this->work_type === 'brain_scorcher';
     }
 }

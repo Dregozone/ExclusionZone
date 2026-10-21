@@ -4,6 +4,7 @@ namespace App\Actions\Game;
 
 use App\Models\City;
 use App\Models\CityAction;
+use App\Models\Item;
 use App\Models\User;
 use App\Models\UserWork;
 use App\Weather;
@@ -16,6 +17,7 @@ class StartUserWork
     public function __construct(
         public PerformCityAction $performCityAction,
         public TravelToCity $travelToCity,
+        public FeedBrainScorcher $feedBrainScorcher,
         public CalculateWorkDuration $calculateWorkDuration,
     ) {}
 
@@ -65,6 +67,29 @@ class StartUserWork
     /**
      * @throws AuthorizationException
      */
+    public function forBrainScorcher(User $user, Item $item, int $quantity): UserWork
+    {
+        $user->loadMissing('location.city');
+
+        $this->ensureNoActiveWork($user);
+        $this->feedBrainScorcher->authorize($user, $item, $quantity);
+
+        return $this->createWork($user, [
+            'work_type' => 'brain_scorcher',
+            'city_action_id' => null,
+            'origin_city_id' => $user->location?->city_id,
+            'destination_city_id' => null,
+            'offered_item_id' => $item->id,
+            'offered_quantity' => $quantity,
+            'skill_key' => null,
+            'duration_seconds' => $this->calculateWorkDuration->forBrainScorcher($user),
+            'weather' => $this->calculateWorkDuration->currentWeather($user),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
     private function ensureNoActiveWork(User $user): void
     {
         if ($user->activeWork()->exists()) {
@@ -73,7 +98,7 @@ class StartUserWork
     }
 
     /**
-     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
+     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,offered_item_id?:int,offered_quantity?:int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
      *
      * @throws AuthorizationException
      */

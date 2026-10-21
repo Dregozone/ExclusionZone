@@ -12,6 +12,7 @@ class CompleteUserWork
     public function __construct(
         public PerformCityAction $performCityAction,
         public TravelToCity $travelToCity,
+        public FeedBrainScorcher $feedBrainScorcher,
         public RecordQuestActionProgress $recordQuestActionProgress,
     ) {}
 
@@ -24,7 +25,7 @@ class CompleteUserWork
     {
         return DB::transaction(function () use ($user): array {
             $work = UserWork::query()
-                ->with(['cityAction.skill', 'originCity', 'destinationCity'])
+                ->with(['cityAction.skill', 'originCity', 'destinationCity', 'offeredItem'])
                 ->whereBelongsTo($user)
                 ->lockForUpdate()
                 ->first();
@@ -37,9 +38,11 @@ class CompleteUserWork
                 throw new AuthorizationException('That work is still in progress. Wait for the timer to finish or cancel it.');
             }
 
-            $result = $work->isCityAction()
-                ? $this->completeCityAction($user, $work)
-                : $this->completeTravel($user, $work);
+            $result = match (true) {
+                $work->isCityAction() => $this->completeCityAction($user, $work),
+                $work->isBrainScorcher() => $this->completeBrainScorcher($user, $work),
+                default => $this->completeTravel($user, $work),
+            };
 
             $work->delete();
 
@@ -99,6 +102,44 @@ class CompleteUserWork
         return [
             'type' => 'city_action',
             'status' => $summary,
+        ];
+    }
+
+    /**
+     * @return array{type:string,status:string}
+     */
+    private function completeBrainScorcher(User $user, UserWork $work): array
+    {
+        $item = $work->offeredItem;
+        $quantity = (int) $work->offered_quantity;
+
+        if ($item === null) {
+            throw new AuthorizationException('That offering is no longer available.');
+        }
+
+        $offering = $this->feedBrainScorcher->describeOffering($item, $quantity);
+
+        if ($this->feedBrainScorcher->ownedQuantity($user, $item) < $quantity) {
+            return [
+                'type' => 'brain_scorcher',
+                'status' => "The Brain Scorcher found nothing to burn: you no longer have {$offering}. Nothing was lost.",
+            ];
+        }
+
+        $result = ($this->feedBrainScorcher)($user, $item, $quantity);
+        $reward = $result['reward'];
+
+        $status = match ($result['outcome']) {
+            'jackpot' => "Jackpot! The Brain Scorcher burned {$offering} and spat out 1x {$reward?->name} ({$reward?->rarity->label()}).",
+            'upgrade' => "The Brain Scorcher burned {$offering} and returned something better: 1x {$reward?->name} ({$reward?->rarity->label()}).",
+            'same' => "The Brain Scorcher burned {$offering} and returned 1x {$reward?->name}.",
+            'downgrade' => "The Brain Scorcher burned {$offering} and returned something worse: 1x {$reward?->name} ({$reward?->rarity->label()}).",
+            default => "The Brain Scorcher burned {$offering} and gave nothing back.",
+        };
+
+        return [
+            'type' => 'brain_scorcher',
+            'status' => $status,
         ];
     }
 

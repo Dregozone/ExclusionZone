@@ -7,10 +7,12 @@ use App\Actions\Game\CompleteUserWork;
 use App\Actions\Game\EquipPremiumCosmetic;
 use App\Actions\Game\StartUserWork;
 use App\Http\Requests\EquipCosmeticRequest;
+use App\Http\Requests\FeedBrainScorcherRequest;
 use App\Http\Requests\PerformCityActionRequest;
 use App\Http\Requests\TravelRequest;
 use App\Models\City;
 use App\Models\CityAction;
+use App\Models\Item;
 use App\Models\PremiumCosmetic;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -42,6 +44,22 @@ class GameActionController extends Controller
         return to_route('dashboard')->with('status', 'Work started. Return when the timer ends in '.max(10, $work->duration_seconds).' seconds.');
     }
 
+    public function feedBrainScorcher(FeedBrainScorcherRequest $request, StartUserWork $startUserWork): RedirectResponse
+    {
+        try {
+            $this->authorizeTask($request, 'city_action_perform');
+            $work = $startUserWork->forBrainScorcher(
+                $request->user(),
+                Item::query()->findOrFail($request->integer('item_id')),
+                $request->integer('quantity'),
+            );
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
+
+        return to_route('dashboard')->with('status', 'The Brain Scorcher accepted your offering. See what it gives back in '.max(10, $work->duration_seconds).' seconds, or cancel to take your items back.');
+    }
+
     public function completeWork(Request $request, CompleteUserWork $completeUserWork): RedirectResponse
     {
         try {
@@ -61,9 +79,11 @@ class GameActionController extends Controller
             return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
-        $message = $work->isCityAction()
-            ? 'Work canceled. No rewards were granted.'
-            : 'Travel canceled. You stayed in your current city.';
+        $message = match (true) {
+            $work->isCityAction() => 'Work canceled. No rewards were granted.',
+            $work->isBrainScorcher() => 'Offering withdrawn. Your items are still in your pack.',
+            default => 'Travel canceled. You stayed in your current city.',
+        };
 
         return to_route('dashboard')->with('status', $message);
     }

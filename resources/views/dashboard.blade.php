@@ -57,9 +57,11 @@
                         @if ($active_work['weather']->isBad())
                             <div class="rounded-[1.5rem] border border-sky-300/70 bg-sky-50/80 p-5 text-sm text-zinc-600 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-zinc-300" data-test="active-work-weather">
                                 <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['weather']->label() }}:</span>
-                                {{ $active_work['type'] === 'travel'
-                                    ? "This route takes {$active_work['weather']->timerIncreasePercent()}% longer in the {$active_work['weather']->value}."
-                                    : $active_work['weather']->effectsSummary() }}
+                                {{ match ($active_work['type']) {
+                                    'travel' => "This route takes {$active_work['weather']->timerIncreasePercent()}% longer in the {$active_work['weather']->value}.",
+                                    'brain_scorcher' => "The Brain Scorcher runs {$active_work['weather']->timerIncreasePercent()}% slower in the {$active_work['weather']->value}.",
+                                    default => $active_work['weather']->effectsSummary(),
+                                } }}
                             </div>
                         @endif
 
@@ -81,6 +83,11 @@
                                 <div class="mt-4 h-3 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                                     <div class="h-full rounded-full bg-amber-500 transition-all duration-500" style="width: {{ $active_work['skill_progress_percent'] }}%"></div>
                                 </div>
+                            </div>
+                        @elseif ($active_work['type'] === 'brain_scorcher')
+                            <div class="rounded-[1.5rem] border border-fuchsia-300/70 bg-fuchsia-50/80 p-5 text-sm text-zinc-600 dark:border-fuchsia-500/30 dark:bg-fuchsia-500/10 dark:text-zinc-300">
+                                <span class="font-medium text-zinc-900 dark:text-zinc-100">Offering note:</span>
+                                The offering burns when you complete the work. It does not grant skill experience.
                             </div>
                         @else
                             <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-300">
@@ -241,6 +248,86 @@
                 @endforeach
             </div>
         </div>
+
+        @if ($brain_scorcher)
+            <div
+                x-data="{
+                    offerings: @js($brain_scorcher['offerings']),
+                    itemId: @js($brain_scorcher['offerings'][0]['item_id'] ?? null),
+                    quantity: 1,
+                    get offering() {
+                        return this.offerings.find((offering) => offering.item_id === Number(this.itemId)) ?? null;
+                    },
+                    get odds() {
+                        if (! this.offering) {
+                            return null;
+                        }
+
+                        const quantities = Object.keys(this.offering.odds_by_quantity).map(Number);
+                        const quantity = Math.min(Math.max(1, Number(this.quantity) || 1), Math.max(...quantities));
+
+                        return this.offering.odds_by_quantity[quantity];
+                    }
+                }"
+                class="rounded-3xl border border-fuchsia-300/60 bg-white p-6 dark:border-fuchsia-500/30 dark:bg-zinc-900"
+                data-test="brain-scorcher"
+            >
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.3em] text-fuchsia-700 dark:text-fuchsia-300">High risk · high reward</p>
+                        <h2 class="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">The Brain Scorcher</h2>
+                        <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+                            A Soviet psi-emitter still crackles under the cooling towers. Feed it an offering and it may hand back something worse, the same, something better, a Scorched item found nowhere else, or nothing at all. Rarer items and bigger offerings run hotter.
+                        </p>
+                    </div>
+                    <span class="rounded-full bg-fuchsia-100 px-2.5 py-1 text-xs font-medium text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-300">{{ $brain_scorcher['duration_seconds'] }}s burn</span>
+                </div>
+
+                @if (count($brain_scorcher['offerings']) === 0)
+                    <p class="mt-5 rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                        Your pack is empty. Bring something to burn.
+                    </p>
+                @else
+                    <form method="POST" action="{{ route('brain-scorcher.store') }}" class="mt-5 grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+                        @csrf
+
+                        <div class="space-y-4">
+                            <flux:field>
+                                <flux:label>Offering</flux:label>
+                                <flux:select name="item_id" x-model="itemId" data-test="brain-scorcher-item">
+                                    @foreach ($brain_scorcher['offerings'] as $offering)
+                                        <flux:select.option value="{{ $offering['item_id'] }}">{{ $offering['name'] }} ({{ $offering['rarity'] }}) · {{ $offering['owned'] }} carried</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>Quantity</flux:label>
+                                <flux:input type="number" name="quantity" min="1" x-model="quantity" x-bind:max="offering?.owned" data-test="brain-scorcher-quantity" />
+                                <flux:description>More copies raise the odds, up to {{ \App\Actions\Game\FeedBrainScorcher::MAX_EFFECTIVE_QUANTITY }}. You get one item back at most.</flux:description>
+                            </flux:field>
+
+                            <flux:button type="submit" variant="primary" :disabled="! $brain_scorcher['available']" data-test="brain-scorcher-submit">
+                                {{ $brain_scorcher['available'] ? 'Feed the Brain Scorcher' : 'Unavailable' }}
+                            </flux:button>
+                        </div>
+
+                        <div class="grid grid-cols-2 content-start gap-2 text-sm sm:grid-cols-5" x-show="odds">
+                            @foreach (['nothing' => 'Burned', 'downgrade' => 'Worse', 'same' => 'Same', 'upgrade' => 'Better', 'jackpot' => 'Scorched'] as $outcome => $label)
+                                <div @class([
+                                    'rounded-2xl p-3',
+                                    'bg-zinc-50 dark:bg-zinc-800/70' => $outcome !== 'jackpot',
+                                    'border border-fuchsia-300/70 bg-fuchsia-50 dark:border-fuchsia-500/30 dark:bg-fuchsia-500/10' => $outcome === 'jackpot',
+                                ])>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $label }}</p>
+                                    <p class="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-100" x-text="(odds?.{{ $outcome }} ?? 0) + '%'"></p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </form>
+                @endif
+            </div>
+        @endif
 
         <x-pda
             :neighbors="$neighbors"

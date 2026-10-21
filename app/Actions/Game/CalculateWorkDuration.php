@@ -45,6 +45,11 @@ class CalculateWorkDuration
         );
     }
 
+    public function forBrainScorcher(User $user): int
+    {
+        return $this->applyWeather(FeedBrainScorcher::BASE_DURATION_SECONDS, $this->currentWeather($user));
+    }
+
     public function currentWeather(User $user): Weather
     {
         return $user->location?->city?->weather ?? Weather::Clear;

@@ -26,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');
     Route::post('dashboard/travel', [GameActionController::class, 'travel'])->name('travel.store');
     Route::post('dashboard/actions', [GameActionController::class, 'performAction'])->name('city-action.store');
+    Route::post('dashboard/brain-scorcher', [GameActionController::class, 'feedBrainScorcher'])->name('brain-scorcher.store');
     Route::post('dashboard/work/complete', [GameActionController::class, 'completeWork'])->name('work.complete');
     Route::post('dashboard/work/cancel', [GameActionController::class, 'cancelWork'])->name('work.cancel');
     Route::post('dashboard/hooks/{feature}', [GameActionController::class, 'visitHook'])->name('feature-hook.store');
