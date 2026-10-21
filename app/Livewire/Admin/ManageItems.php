@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Admin;
 
+use App\ItemRarity;
 use App\Models\Item;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -25,6 +27,8 @@ class ManageItems extends Component
 
     public string $description = '';
 
+    public string $rarity = 'common';
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -39,7 +43,7 @@ class ManageItems extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'key', 'name', 'description', 'deleted_at']);
+        return $query->get(['id', 'key', 'name', 'description', 'rarity', 'deleted_at']);
     }
 
     public function create(): void
@@ -56,6 +60,7 @@ class ManageItems extends Component
         $this->key = $item->key;
         $this->name = $item->name;
         $this->description = $item->description;
+        $this->rarity = $item->rarity->value;
         $this->showForm = true;
     }
 
@@ -65,6 +70,7 @@ class ManageItems extends Component
             'key' => ['required', 'string', 'max:100'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:1000'],
+            'rarity' => ['required', Rule::enum(ItemRarity::class)],
         ]);
 
         if ($this->editingId !== null) {
@@ -106,5 +112,6 @@ class ManageItems extends Component
         $this->key = '';
         $this->name = '';
         $this->description = '';
+        $this->rarity = 'common';
     }
 }

@@ -29,6 +29,17 @@
                 </div>
 
                 <flux:field>
+                    <flux:label>{{ __('Rarity') }}</flux:label>
+                    <flux:select wire:model="rarity">
+                        @foreach (\App\ItemRarity::cases() as $rarityOption)
+                            <flux:select.option value="{{ $rarityOption->value }}">{{ $rarityOption->label() }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:description>{{ __('Decides what counts as better or worse at the Brain Scorcher. Scorched items are only handed out by the Brain Scorcher.') }}</flux:description>
+                    <flux:error name="rarity" />
+                </flux:field>
+
+                <flux:field>
                     <flux:label>{{ __('Description') }}</flux:label>
                     <flux:textarea wire:model="description" placeholder="{{ __('What this item is and how it might be used…') }}" rows="3" />
                     <flux:error name="description" />
@@ -53,6 +64,7 @@
                 <tr class="border-b border-zinc-200 dark:border-zinc-700">
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">{{ __('Name') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-md:hidden">{{ __('Key') }}</th>
+                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">{{ __('Rarity') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Description') }}</th>
                     <th class="px-4 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">{{ __('Actions') }}</th>
                 </tr>
@@ -67,6 +79,7 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400 max-md:hidden">{{ $item->key }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $item->rarity->label() }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden truncate max-w-xs">{{ $item->description }}</td>
                         <td class="px-4 py-3 text-right">
                             @if ($item->deleted_at)
@@ -79,7 +92,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No items found.') }}</td>
+                        <td colspan="5" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No items found.') }}</td>
                     </tr>
                 @endforelse
             </tbody>

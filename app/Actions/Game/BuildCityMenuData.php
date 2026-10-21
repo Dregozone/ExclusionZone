@@ -30,6 +30,7 @@ class BuildCityMenuData
             'activeWork.originCity',
             'activeWork.destinationCity',
             'activeWork.skill',
+            'activeWork.offeredItem',
             'cosmeticLoadout.outfitSkin',
             'cosmeticLoadout.uiTheme',
             'cosmeticLoadout.profileFlair',
@@ -84,6 +85,7 @@ class BuildCityMenuData
             }),
             'skills' => $user->skills->sortBy(fn ($skill) => $skill->skill?->display_name)->values(),
             'inventory' => $user->inventoryItems->sortBy(fn ($item) => $item->item?->name)->values(),
+            'brain_scorcher' => $this->brainScorcherDataFor($user, $city, $canPerformCityActions),
             'quest_step_actions' => $this->questStepActionsFor($user, $city),
             'jobs' => $this->jobsDataFor($user),
             'cosmetics' => PremiumCosmetic::query()
@@ -139,6 +141,40 @@ class BuildCityMenuData
         return ['nodes' => $nodes, 'edges' => $edges];
     }
 
+    /**
+     * Offerings the player can feed the Brain Scorcher, with the odds for every quantity
+     * that still changes them, so the menu can show the odds as the player picks.
+     *
+     * @return array{available: bool, duration_seconds: int, offerings: array<int, array{item_id: int, name: string, rarity: string, owned: int, odds_by_quantity: array<int, array{jackpot: int, upgrade: int, same: int, downgrade: int, nothing: int}>}>}|null
+     */
+    private function brainScorcherDataFor(User $user, ?City $city, bool $canPerformCityActions): ?array
+    {
+        $feedBrainScorcher = new FeedBrainScorcher;
+
+        if (! $feedBrainScorcher->isAvailableIn($city?->city)) {
+            return null;
+        }
+
+        return [
+            'available' => $canPerformCityActions,
+            'duration_seconds' => (new CalculateWorkDuration)->forBrainScorcher($user),
+            'offerings' => $user->inventoryItems
+                ->filter(fn ($inventoryItem): bool => $inventoryItem->item !== null && $inventoryItem->quantity > 0)
+                ->sortBy(fn ($inventoryItem) => $inventoryItem->item->name)
+                ->map(fn ($inventoryItem): array => [
+                    'item_id' => $inventoryItem->item->id,
+                    'name' => $inventoryItem->item->name,
+                    'rarity' => $inventoryItem->item->rarity->label(),
+                    'owned' => $inventoryItem->quantity,
+                    'odds_by_quantity' => collect(range(1, min($inventoryItem->quantity, FeedBrainScorcher::MAX_EFFECTIVE_QUANTITY)))
+                        ->mapWithKeys(fn (int $quantity): array => [$quantity => $feedBrainScorcher->oddsFor($inventoryItem->item->rarity, $quantity)])
+                        ->all(),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
     private function localEventFor(?Weather $weather, ?int $troubleChance): string
     {
         if ($weather === null || $troubleChance === null) {
@@ -163,16 +199,20 @@ class BuildCityMenuData
         $currentLevel = $skillProgress?->level ?? 1;
         $nextLevelXp = $currentLevel * 100;
         $currentXp = $skillProgress?->xp ?? 0;
-        $title = $activeWork->isCityAction()
-            ? 'Working on '.($activeWork->cityAction?->label ?? 'city action')
-            : 'Traveling from '.($activeWork->originCity?->city ?? 'your current city').' to '.($activeWork->destinationCity?->city ?? 'your destination');
+        $title = match (true) {
+            $activeWork->isCityAction() => 'Working on '.($activeWork->cityAction?->label ?? 'city action'),
+            $activeWork->isBrainScorcher() => 'Feeding the Brain Scorcher',
+            default => 'Traveling from '.($activeWork->originCity?->city ?? 'your current city').' to '.($activeWork->destinationCity?->city ?? 'your destination'),
+        };
 
         return [
             'type' => $activeWork->work_type,
             'title' => $title,
-            'description' => $activeWork->isCityAction()
-                ? ($activeWork->cityAction?->description ?? 'Stay focused until the work window closes.')
-                : 'Movement is locked in until you arrive or cancel the route.',
+            'description' => match (true) {
+                $activeWork->isCityAction() => $activeWork->cityAction?->description ?? 'Stay focused until the work window closes.',
+                $activeWork->isBrainScorcher() => 'The machine is chewing on your '.$activeWork->offered_quantity.'x '.($activeWork->offeredItem?->name ?? 'offering').'. Keep it in your pack until the timer ends, or cancel to take it back.',
+                default => 'Movement is locked in until you arrive or cancel the route.',
+            },
             'duration_seconds' => $activeWork->duration_seconds,
             'weather' => $activeWork->weather,
             'available_at_iso' => $activeWork->available_at->toIso8601String(),
