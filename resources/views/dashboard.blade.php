@@ -126,6 +126,12 @@
                     <p class="text-xs uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Current location</p>
                     <h1 class="mt-3 text-3xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $city?->city }}</h1>
                     <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{{ $country?->country }} · {{ $city?->biome }}</p>
+                    @if ($city?->has_trade_post)
+                        <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" data-test="trade-post-badge">
+                            <flux:icon.arrows-right-left variant="micro" />
+                            Trade post · open the Trade tab on your PDA
+                        </p>
+                    @endif
                 </div>
 
                 <div class="grid gap-2 text-right text-sm text-zinc-600 dark:text-zinc-400">

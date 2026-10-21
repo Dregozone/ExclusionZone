@@ -28,6 +28,7 @@ Progress rule:
 | user | Move between cities and see city-specific actions | `tests/Feature/GameMvpTest.php` (`city actions are filtered by the current location...`) | Done |
 | user | Gather resources | `tests/Feature/GameMvpTest.php` (`performing a city action grants experience and adds items to inventory`) | Done |
 | user | Chat and trade access hooks | `tests/Feature/GameMvpTest.php` (`feature hook denials redirect back...`) | Done (deny-path) |
+| user | Trade items with another player at a trade post | `tests/Feature/TradingTest.php` | Done |
 | user | Engage in combat | `tests/Feature/GameMvpTest.php` (`reference data from the specification is seeded and bounded`) + combat task seed coverage | Planned (full combat loop) |
 | premium | Equip cosmetic outfits/themes | `tests/Feature/GameMvpTest.php` (`premium cosmetic equip succeeds and does not change gameplay rewards`) | Done |
 | premium | No gameplay advantage from premium | `tests/Feature/GameMvpTest.php` (`premium cosmetic equip succeeds and does not change gameplay rewards`) | Done |
@@ -47,6 +48,7 @@ Progress rule:
 | Skill thresholds | Below-min-level denied; boundary level allowed | `tests/Feature/GameMvpTest.php` (`skill thresholds deny and allow access...`) | Done |
 | Premium non-P2W | Premium can equip cosmetics only; outcomes stay parity | `tests/Feature/GameMvpTest.php` (`premium cosmetic equip succeeds...`) | Done |
 | Moderator controls | Moderator mute allowed and expiration works | `tests/Feature/GameMvpTest.php` (`moderators can temporarily mute users and the mute expires`) | Done |
+| Player trading | Both players must stand at the same trade post (one per continent); request, accept/reject, add/remove item quantities, commit or cancel; completes only when both commit; quest items cannot be traded; changing the table withdraws commitments; nearest trade post on the continent is suggested; updates broadcast on each trader's private channel | `tests/Feature/TradingTest.php` | Done |
 | Dynamic weather | Hourly per-city weather roll; bad weather lengthens work/travel timers, grants bonus XP, and can lose loot; weather is locked when work starts | `tests/Feature/WeatherTest.php` | Done |
 | Seed/reference integrity | Roles/skills/countries/cities seeded; percentages bounded | `tests/Feature/GameMvpTest.php` (`reference data from the specification is seeded and bounded`) | Done |
 | Auth starter-kit flows | Registration/login/reset/verification/2FA/profile/security | `tests/Feature/Auth/*`, `tests/Feature/Settings/*` | Done |
@@ -59,9 +61,7 @@ Progress rule:
 2. **Chat moderation workflow**
    - Moderator can remove/flag chat messages.
    - Non-moderator cannot perform moderation actions.
-3. **Trade allow-path**
-   - Standard user can access/create trade flow (not just denial-path coverage).
-4. **Admin dashboard boundaries**
+3. **Admin dashboard boundaries**
    - Admin-only dashboard access constraints for non-admin roles.
 
 ## 6. Entry / Exit Criteria

@@ -53,7 +53,7 @@ class StoryItemsSeeder extends Seeder
         ];
 
         foreach ($items as $item) {
-            Item::firstOrCreate(['key' => $item['key']], $item);
+            Item::firstOrCreate(['key' => $item['key']], [...$item, 'is_quest_item' => true]);
         }
     }
 }

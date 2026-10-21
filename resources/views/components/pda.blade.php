@@ -237,19 +237,9 @@
                             <livewire:radio-chat />
                         </div>
 
-                        {{-- TRADE tab (placeholder) --}}
-                        <div x-show="tab === 'trade'" class="flex min-h-[300px] flex-col items-center justify-center p-6 text-center">
-                            <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
-                                <svg class="h-8 w-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                                </svg>
-                            </div>
-                            <p class="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Trade Board</p>
-                            <p class="mb-4 font-mono text-xs text-amber-500/50">MARKET OFFLINE</p>
-                            <div class="w-full space-y-1 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-                                <p class="font-mono text-xs text-zinc-500">Market connection unavailable.</p>
-                                <p class="font-mono text-xs text-zinc-700">Locate a trade post to access the exchange.</p>
-                            </div>
+                        {{-- TRADE tab --}}
+                        <div x-show="tab === 'trade'" class="h-full">
+                            <livewire:trade-board />
                         </div>
 
                         {{-- CONTRACTS / JOBS tab --}}

@@ -13,6 +13,7 @@ class Item extends Model
 
     protected $attributes = [
         'rarity' => 'common',
+        'is_quest_item' => false,
     ];
 
     protected $fillable = [
@@ -20,12 +21,14 @@ class Item extends Model
         'name',
         'description',
         'rarity',
+        'is_quest_item',
     ];
 
     protected function casts(): array
     {
         return [
             'rarity' => ItemRarity::class,
+            'is_quest_item' => 'boolean',
         ];
     }
 }
