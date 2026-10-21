@@ -14,6 +14,7 @@ use App\Livewire\Admin\ManageQuests;
 use App\Livewire\Admin\ManageSkills;
 use App\Livewire\Admin\ManageTravelRoutes;
 use App\Livewire\Admin\MovePlayer;
+use App\Livewire\RadioHistory;
 use App\Livewire\WorldMap;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/moderation/mutes', [ModerationController::class, 'store'])->name('moderation.mutes.store');
     Route::post('dashboard/quests/{quest}/accept', [QuestController::class, 'accept'])->name('quest.accept');
     Route::post('dashboard/quest-steps/{questStep}/interact', [QuestController::class, 'interact'])->name('quest-step.interact');
+    Route::livewire('radio/history', RadioHistory::class)->name('radio.history');
 
     Route::middleware('admin')->group(function () {
         Route::livewire('admin/change-user-role', ChangeUserRole::class)->name('admin.change-user-role');

@@ -80,6 +80,11 @@ class User extends Authenticatable
         return $this->hasMany(UserQuest::class);
     }
 
+    public function radioMessages(): HasMany
+    {
+        return $this->hasMany(RadioMessage::class);
+    }
+
     public function activeMutes(): HasMany
     {
         return $this->hasMany(UserMute::class, 'target_user_id')
