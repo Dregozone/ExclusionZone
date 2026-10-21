@@ -29,6 +29,8 @@ class ManageItems extends Component
 
     public string $rarity = 'common';
 
+    public bool $is_quest_item = false;
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -43,7 +45,7 @@ class ManageItems extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'key', 'name', 'description', 'rarity', 'deleted_at']);
+        return $query->get(['id', 'key', 'name', 'description', 'rarity', 'is_quest_item', 'deleted_at']);
     }
 
     public function create(): void
@@ -61,6 +63,7 @@ class ManageItems extends Component
         $this->name = $item->name;
         $this->description = $item->description;
         $this->rarity = $item->rarity->value;
+        $this->is_quest_item = $item->is_quest_item;
         $this->showForm = true;
     }
 
@@ -71,6 +74,7 @@ class ManageItems extends Component
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:1000'],
             'rarity' => ['required', Rule::enum(ItemRarity::class)],
+            'is_quest_item' => ['boolean'],
         ]);
 
         if ($this->editingId !== null) {
@@ -113,5 +117,6 @@ class ManageItems extends Component
         $this->name = '';
         $this->description = '';
         $this->rarity = 'common';
+        $this->is_quest_item = false;
     }
 }

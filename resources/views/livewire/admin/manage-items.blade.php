@@ -39,6 +39,13 @@
                     <flux:error name="rarity" />
                 </flux:field>
 
+                <flux:field variant="inline">
+                    <flux:checkbox wire:model="is_quest_item" />
+                    <flux:label>{{ __('Quest item') }}</flux:label>
+                    <flux:description>{{ __('Quest items stay with the survivor who earned them and cannot be traded.') }}</flux:description>
+                    <flux:error name="is_quest_item" />
+                </flux:field>
+
                 <flux:field>
                     <flux:label>{{ __('Description') }}</flux:label>
                     <flux:textarea wire:model="description" placeholder="{{ __('What this item is and how it might be used…') }}" rows="3" />
@@ -79,7 +86,12 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400 max-md:hidden">{{ $item->key }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $item->rarity->label() }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                            {{ $item->rarity->label() }}
+                            @if ($item->is_quest_item)
+                                <span class="ml-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{{ __('Quest') }}</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden truncate max-w-xs">{{ $item->description }}</td>
                         <td class="px-4 py-3 text-right">
                             @if ($item->deleted_at)

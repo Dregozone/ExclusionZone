@@ -73,6 +73,13 @@
                     </flux:field>
                 </div>
 
+                <flux:field variant="inline">
+                    <flux:checkbox wire:model="has_trade_post" />
+                    <flux:label>{{ __('Trade post') }}</flux:label>
+                    <flux:description>{{ __('Players standing here together can trade items. Aim for one key city per continent.') }}</flux:description>
+                    <flux:error name="has_trade_post" />
+                </flux:field>
+
                 <flux:field>
                     <flux:label>{{ __('Neighbour Locations') }}</flux:label>
                     <flux:text class="text-xs text-zinc-500 dark:text-zinc-400 mb-2">{{ __('Select the cities that can be travelled to from this location.') }}</flux:text>
@@ -124,6 +131,9 @@
                     <tr wire:key="loc-{{ $location->id }}" class="{{ $location->deleted_at ? 'opacity-50' : '' }}">
                         <td class="px-4 py-3 font-medium text-zinc-900 dark:text-white">
                             {{ $location->city }}
+                            @if ($location->has_trade_post)
+                                <span class="ml-2 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{{ __('Trade post') }}</span>
+                            @endif
                             @if ($location->deleted_at)
                                 <span class="ml-2 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">{{ __('Deleted') }}</span>
                             @endif

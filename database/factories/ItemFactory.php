@@ -21,4 +21,11 @@ class ItemFactory extends Factory
             'description' => $this->faker->sentence(),
         ];
     }
+
+    public function questItem(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_quest_item' => true,
+        ]);
+    }
 }

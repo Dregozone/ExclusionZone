@@ -32,6 +32,8 @@ class ManageLocations extends Component
 
     public string $baseline_loot_tier = 'medium';
 
+    public bool $has_trade_post = false;
+
     public ?float $lat = null;
 
     public ?float $lng = null;
@@ -55,7 +57,7 @@ class ManageLocations extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'country_id', 'city', 'biome', 'rain_chance_pct', 'trouble_chance_pct', 'baseline_loot_tier', 'lat', 'lng', 'deleted_at']);
+        return $query->get(['id', 'country_id', 'city', 'biome', 'rain_chance_pct', 'trouble_chance_pct', 'baseline_loot_tier', 'has_trade_post', 'lat', 'lng', 'deleted_at']);
     }
 
     #[Computed]
@@ -94,6 +96,7 @@ class ManageLocations extends Component
         $this->rain_chance_pct = $city->rain_chance_pct;
         $this->trouble_chance_pct = $city->trouble_chance_pct;
         $this->baseline_loot_tier = $city->baseline_loot_tier;
+        $this->has_trade_post = $city->has_trade_post;
         $this->lat = $city->lat;
         $this->lng = $city->lng;
         $this->neighborIds = $city->neighbors->pluck('id')->map(fn ($v) => (int) $v)->toArray();
@@ -109,6 +112,7 @@ class ManageLocations extends Component
             'rain_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
             'trouble_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
             'baseline_loot_tier' => ['required', 'string', 'max:50'],
+            'has_trade_post' => ['boolean'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
             'neighborIds' => ['array'],
@@ -122,6 +126,7 @@ class ManageLocations extends Component
             'rain_chance_pct' => $validated['rain_chance_pct'],
             'trouble_chance_pct' => $validated['trouble_chance_pct'],
             'baseline_loot_tier' => $validated['baseline_loot_tier'],
+            'has_trade_post' => $validated['has_trade_post'],
             'lat' => $validated['lat'] ?? null,
             'lng' => $validated['lng'] ?? null,
         ];
@@ -171,6 +176,7 @@ class ManageLocations extends Component
         $this->rain_chance_pct = 0;
         $this->trouble_chance_pct = 0;
         $this->baseline_loot_tier = 'medium';
+        $this->has_trade_post = false;
         $this->lat = null;
         $this->lng = null;
         $this->neighborIds = [];

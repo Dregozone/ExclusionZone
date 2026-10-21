@@ -116,7 +116,7 @@ class GameActionController extends Controller
 
         $message = match ($feature) {
             'chat' => 'The radio crackles with survivor chatter. Open Radio Comms on your PDA to join channel 7.',
-            'trade' => 'Merchants are posting prices. The trade board hook is online for the next iteration.',
+            'trade' => 'Merchants are posting prices. Open the Trade tab on your PDA at a trade post to barter with other survivors.',
             'combat' => 'Scouts marked combat hotspots. Contracted fights are wired in as the next gameplay layer.',
         };
 
