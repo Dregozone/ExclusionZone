@@ -232,19 +232,9 @@
                             @endforelse
                         </div>
 
-                        {{-- RADIO tab (placeholder) --}}
-                        <div x-show="tab === 'radio'" class="flex min-h-[300px] flex-col items-center justify-center p-6 text-center">
-                            <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
-                                <svg class="h-8 w-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-                                </svg>
-                            </div>
-                            <p class="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Radio Comms</p>
-                            <p class="mb-4 font-mono text-xs text-emerald-500/50">EXCLUSION NET · STANDBY</p>
-                            <div class="w-full space-y-1 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-                                <p class="font-mono text-xs text-zinc-500">Channel 7 · No transmissions detected.</p>
-                                <p class="font-mono text-xs text-zinc-700">System pending activation.</p>
-                            </div>
+                        {{-- RADIO tab --}}
+                        <div x-show="tab === 'radio'" class="h-full">
+                            <livewire:radio-chat />
                         </div>
 
                         {{-- TRADE tab (placeholder) --}}
