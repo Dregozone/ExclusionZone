@@ -41,7 +41,7 @@ class GameActionController extends Controller
             return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
-        return to_route('dashboard')->with('status', 'Work started. Return when the timer ends in '.max(10, $work->duration_seconds).' seconds.');
+        return to_route('dashboard')->with('status', 'Work started. It pays out every '.max(10, $work->duration_seconds).' seconds and repeats until you stop it.');
     }
 
     public function feedBrainScorcher(FeedBrainScorcherRequest $request, StartUserWork $startUserWork): RedirectResponse
@@ -80,6 +80,7 @@ class GameActionController extends Controller
         }
 
         $message = match (true) {
+            $work->isCityAction() && $work->cycles_completed > 0 => "Work stopped after {$work->cycles_completed} ".str('cycle')->plural($work->cycles_completed)." (+{$work->xp_earned} XP). The unfinished cycle earned nothing.",
             $work->isCityAction() => 'Work canceled. No rewards were granted.',
             $work->isBrainScorcher() => 'Offering withdrawn. Your items are still in your pack.',
             default => 'Travel canceled. You stayed in your current city.',

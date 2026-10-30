@@ -6,18 +6,64 @@
             </div>
         @endif
 
+        @if ($last_work_report)
+            <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100" data-test="last-work-report">
+                {{ $last_work_report }}
+            </div>
+        @endif
+
         @if ($active_work)
             <div
+                @if ($active_work['type'] === 'city_action') data-work-loop data-available-at="{{ $active_work['available_at_iso'] }}" @endif
                 x-data="{
                     remainingSeconds: {{ $active_work['remaining_seconds'] }},
                     deadline: Date.parse(@js($active_work['available_at_iso'])),
                     timerId: null,
+                    isLoop: @js($active_work['type'] === 'city_action'),
+                    nextRefreshAt: 0,
                     init() {
                         this.tick();
                         this.timerId = window.setInterval(() => this.tick(), 1000);
                     },
                     tick() {
                         this.remainingSeconds = Math.max(0, Math.ceil((this.deadline - Date.now()) / 1000));
+
+                        if (this.isLoop && this.remainingSeconds === 0 && Date.now() >= this.nextRefreshAt) {
+                            this.nextRefreshAt = Date.now() + 5000;
+                            this.refreshLoop();
+                        }
+                    },
+                    async refreshLoop() {
+                        try {
+                            const response = await fetch(window.location.href, { headers: { Accept: 'text/html' } });
+
+                            if (! response.ok) {
+                                return;
+                            }
+
+                            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+                            const loop = page.querySelector('[data-work-loop]');
+
+                            if (loop === null) {
+                                window.location.reload();
+
+                                return;
+                            }
+
+                            this.deadline = Date.parse(loop.dataset.availableAt);
+
+                            page.querySelectorAll('[data-work-live]').forEach((fresh) => {
+                                const current = document.querySelector(`[data-work-live='${fresh.dataset.workLive}']`);
+
+                                if (current !== null) {
+                                    current.innerHTML = fresh.innerHTML;
+                                }
+                            });
+
+                            this.tick();
+                        } catch {
+                            // Offline for a moment: tick() tries again shortly, and the server keeps settling meanwhile.
+                        }
                     },
                     formattedRemaining() {
                         const minutes = Math.floor(this.remainingSeconds / 60);
@@ -49,10 +95,26 @@
                                 <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">Time remaining</p>
                                 <p class="mt-2 text-3xl font-semibold text-zinc-900 dark:text-zinc-100" x-text="formattedRemaining()"></p>
                                 <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                                    Server unlocks completion {{ $active_work['available_at_human'] }}.
+                                    @if ($active_work['type'] === 'city_action')
+                                        Until the next payout. Repeats automatically.
+                                    @else
+                                        Server unlocks completion {{ $active_work['available_at_human'] }}.
+                                    @endif
                                 </p>
                             </div>
                         </div>
+
+                        @if ($active_work['type'] === 'city_action')
+                            <div class="rounded-[1.5rem] border border-emerald-300/70 bg-emerald-50/80 p-5 text-sm text-zinc-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-zinc-300" data-work-live="loop-progress" data-test="work-loop-progress">
+                                <p>
+                                    <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['cycles_completed'] }} {{ Str::plural('cycle', $active_work['cycles_completed']) }} completed</span>
+                                    · +{{ $active_work['xp_earned'] }} XP so far. Keeps running if you leave, and stops {{ $active_work['loop_ends_at_human'] }}.
+                                </p>
+                                @if ($active_work['last_cycle_summary'])
+                                    <p class="mt-2">Last cycle: {{ $active_work['last_cycle_summary'] }}</p>
+                                @endif
+                            </div>
+                        @endif
 
                         @if ($active_work['weather']->isBad())
                             <div class="rounded-[1.5rem] border border-sky-300/70 bg-sky-50/80 p-5 text-sm text-zinc-600 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-zinc-300" data-test="active-work-weather">
@@ -66,7 +128,7 @@
                         @endif
 
                         @if ($active_work['skill_name'])
-                            <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 dark:border-zinc-700 dark:bg-zinc-900/80">
+                            <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 dark:border-zinc-700 dark:bg-zinc-900/80" data-work-live="training-focus">
                                 <div class="flex flex-wrap items-start justify-between gap-4">
                                     <div>
                                         <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">Training focus</p>
@@ -97,22 +159,24 @@
                         @endif
 
                         <div class="flex flex-wrap gap-3">
-                            <form method="POST" action="{{ route('work.complete') }}">
-                                @csrf
-                                <flux:button type="submit" variant="primary" x-bind:disabled="remainingSeconds > 0">
-                                    Complete work
-                                </flux:button>
-                            </form>
+                            @if ($active_work['type'] !== 'city_action')
+                                <form method="POST" action="{{ route('work.complete') }}">
+                                    @csrf
+                                    <flux:button type="submit" variant="primary" x-bind:disabled="remainingSeconds > 0">
+                                        Complete work
+                                    </flux:button>
+                                </form>
+                            @endif
 
                             <form method="POST" action="{{ route('work.cancel') }}">
                                 @csrf
-                                <flux:button type="submit" variant="ghost">
-                                    Cancel
+                                <flux:button type="submit" variant="ghost" data-test="cancel-work">
+                                    {{ $active_work['type'] === 'city_action' ? 'Stop working' : 'Cancel' }}
                                 </flux:button>
                             </form>
 
                             <p class="self-center text-xs text-zinc-500 dark:text-zinc-400">
-                                Completion is always verified on the server, even if the local timer is modified.
+                                {{ $active_work['type'] === 'city_action' ? 'Stopping pays out finished cycles. The unfinished one earns nothing.' : 'Completion is always verified on the server, even if the local timer is modified.' }}
                             </p>
                         </div>
                     </div>

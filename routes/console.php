@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('weather:roll')->hourly();
+Schedule::command('work:advance-loops')->everyMinute()->withoutOverlapping();

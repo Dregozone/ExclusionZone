@@ -66,6 +66,7 @@ class BuildCityMenuData
             'can_perform_city_actions' => $canPerformCityActions,
             'city_action_restriction' => $cityActionRestriction,
             'active_work' => $activeWork === null ? null : $this->activeWorkData($user, $activeWork),
+            'last_work_report' => $user->last_work_report,
             'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions): array {
                 $requiredItems = (new PerformCityAction)->requiredItemsFor($user, $action);
                 $hasRequiredItems = collect($requiredItems)->every(
@@ -209,11 +210,17 @@ class BuildCityMenuData
             'type' => $activeWork->work_type,
             'title' => $title,
             'description' => match (true) {
-                $activeWork->isCityAction() => $activeWork->cityAction?->description ?? 'Stay focused until the work window closes.',
+                $activeWork->isCityAction() => $activeWork->cityAction?->description ?? 'This work repeats until you stop it.',
                 $activeWork->isBrainScorcher() => 'The machine is chewing on your '.$activeWork->offered_quantity.'x '.($activeWork->offeredItem?->name ?? 'offering').'. Keep it in your pack until the timer ends, or cancel to take it back.',
                 default => 'Movement is locked in until you arrive or cancel the route.',
             },
             'duration_seconds' => $activeWork->duration_seconds,
+            'cycles_completed' => $activeWork->cycles_completed,
+            'xp_earned' => $activeWork->xp_earned,
+            'last_cycle_summary' => $activeWork->last_cycle_summary,
+            'loop_ends_at_human' => $activeWork->isCityAction()
+                ? $activeWork->created_at->addHours(AdvanceWorkLoop::MAX_LOOP_HOURS)->diffForHumans()
+                : null,
             'weather' => $activeWork->weather,
             'available_at_iso' => $activeWork->available_at->toIso8601String(),
             'available_at_human' => $activeWork->available_at->diffForHumans(),

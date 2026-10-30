@@ -10,6 +10,8 @@ class UserWork extends Model
 {
     protected $attributes = [
         'weather' => 'clear',
+        'cycles_completed' => 0,
+        'xp_earned' => 0,
     ];
 
     protected $fillable = [
@@ -24,6 +26,9 @@ class UserWork extends Model
         'duration_seconds',
         'weather',
         'available_at',
+        'cycles_completed',
+        'xp_earned',
+        'last_cycle_summary',
     ];
 
     protected function casts(): array
@@ -31,6 +36,8 @@ class UserWork extends Model
         return [
             'available_at' => 'immutable_datetime',
             'offered_quantity' => 'integer',
+            'cycles_completed' => 'integer',
+            'xp_earned' => 'integer',
             'weather' => Weather::class,
         ];
     }

@@ -110,6 +110,8 @@ class StartUserWork
                     throw new AuthorizationException('Finish or cancel your current work before starting something new.');
                 }
 
+                $user->forceFill(['last_work_report' => null])->save();
+
                 return UserWork::query()->create([
                     'user_id' => $user->id,
                     ...$attributes,

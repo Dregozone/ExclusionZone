@@ -192,7 +192,7 @@
                         </div>
 
                         {{-- SKILLS tab --}}
-                        <div x-show="tab === 'skills'" class="space-y-2 p-4">
+                        <div x-show="tab === 'skills'" class="space-y-2 p-4" data-work-live="skills">
                             <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Skill Tracker</p>
                             @foreach ($skills as $skill)
                                 <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5">
@@ -211,7 +211,7 @@
                         </div>
 
                         {{-- PACK (inventory) tab --}}
-                        <div x-show="tab === 'pack'" class="space-y-2 p-4">
+                        <div x-show="tab === 'pack'" class="space-y-2 p-4" data-work-live="pack">
                             <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Inventory</p>
                             @forelse ($inventory as $inventoryItem)
                                 <div class="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5">
