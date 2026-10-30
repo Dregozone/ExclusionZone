@@ -209,6 +209,7 @@ class BuildCityMenuData
         return [
             'type' => $activeWork->work_type,
             'title' => $title,
+            'image_url' => asset($activeWork->sceneImagePath()),
             'description' => match (true) {
                 $activeWork->isCityAction() => $activeWork->cityAction?->description ?? 'This work repeats until you stop it.',
                 $activeWork->isBrainScorcher() => 'The machine is chewing on your '.$activeWork->offered_quantity.'x '.($activeWork->offeredItem?->name ?? 'offering').'. Keep it in your pack until the timer ends, or cancel to take it back.',
