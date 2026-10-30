@@ -74,12 +74,12 @@
                 class="overflow-hidden rounded-[2rem] border border-amber-300/70 bg-linear-to-br from-amber-50 via-orange-50 to-white p-6 shadow-sm dark:border-amber-500/30 dark:from-amber-500/10 dark:via-zinc-900 dark:to-zinc-900"
             >
                 <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-                    <div class="rounded-[1.75rem] border border-dashed border-amber-300/80 bg-white/70 p-6 dark:border-amber-500/30 dark:bg-zinc-900/70">
-                        <p class="text-xs uppercase tracking-[0.3em] text-amber-700 dark:text-amber-200">Work image</p>
-                        <div class="mt-4 flex min-h-56 items-center justify-center rounded-[1.5rem] bg-zinc-100/80 text-center text-sm text-zinc-500 dark:bg-zinc-800/80 dark:text-zinc-400">
-                            Placeholder image area for your work scene.
-                        </div>
-                    </div>
+                    <img
+                        src="{{ $active_work['image_url'] }}"
+                        alt=""
+                        class="aspect-3/2 w-full self-start rounded-[1.75rem] border border-amber-300/70 object-cover dark:border-amber-500/30"
+                        data-test="active-work-image"
+                    >
 
                     <div class="space-y-5">
                         <div class="flex flex-wrap items-start justify-between gap-4">

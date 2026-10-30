@@ -8,6 +8,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserWork extends Model
 {
+    /**
+     * The skills with their own scene in public/images/work.
+     *
+     * @var list<string>
+     */
+    public const SKILL_SCENES = [
+        'barter',
+        'combat_melee',
+        'combat_ranged',
+        'construction',
+        'cooking',
+        'crafting',
+        'engineering',
+        'fishing',
+        'hunting',
+        'medicine',
+        'scavenging',
+        'stealth',
+        'survival',
+    ];
+
     protected $attributes = [
         'weather' => 'clear',
         'cycles_completed' => 0,
@@ -85,5 +106,20 @@ class UserWork extends Model
     public function isBrainScorcher(): bool
     {
         return $this->work_type === 'brain_scorcher';
+    }
+
+    /**
+     * The public path of the scene shown while this work runs. Skills added through the admin screens use the default scene.
+     */
+    public function sceneImagePath(): string
+    {
+        $scene = match (true) {
+            $this->isTravel() => 'travel',
+            $this->isBrainScorcher() => 'brain_scorcher',
+            in_array($this->skill_key, self::SKILL_SCENES, true) => $this->skill_key,
+            default => 'default',
+        };
+
+        return "images/work/{$scene}.jpg";
     }
 }
