@@ -15,6 +15,7 @@ use App\Models\Trade;
 use App\Models\TradeItem;
 use App\Models\User;
 use App\TradeStatus;
+use Flux\Flux;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -30,8 +31,6 @@ class TradeBoard extends Component
      * @var array<int|string, int|string|null>
      */
     public array $offerQuantities = [];
-
-    public ?string $notice = null;
 
     /**
      * Trade changes arrive on the player's own private channel.
@@ -164,7 +163,7 @@ class TradeBoard extends Component
         $this->attempt(function () use ($userId, $requestTrade): void {
             $recipient = User::query()->findOrFail($userId);
             $requestTrade($this->player(), $recipient);
-            $this->notice = 'Trade request sent to '.$recipient->name.'.';
+            $this->toast('success', 'Trade request sent to '.$recipient->name.'.');
         });
     }
 
@@ -177,7 +176,7 @@ class TradeBoard extends Component
     {
         $this->attempt(function () use ($tradeId, $cancelTrade): void {
             $trade = $cancelTrade($this->player(), $this->tradeFor($tradeId));
-            $this->notice = $trade->status === TradeStatus::Declined ? 'Trade request declined.' : 'Trade cancelled. No items changed hands.';
+            $this->toast('success', $trade->status === TradeStatus::Declined ? 'Trade request declined.' : 'Trade cancelled. No items changed hands.');
         });
     }
 
@@ -186,7 +185,7 @@ class TradeBoard extends Component
         $quantity = $this->offerQuantities[$itemId] ?? null;
 
         if (! is_numeric($quantity) || (int) $quantity < 1) {
-            $this->addError('trade', 'Enter how many to offer.');
+            $this->toast('danger', 'Enter how many to offer.');
 
             return;
         }
@@ -208,9 +207,9 @@ class TradeBoard extends Component
             }
 
             $trade = $commitTrade($this->player(), $this->openTrade);
-            $this->notice = $trade->status === TradeStatus::Completed
+            $this->toast('success', $trade->status === TradeStatus::Completed
                 ? 'Trade complete. The items are in your pack.'
-                : 'Offer committed. Waiting for the other trader to commit.';
+                : 'Offer committed. Waiting for the other trader to commit.');
         });
     }
 
@@ -231,20 +230,22 @@ class TradeBoard extends Component
     }
 
     /**
-     * Run a trade action, turning a refusal into a message on the trade screen.
+     * Run a trade action, turning a refusal into a toast.
      */
     private function attempt(callable $action): void
     {
-        $this->resetErrorBag();
-        $this->notice = null;
-
         try {
             $action();
         } catch (AuthorizationException $exception) {
-            $this->addError('trade', $exception->getMessage());
+            $this->toast('danger', $exception->getMessage());
         }
 
         $this->refreshTrades();
+    }
+
+    private function toast(string $variant, string $text): void
+    {
+        Flux::toast(variant: $variant, text: $text, duration: 10000);
     }
 
     /**

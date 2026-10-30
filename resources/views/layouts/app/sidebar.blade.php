@@ -143,14 +143,7 @@
         {{ $slot }}
 
         @if (session()->has('toast'))
-            @php($toast = session('toast'))
-
-            <div
-                x-data="{ toast: @js($toast) }"
-                x-init="$nextTick(() => $flux.toast(toast))"
-                class="hidden"
-                aria-hidden="true"
-            ></div>
+            <x-session-toast :toast="session('toast')" />
         @endif
 
         @persist('toast')

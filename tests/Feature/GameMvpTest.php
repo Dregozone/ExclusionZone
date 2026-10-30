@@ -457,3 +457,13 @@ test('reference data from the specification is seeded and bounded', function () 
         ->and(Country::query()->whereNotBetween('rain_chance_pct', [0, 100])->count())->toBe(0)
         ->and(City::query()->whereNotBetween('trouble_chance_pct', [0, 100])->count())->toBe(0);
 });
+
+test('flashed status messages show as a ten second toast instead of an inline card', function () {
+    $this->actingAs(User::factory()->create())
+        ->withSession(['status' => 'Travel started.'])
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Travel started.')
+        ->assertSee('duration: 10000', false)
+        ->assertDontSee('border-emerald-500/30', false);
+});

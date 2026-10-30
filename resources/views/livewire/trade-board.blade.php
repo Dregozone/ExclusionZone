@@ -11,14 +11,6 @@
     </div>
 
     <div class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4" aria-live="polite">
-        @error('trade')
-            <p class="rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 font-mono text-xs text-red-400" data-test="trade-error">{{ $message }}</p>
-        @enderror
-
-        @if ($notice)
-            <p class="rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2 font-mono text-xs text-emerald-400">{{ $notice }}</p>
-        @endif
-
         @if (! $this->canTrade)
             <div class="flex flex-col items-center justify-center py-10 text-center">
                 <p class="font-mono text-xs text-zinc-500">{{ auth()->user()->denialReasonForTask('trade_create') }}</p>
