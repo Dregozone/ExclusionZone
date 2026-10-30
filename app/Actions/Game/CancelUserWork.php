@@ -9,11 +9,17 @@ use Illuminate\Support\Facades\DB;
 
 class CancelUserWork
 {
+    public function __construct(public AdvanceWorkLoop $advanceWorkLoop) {}
+
     /**
+     * Cycles that have already finished are paid out; only the unfinished one is forfeited.
+     *
      * @throws AuthorizationException
      */
     public function __invoke(User $user): UserWork
     {
+        ($this->advanceWorkLoop)($user);
+
         return DB::transaction(function () use ($user): UserWork {
             $work = UserWork::query()
                 ->with(['cityAction', 'originCity', 'destinationCity'])

@@ -10,10 +10,9 @@ use Illuminate\Support\Facades\DB;
 class CompleteUserWork
 {
     public function __construct(
-        public PerformCityAction $performCityAction,
+        public AdvanceWorkLoop $advanceWorkLoop,
         public TravelToCity $travelToCity,
         public FeedBrainScorcher $feedBrainScorcher,
-        public RecordQuestActionProgress $recordQuestActionProgress,
     ) {}
 
     /**
@@ -23,6 +22,10 @@ class CompleteUserWork
      */
     public function __invoke(User $user): array
     {
+        if ($user->activeWork()->where('work_type', 'city_action')->exists()) {
+            return $this->finishWorkLoop($user);
+        }
+
         return DB::transaction(function () use ($user): array {
             $work = UserWork::query()
                 ->with(['cityAction.skill', 'originCity', 'destinationCity', 'offeredItem'])
@@ -39,7 +42,6 @@ class CompleteUserWork
             }
 
             $result = match (true) {
-                $work->isCityAction() => $this->completeCityAction($user, $work),
                 $work->isBrainScorcher() => $this->completeBrainScorcher($user, $work),
                 default => $this->completeTravel($user, $work),
             };
@@ -51,57 +53,25 @@ class CompleteUserWork
     }
 
     /**
+     * Pay out every finished cycle of a work loop, then end the loop.
+     *
      * @return array{type:string,status:string}
+     *
+     * @throws AuthorizationException
      */
-    private function completeCityAction(User $user, UserWork $work): array
+    private function finishWorkLoop(User $user): array
     {
-        $action = $work->cityAction;
+        $settled = ($this->advanceWorkLoop)($user);
 
-        if ($action === null) {
-            throw new AuthorizationException('That action is no longer available.');
+        if ($settled['last_status'] === null) {
+            throw new AuthorizationException('That work is still in progress. Wait for the timer to finish or cancel it.');
         }
 
-        $missingItems = $this->performCityAction->missingRequiredItems($user, $action);
-
-        if ($missingItems !== []) {
-            return [
-                'type' => 'city_action',
-                'status' => 'Action failed: you no longer have '.$this->performCityAction->describeRequiredItems($missingItems).'. No rewards were granted.',
-            ];
-        }
-
-        $weather = $work->weather;
-        $reward = ($this->performCityAction)($user, $action, $weather);
-
-        $summary = $reward['items_used'] === ''
-            ? "Action completed: +{$reward['xp']} XP"
-            : "Action completed: used {$reward['items_used']}, +{$reward['xp']} XP";
-
-        if ($weather->isBad()) {
-            $summary .= " (+{$weather->experienceBonusPercent()}% {$weather->label()} bonus)";
-        }
-
-        if ($reward['item_name'] !== null) {
-            $summary .= $reward['item_lost']
-                ? ", {$reward['quantity']} {$reward['item_name']} lost to the {$weather->value}"
-                : ", +{$reward['quantity']} {$reward['item_name']}";
-        }
-
-        if ($reward['levels_gained'] > 0) {
-            $summary .= ", {$reward['levels_gained']} level gained";
-        }
-
-        $summary .= '.';
-
-        $questProgress = ($this->recordQuestActionProgress)($user, $action);
-
-        if ($questProgress !== []) {
-            $summary .= ' Job progress: '.implode(', ', $questProgress).'.';
-        }
+        $user->activeWork()->delete();
 
         return [
             'type' => 'city_action',
-            'status' => $summary,
+            'status' => $settled['last_status'],
         ];
     }
 

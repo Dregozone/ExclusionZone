@@ -50,6 +50,7 @@ Progress rule:
 | Moderator controls | Moderator mute allowed and expiration works | `tests/Feature/GameMvpTest.php` (`moderators can temporarily mute users and the mute expires`) | Done |
 | Player trading | Both players must stand at the same trade post (one per continent); request, accept/reject, add/remove item quantities, commit or cancel; completes only when both commit; quest items cannot be traded; changing the table withdraws commitments; nearest trade post on the continent is suggested; updates broadcast on each trader's private channel | `tests/Feature/TradingTest.php` | Done |
 | Dynamic weather | Hourly per-city weather roll; bad weather lengthens work/travel timers, grants bonus XP, and can lose loot; weather is locked when work starts | `tests/Feature/WeatherTest.php` | Done |
+| Continuous work | City actions repeat until stopped; finished cycles pay out automatically, including while the player is away; the loop ends on stop, missing items, lost access, or an 8 hour limit, and reports why; travel and the Brain Scorcher stay one-shot | `tests/Feature/WorkLoopTest.php` | Done |
 | Seed/reference integrity | Roles/skills/countries/cities seeded; percentages bounded | `tests/Feature/GameMvpTest.php` (`reference data from the specification is seeded and bounded`) | Done |
 | Auth starter-kit flows | Registration/login/reset/verification/2FA/profile/security | `tests/Feature/Auth/*`, `tests/Feature/Settings/*` | Done |
 
