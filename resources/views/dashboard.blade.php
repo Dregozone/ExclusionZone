@@ -1,9 +1,7 @@
 <x-layouts::app :title="__('City Menu')">
     <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
         @if (session('status'))
-            <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
-                {{ session('status') }}
-            </div>
+            <x-session-toast :toast="['text' => session('status')]" />
         @endif
 
         @if ($last_work_report)

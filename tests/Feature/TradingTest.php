@@ -40,6 +40,16 @@ function carriedTradeGoods(User $user, Item $item): int
     return (int) $user->inventoryItems()->where('item_id', $item->id)->value('quantity');
 }
 
+/**
+ * Match a toast-show event by its variant and, when given, its text.
+ */
+function tradeToast(string $variant, ?string $text = null): Closure
+{
+    return fn (string $event, array $params): bool => ($params['dataset']['variant'] ?? null) === $variant
+        && $params['duration'] === 10000
+        && ($text === null || $params['slots']['text'] === $text);
+}
+
 function openTradeBetween(User $initiator, User $recipient): Trade
 {
     return Trade::factory()->open()->create([
@@ -63,7 +73,7 @@ test('two players at the same trade post can request, accept, fill and commit a 
         ->assertSee('Trade Post · Warsaw')
         ->assertSee('Niko')
         ->call('requestTrade', $niko->id)
-        ->assertHasNoErrors()
+        ->assertNotDispatched('toast-show', tradeToast('danger'))
         ->assertSee('Waiting for Niko');
 
     $trade = Trade::query()->sole();
@@ -72,11 +82,11 @@ test('two players at the same trade post can request, accept, fill and commit a 
     $nikoBoard = Livewire::test(TradeBoard::class)
         ->assertSee('Sasha wants to trade')
         ->call('accept', $trade->id)
-        ->assertHasNoErrors()
+        ->assertNotDispatched('toast-show', tradeToast('danger'))
         ->assertSee('Trading with Sasha')
         ->set("offerQuantities.{$water->id}", 2)
         ->call('offer', $water->id)
-        ->assertHasNoErrors();
+        ->assertNotDispatched('toast-show', tradeToast('danger'));
 
     $this->actingAs($sasha);
     Livewire::test(TradeBoard::class)
@@ -85,16 +95,16 @@ test('two players at the same trade post can request, accept, fill and commit a 
         ->set("offerQuantities.{$scrap->id}", 3)
         ->call('offer', $scrap->id)
         ->call('commit')
-        ->assertHasNoErrors()
-        ->assertSee('Waiting for the other trader to commit.');
+        ->assertNotDispatched('toast-show', tradeToast('danger'))
+        ->assertDispatched('toast-show', tradeToast('success', 'Offer committed. Waiting for the other trader to commit.'));
 
     expect($trade->fresh()->status)->toBe(TradeStatus::Open)
         ->and(carriedTradeGoods($sasha, $water))->toBe(0);
 
     $this->actingAs($niko);
     $nikoBoard->call('commit')
-        ->assertHasNoErrors()
-        ->assertSee('Trade complete. The items are in your pack.');
+        ->assertNotDispatched('toast-show', tradeToast('danger'))
+        ->assertDispatched('toast-show', tradeToast('success', 'Trade complete. The items are in your pack.'));
 
     expect($trade->fresh()->status)->toBe(TradeStatus::Completed)
         ->and(carriedTradeGoods($sasha, $scrap))->toBe(2)
@@ -137,8 +147,7 @@ test('a trade request needs both players at the same trade post', function (stri
     $this->actingAs($initiator);
     Livewire::test(TradeBoard::class)
         ->call('requestTrade', $recipient->id)
-        ->assertHasErrors('trade')
-        ->assertSee($message);
+        ->assertDispatched('toast-show', tradeToast('danger', $message));
 
     expect(Trade::query()->count())->toBe(0);
 })->with([
@@ -183,8 +192,8 @@ test('the recipient can reject a trade request', function () {
     $this->actingAs($niko);
     Livewire::test(TradeBoard::class)
         ->call('cancel', $trade->id)
-        ->assertHasNoErrors()
-        ->assertSee('Trade request declined.');
+        ->assertNotDispatched('toast-show', tradeToast('danger'))
+        ->assertDispatched('toast-show', tradeToast('success', 'Trade request declined.'));
 
     expect($trade->fresh()->status)->toBe(TradeStatus::Declined);
 });
@@ -198,7 +207,7 @@ test('a player can only send one trade request at a time', function () {
     $this->actingAs($sasha);
     Livewire::test(TradeBoard::class)
         ->call('requestTrade', $olek->id)
-        ->assertSee('You already have a trade request out.');
+        ->assertDispatched('toast-show', tradeToast('danger', 'You already have a trade request out. Cancel it before sending another.'));
 
     expect(Trade::query()->count())->toBe(1);
 });
@@ -226,7 +235,7 @@ test('quest items cannot be offered and are marked in the pack', function () {
         ->assertSeeInOrder(['Encrypted Keycard', 'Quest item'])
         ->set("offerQuantities.{$keycard->id}", 1)
         ->call('offer', $keycard->id)
-        ->assertSee('Encrypted Keycard is a quest item and cannot be traded.');
+        ->assertDispatched('toast-show', tradeToast('danger', 'Encrypted Keycard is a quest item and cannot be traded.'));
 
     expect(Trade::query()->sole()->items()->count())->toBe(0);
 });
@@ -241,7 +250,7 @@ test('players cannot offer more than they carry', function () {
     Livewire::test(TradeBoard::class)
         ->set("offerQuantities.{$scrap->id}", 3)
         ->call('offer', $scrap->id)
-        ->assertSee('You only carry 2x Scrap Bundle.');
+        ->assertDispatched('toast-show', tradeToast('danger', 'You only carry 2x Scrap Bundle.'));
 
     expect(Trade::query()->sole()->items()->count())->toBe(0);
 });
@@ -258,7 +267,7 @@ test('changing the table withdraws both commitments', function () {
     $this->actingAs($sasha);
     Livewire::test(TradeBoard::class)
         ->call('removeOffer', $scrap->id)
-        ->assertHasNoErrors();
+        ->assertNotDispatched('toast-show', tradeToast('danger'));
 
     expect($trade->fresh()->recipient_committed_at)->toBeNull()
         ->and($trade->items()->count())->toBe(0);
@@ -271,7 +280,7 @@ test('an empty table cannot be committed', function () {
     $this->actingAs($sasha);
     Livewire::test(TradeBoard::class)
         ->call('commit')
-        ->assertSee('Put at least one item on the table before committing.');
+        ->assertDispatched('toast-show', tradeToast('danger', 'Put at least one item on the table before committing.'));
 
     expect($trade->fresh()->initiator_committed_at)->toBeNull();
 });
@@ -291,7 +300,7 @@ test('a trade does not complete when a trader no longer carries what they offere
     $this->actingAs($niko);
     Livewire::test(TradeBoard::class)
         ->call('commit')
-        ->assertSee('Sasha no longer carries 3x Scrap Bundle.');
+        ->assertDispatched('toast-show', tradeToast('danger', 'Sasha no longer carries 3x Scrap Bundle. Update the offer and commit again.'));
 
     expect($trade->fresh()->status)->toBe(TradeStatus::Open)
         ->and($trade->fresh()->recipient_committed_at)->toBeNull()
@@ -312,7 +321,7 @@ test('a trade does not complete once a trader has left the trade post', function
     $this->actingAs($niko);
     Livewire::test(TradeBoard::class)
         ->call('commit')
-        ->assertHasErrors('trade');
+        ->assertDispatched('toast-show', tradeToast('danger'));
 
     expect($trade->fresh()->status)->toBe(TradeStatus::Open)
         ->and(carriedTradeGoods($niko, $water))->toBe(1);
@@ -329,7 +338,7 @@ test('cancelling an open trade moves no items', function () {
     $this->actingAs($niko);
     Livewire::test(TradeBoard::class)
         ->call('cancel', $trade->id)
-        ->assertSee('Trade cancelled. No items changed hands.');
+        ->assertDispatched('toast-show', tradeToast('success', 'Trade cancelled. No items changed hands.'));
 
     expect($trade->fresh()->status)->toBe(TradeStatus::Cancelled)
         ->and(carriedTradeGoods($sasha, $scrap))->toBe(4)
@@ -345,7 +354,7 @@ test('roles without trade access cannot trade', function () {
     Livewire::test(TradeBoard::class)
         ->assertDontSee('Traders at this post')
         ->call('requestTrade', $niko->id)
-        ->assertHasErrors('trade');
+        ->assertDispatched('toast-show', tradeToast('danger'));
 
     expect(Trade::query()->count())->toBe(0);
 });
@@ -359,7 +368,7 @@ test('admins can mark an item as a quest item', function () {
         ->assertSet('is_quest_item', false)
         ->set('is_quest_item', true)
         ->call('save')
-        ->assertHasNoErrors();
+        ->assertNotDispatched('toast-show', tradeToast('danger'));
 
     expect($item->fresh()->is_quest_item)->toBeTrue();
 });
@@ -373,7 +382,7 @@ test('admins can give a city a trade post', function () {
         ->assertSet('has_trade_post', false)
         ->set('has_trade_post', true)
         ->call('save')
-        ->assertHasNoErrors();
+        ->assertNotDispatched('toast-show', tradeToast('danger'));
 
     expect($kyiv->fresh()->has_trade_post)->toBeTrue();
 });
