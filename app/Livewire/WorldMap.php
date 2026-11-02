@@ -2,10 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\City;
+use App\Actions\Game\BuildWorldMapData;
 use App\Models\User;
-use App\Models\UserLocation;
-use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,60 +11,17 @@ use Livewire\Component;
 #[Title('World Map')]
 class WorldMap extends Component
 {
-    #[Computed]
-    public function cities(): Collection
-    {
-        return City::query()
-            ->with(['neighbors:id', 'country:id,country,continent'])
-            ->orderBy('city')
-            ->get(['id', 'city', 'country_id', 'biome', 'lat', 'lng']);
-    }
-
-    #[Computed]
-    public function currentCityId(): ?int
-    {
-        if (! auth()->check()) {
-            return null;
-        }
-
-        /** @var User $user */
-        $user = auth()->user();
-
-        return UserLocation::query()
-            ->where('user_id', $user->id)
-            ->value('city_id');
-    }
-
     /**
-     * Build a JSON-serialisable array describing nodes and directed edges for the map.
+     * Cities, routes and the signed-in player's position for the map.
      *
-     * @return array{nodes: array<int,array{id:int,label:string,country:string,biome:string}>, edges: array<int,array{from:int,to:int}>}
+     * @return array<string, mixed>
      */
     #[Computed]
     public function mapData(): array
     {
-        $nodes = [];
-        $edges = [];
+        /** @var User|null $user */
+        $user = auth()->user();
 
-        foreach ($this->cities as $city) {
-            $nodes[] = [
-                'id' => $city->id,
-                'label' => $city->city,
-                'country' => $city->country?->country ?? '',
-                'continent' => $city->country?->continent ?? '',
-                'biome' => $city->biome,
-                'lat' => $city->lat,
-                'lng' => $city->lng,
-            ];
-
-            foreach ($city->neighbors as $neighbor) {
-                $edges[] = [
-                    'from' => $city->id,
-                    'to' => $neighbor->id,
-                ];
-            }
-        }
-
-        return ['nodes' => $nodes, 'edges' => $edges];
+        return (new BuildWorldMapData)($user);
     }
 }

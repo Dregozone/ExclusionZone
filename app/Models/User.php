@@ -124,6 +124,16 @@ class User extends Authenticatable
             ->contains('key', $taskKey) ?? false;
     }
 
+    /**
+     * Why the player cannot start a city action or route right now, or null when they can.
+     */
+    public function cityActionRestriction(): ?string
+    {
+        return $this->hasActiveWork()
+            ? 'Finish or cancel your current work before starting another action or route.'
+            : $this->denialReasonForTask('city_action_perform');
+    }
+
     public function denialReasonForTask(string $taskKey): ?string
     {
         if ($this->canPerformTask($taskKey)) {
