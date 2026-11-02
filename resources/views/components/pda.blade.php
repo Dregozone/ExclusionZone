@@ -7,7 +7,6 @@
     'city',
     'country',
     'mapData',
-    'currentCityId',
     'canPerformCityActions',
     'cityActionRestriction',
     'jobs',
@@ -81,7 +80,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
-        class="fixed inset-x-2 top-2 bottom-2 z-50 flex flex-col sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-[85dvh] sm:w-auto sm:aspect-[11/20] {{-- sm:max-w-2xl --}}"
+        class="fixed inset-x-2 top-2 bottom-2 z-50 flex flex-col sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-[85dvh] sm:w-auto sm:min-w-0 sm:aspect-[11/20] {{-- sm:max-w-2xl --}}"
     >
         {{-- Outer device body (metallic grey casing) --}}
         <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[2rem] bg-linear-to-b from-zinc-300 via-zinc-400 to-zinc-600 p-3.5 pb-4 pt-2.5 shadow-[0_25px_80px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
@@ -147,10 +146,9 @@
 
                         {{-- MAP tab (x-if so the SVG initialises with correct container width) --}}
                         <template x-if="tab === 'map'">
-                            <div class="p-3">
+                            <div class="flex h-full min-h-[460px] flex-col p-3">
                                 <x-geo-map
                                     :map-data="$mapData"
-                                    :current-city-id="$currentCityId"
                                     :compact="true"
                                     :dark="true"
                                 />
@@ -178,9 +176,12 @@
                                                 <p class="text-sm font-medium text-zinc-200">{{ $neighbor->city }}</p>
                                                 <p class="mt-0.5 text-xs text-zinc-500">{{ $neighbor->country?->country }} · {{ $neighbor->baseline_loot_tier }} loot</p>
                                             </div>
-                                            <flux:button type="submit" size="sm" variant="primary" :disabled="! $canPerformCityActions" data-test="travel-{{ Str::slug($neighbor->city) }}">
-                                                {{ $canPerformCityActions ? 'Travel' : 'N/A' }}
-                                            </flux:button>
+                                            <div class="flex shrink-0 items-center gap-1.5">
+                                                <flux:button type="button" size="sm" variant="ghost" icon="map" x-on:click="window.__geoMapPendingFocus = {{ $neighbor->id }}; tab = 'map'" aria-label="Show {{ $neighbor->city }} on the map" />
+                                                <flux:button type="submit" size="sm" variant="primary" :disabled="! $canPerformCityActions" data-test="travel-{{ Str::slug($neighbor->city) }}">
+                                                    {{ $canPerformCityActions ? 'Travel' : 'N/A' }}
+                                                </flux:button>
+                                            </div>
                                         </div>
                                     </form>
                                 @empty

@@ -406,7 +406,6 @@
             :city="$city"
             :country="$country"
             :mapData="$map_data"
-            :currentCityId="$current_city_id"
             :canPerformCityActions="$can_perform_city_actions"
             :cityActionRestriction="$city_action_restriction"
             :jobs="$jobs"

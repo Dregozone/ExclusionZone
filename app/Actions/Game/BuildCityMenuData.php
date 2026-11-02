@@ -45,9 +45,7 @@ class BuildCityMenuData
         $city = $location?->city?->loadMissing('country');
         $neighbors = $city?->neighbors()->with('country')->orderBy('city')->get() ?? collect();
         $activeWork = $user->activeWork;
-        $cityActionRestriction = $activeWork !== null
-            ? 'Finish or cancel your current work before starting another action or route.'
-            : $user->denialReasonForTask('city_action_perform');
+        $cityActionRestriction = $user->cityActionRestriction();
         $canPerformCityActions = $cityActionRestriction === null;
         $cityActions = $city === null
             ? collect()
@@ -95,8 +93,7 @@ class BuildCityMenuData
                 ->get()
                 ->mapToGroups(fn (PremiumCosmetic $cosmetic): array => [$cosmetic->cosmetic_type => $cosmetic]),
             'loadout' => $user->cosmeticLoadout,
-            'map_data' => $this->buildMapData(),
-            'current_city_id' => $city?->id,
+            'map_data' => (new BuildWorldMapData)($user),
             'weather' => $city?->weather,
             'local_event' => $this->localEventFor($city?->weather, $city?->trouble_chance_pct),
             'hooks' => collect([
@@ -108,38 +105,6 @@ class BuildCityMenuData
                 'available' => $user->canPerformTask($hook['key']),
             ]),
         ];
-    }
-
-    /**
-     * @return array{nodes: array<int,array{id:int,label:string,country:string,biome:string}>, edges: array<int,array{from:int,to:int}>}
-     */
-    private function buildMapData(): array
-    {
-        $nodes = [];
-        $edges = [];
-
-        $cities = City::query()
-            ->with(['neighbors:id', 'country:id,country,continent'])
-            ->orderBy('city')
-            ->get(['id', 'city', 'country_id', 'biome', 'lat', 'lng']);
-
-        foreach ($cities as $city) {
-            $nodes[] = [
-                'id' => $city->id,
-                'label' => $city->city,
-                'country' => $city->country?->country ?? '',
-                'continent' => $city->country?->continent ?? '',
-                'biome' => $city->biome,
-                'lat' => $city->lat,
-                'lng' => $city->lng,
-            ];
-
-            foreach ($city->neighbors as $neighbor) {
-                $edges[] = ['from' => $city->id, 'to' => $neighbor->id];
-            }
-        }
-
-        return ['nodes' => $nodes, 'edges' => $edges];
     }
 
     /**
