@@ -19,11 +19,5 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
-
-        $this->call([
-            StoryItemsSeeder::class,
-            StoryQuestSeeder::class,
-            RecurringJobsSeeder::class,
-        ]);
     }
 }

@@ -318,12 +318,12 @@ class BuildCityMenuData
                 'userQuest' => null,
             ]);
 
-        // Regular non-repeatable jobs not yet started
-        $availableRegularJobs = Quest::query()
+        // Jobs the player has never taken, repeatable or not. Repeatable jobs they
+        // have taken before come back below with their run count.
+        $availableNewJobs = Quest::query()
             ->where('is_active', true)
             ->where('quest_type', 'job')
-            ->where('is_repeatable', false)
-            ->whereNotIn('id', $activeOrCompletedQuestIds)
+            ->whereNotIn('id', $user->userQuests->pluck('quest_id')->all())
             ->orderBy('name')
             ->get()
             ->map(fn (Quest $quest): array => [
@@ -345,7 +345,7 @@ class BuildCityMenuData
             ->values();
 
         $available = $availableStoryQuests
-            ->concat($availableRegularJobs)
+            ->concat($availableNewJobs)
             ->concat($availableRepeatableJobs)
             ->values()
             ->all();

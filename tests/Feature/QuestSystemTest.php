@@ -272,6 +272,58 @@ test('repeatable job available again shows in available section with completion_
     expect($entry['quest']->name)->toBe('Daily Supply Run');
 });
 
+test('repeatable job the player has never taken shows in available section', function () {
+    $user = User::factory()->create();
+    Quest::factory()->create([
+        'name' => 'Daily Supply Run',
+        'is_active' => true,
+        'is_repeatable' => true,
+        'quest_type' => 'job',
+    ]);
+
+    $data = (new BuildCityMenuData)($user);
+    $available = collect($data['jobs']['available']);
+
+    expect($available->where('type', 'job')->pluck('quest')->map->name)->toContain('Daily Supply Run');
+});
+
+test('repeatable job ready to run again is listed once', function () {
+    $user = User::factory()->create();
+    $quest = Quest::factory()->create([
+        'name' => 'Daily Supply Run',
+        'is_active' => true,
+        'is_repeatable' => true,
+        'quest_type' => 'job',
+    ]);
+    $user->userQuests()->create([
+        'quest_id' => $quest->id,
+        'status' => 'repeatable',
+        'current_step_index' => 0,
+        'completion_count' => 1,
+    ]);
+
+    $data = (new BuildCityMenuData)($user);
+    $available = collect($data['jobs']['available']);
+
+    expect($available->filter(fn (array $entry): bool => $entry['quest']->is($quest)))->toHaveCount(1);
+});
+
+test('migrations seed the story quest line and recurring jobs', function () {
+    $user = User::factory()->create();
+
+    $data = (new BuildCityMenuData)($user);
+    $available = collect($data['jobs']['available']);
+
+    expect($available->where('type', 'story')->pluck('quest')->map->name->all())->toBe(['Static'])
+        ->and($available->where('type', 'job')->pluck('quest')->map->name->all())->toContain(
+            'Supply Run',
+            'Zone Salvage Contract',
+            'Field Medic Run',
+            'Intel Broker',
+            'Tech Salvage Contract',
+        );
+});
+
 // --- Multi-Item Requirements ---
 
 test('step with several required item types fails and consumes nothing when one is missing', function () {
