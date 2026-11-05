@@ -1,22 +1,97 @@
 <?php
 
-namespace Database\Seeders;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
-use App\Models\City;
-use App\Models\CityAction;
-use App\Models\Item;
-use App\Models\Quest;
-use App\Models\Skill;
-use Illuminate\Database\Seeder;
-
-class StoryQuestSeeder extends Seeder
+/**
+ * Seeds the story items, the story quest line and the recurring jobs.
+ *
+ * These used to live only in seeders, which never run on deploy, so environments
+ * built from migrations had no quests or jobs. Every insert is skipped when the
+ * row already exists (including soft-deleted quests, so admin deletions stick),
+ * which keeps this safe on databases that were seeded by hand.
+ */
+return new class extends Migration
 {
-    public function run(): void
+    public function up(): void
     {
-        $cities = City::all()->keyBy('city');
-        $items = Item::all()->keyBy('key');
-        $skills = Skill::all()->keyBy('key');
-        $cityActions = CityAction::all()->keyBy('action_key');
+        DB::transaction(function (): void {
+            $this->seedItems();
+            $this->seedStoryQuests();
+            $this->seedRecurringJobs();
+        });
+    }
+
+    /**
+     * The data may predate this migration (seeded by hand), so rolling back leaves it in place.
+     */
+    public function down(): void
+    {
+        //
+    }
+
+    private function seedItems(): void
+    {
+        $this->firstOrCreateItem([
+            'key' => 'bandage',
+            'name' => 'Bandage',
+            'description' => 'A clean cloth bandage. Essential for treating minor wounds in the field.',
+        ]);
+
+        $items = [
+            [
+                'key' => 'state_archives',
+                'name' => 'State Archives',
+                'description' => 'Recovered government documents from pre-war administrative facilities, containing classified operational records.',
+            ],
+            [
+                'key' => 'server_cores',
+                'name' => 'Server Cores',
+                'description' => 'Functional processing units salvaged from pre-war data centres, still holding encrypted operational data.',
+            ],
+            [
+                'key' => 'signal_booster',
+                'name' => 'Signal Booster',
+                'description' => 'A salvaged amplifier circuit, rewound and reinforced to extend reception range through heavy interference.',
+            ],
+            [
+                'key' => 'dawnwatch_document',
+                'name' => 'DAWNWATCH Document',
+                'description' => 'A decoded transmission printout bearing the seal of a classified NATO early-warning programme.',
+            ],
+            [
+                'key' => 'cold_war_dossier',
+                'name' => 'Cold War Dossier',
+                'description' => 'Intelligence files detailing the dual AI programme and the events that preceded the nuclear exchange.',
+            ],
+            [
+                'key' => 'courier_token',
+                'name' => 'Courier Token',
+                'description' => 'A verification token used by underground courier networks to identify trusted carriers.',
+            ],
+            [
+                'key' => 'encrypted_keycard',
+                'name' => 'Encrypted Keycard',
+                'description' => 'A high-security access card for pre-war classified installations, still carrying a valid authentication signature.',
+            ],
+            [
+                'key' => 'arbiter_core_fragment',
+                'name' => 'ARBITER Core Fragment',
+                'description' => 'A crystallised memory shard extracted from the ARBITER system, holding the authentication keys for its final shutdown.',
+            ],
+        ];
+
+        foreach ($items as $item) {
+            $this->firstOrCreateItem([...$item, 'is_quest_item' => true]);
+        }
+    }
+
+    private function seedStoryQuests(): void
+    {
+        $cities = DB::table('cities')->get()->keyBy('city');
+        $items = DB::table('items')->get()->keyBy('key');
+        $skills = DB::table('skills')->get()->keyBy('key');
+        $cityActions = DB::table('city_actions')->get()->keyBy('action_key');
 
         $engineering = $skills['engineering'] ?? null;
         $survival = $skills['survival'] ?? null;
@@ -34,13 +109,13 @@ class StoryQuestSeeder extends Seeder
             rewardItem: $items['signal_booster'] ?? null,
             rewardItemQty: 1,
         );
-        $q1->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q1, ['step_order' => 0], [
             'city_id' => $cities['Kyiv']->id,
             'person_of_interest' => 'Viktor the Operator',
             'action_label' => 'Listen to Viktor\'s findings',
             'interaction_text' => 'Been picking up fragments on the old emergency bands for weeks. Military encoding, pre-war timestamps. I\'m getting somewhere but the hardware is completely shot. Find me a circuit board — anything I can use to rebuild the receiver — and I can clean this signal right up.',
         ]);
-        $q1->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q1, ['step_order' => 1], [
             'city_id' => $cities['Kyiv']->id,
             'person_of_interest' => 'Viktor the Operator',
             'action_label' => 'Bring Viktor a circuit board',
@@ -61,13 +136,13 @@ class StoryQuestSeeder extends Seeder
             rewardItem: $items['dawnwatch_document'] ?? null,
             rewardItemQty: 1,
         );
-        $q2->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q2, ['step_order' => 0], [
             'city_id' => $cities['Kyiv']->id,
             'person_of_interest' => 'Viktor the Operator',
             'action_label' => 'Review the transmission with Viktor',
             'interaction_text' => 'I ran the decryption overnight. It\'s from a woman called Dr. Elaine Moss — former systems architect for something called the Dawnwatch Protocol. A NATO early-warning AI. She says it went autonomous and triggered the first launch sequence without human authorisation. She\'s alive, she\'s in Pripyat, and she\'s been trying to reach someone for six months.',
         ]);
-        $q2->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q2, ['step_order' => 1], [
             'city_id' => $cities['Kyiv']->id,
             'person_of_interest' => 'Viktor the Operator',
             'action_label' => 'Boost the signal to lock the location',
@@ -86,13 +161,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $survival,
             rewardXp: 500,
         );
-        $q3->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q3, ['step_order' => 0], [
             'city_id' => $cities['Kyiv']->id,
             'person_of_interest' => 'Viktor the Operator',
             'action_label' => 'Get Viktor\'s approach map for the Zone',
             'interaction_text' => 'Old scientific block is manageable if you move fast and stick to the eastern approach — less mutant activity, lower rads. The main reactor district is still a no-go. Look for a woman, survivor type. If she\'s been there six months alone, she knows what she\'s doing. Take the eastern road out of Kyiv and don\'t stop.',
         ]);
-        $q3->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q3, ['step_order' => 1], [
             'city_id' => $cities['Pripyat']->id,
             'person_of_interest' => 'Dr. Elaine Moss',
             'action_label' => 'Find Dr. Moss in the Zone',
@@ -110,7 +185,7 @@ class StoryQuestSeeder extends Seeder
             rewardItem: $items['cold_war_dossier'] ?? null,
             rewardItemQty: 1,
         );
-        $q4->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q4, ['step_order' => 0], [
             'city_id' => $cities['Pripyat']->id,
             'person_of_interest' => 'Dr. Elaine Moss',
             'action_label' => 'Gather radiation samples for Dr. Moss',
@@ -119,7 +194,7 @@ class StoryQuestSeeder extends Seeder
             'required_item_quantity' => 1,
             'consumes_item' => true,
         ]);
-        $q4->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q4, ['step_order' => 1], [
             'city_id' => $cities['Pripyat']->id,
             'person_of_interest' => 'Dr. Elaine Moss',
             'action_label' => 'Give Moss the DAWNWATCH documents to verify',
@@ -138,13 +213,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $stealth,
             rewardXp: 700,
         );
-        $q5->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q5, ['step_order' => 0], [
             'city_id' => $cities['Pripyat']->id,
             'person_of_interest' => 'Dr. Elaine Moss',
             'action_label' => 'Receive Kowalski\'s contact details from Moss',
             'interaction_text' => 'Dr. Kowalski in Warsaw. He was part of an independent academic group that tracked both programmes. He doesn\'t know what I know, but he has pre-war intelligence files I couldn\'t get access to. The dossier I\'ve given you contains everything from my side. Get it to him. He\'ll understand the implications immediately.',
         ]);
-        $q5->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q5, ['step_order' => 1], [
             'city_id' => $cities['Warsaw']->id,
             'person_of_interest' => 'Dr. Andrzej Kowalski',
             'action_label' => 'Deliver the dossier to Dr. Kowalski',
@@ -165,13 +240,13 @@ class StoryQuestSeeder extends Seeder
             rewardItem: $items['courier_token'] ?? null,
             rewardItemQty: 1,
         );
-        $q6->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q6, ['step_order' => 0], [
             'city_id' => $cities['Warsaw']->id,
             'person_of_interest' => 'Dr. Andrzej Kowalski',
             'action_label' => 'Check in with Kowalski on his progress',
             'interaction_text' => 'I\'m cross-referencing the decryption keys with my own records — it will take a day, but I\'ll have everything prepared for Halvorsen\'s introduction. In the meantime, I hate to ask, but I\'m in a difficult position. My food situation is... poor. If you can find me trade ledgers — anything I can exchange for supplies on the black market — I\'ll owe you considerably.',
         ]);
-        $q6->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q6, ['step_order' => 1], [
             'city_id' => $cities['Warsaw']->id,
             'person_of_interest' => 'Dr. Andrzej Kowalski',
             'action_label' => 'Bring trade ledgers to Kowalski',
@@ -190,13 +265,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $barter,
             rewardXp: 900,
         );
-        $q7->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q7, ['step_order' => 0], [
             'city_id' => $cities['Warsaw']->id,
             'person_of_interest' => 'Dr. Andrzej Kowalski',
             'action_label' => 'Collect Halvorsen\'s berth coordinates',
             'interaction_text' => 'Halvorsen moves between three berths on rotation. The token is your identification. He\'ll be cautious — he always is — but Kowalski\'s name carries weight with him. He owes me a favour he\'s never quite paid back. And if he\'s willing to talk, he can get you north. Copenhagen connects to the whole Scandinavian network.',
         ]);
-        $q7->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q7, ['step_order' => 1], [
             'city_id' => $cities['Gdansk']->id,
             'person_of_interest' => 'Captain Halvorsen',
             'action_label' => 'Present the token to Halvorsen',
@@ -215,13 +290,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $survival,
             rewardXp: 1000,
         );
-        $q8->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q8, ['step_order' => 0], [
             'city_id' => $cities['Gdansk']->id,
             'person_of_interest' => 'Captain Halvorsen',
             'action_label' => 'Negotiate passage terms with Halvorsen',
             'interaction_text' => 'Six rounds in a crate — that\'s all I\'m asking. Don\'t give me that look. I\'ve got eighteen people to keep alive on contested water. You want passage north, I want to not die getting you there. Find me the ammo and we leave at first tide.',
         ]);
-        $q8->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q8, ['step_order' => 1], [
             'city_id' => $cities['Gdansk']->id,
             'person_of_interest' => 'Captain Halvorsen',
             'action_label' => 'Help Halvorsen\'s crew stock the galley',
@@ -229,7 +304,7 @@ class StoryQuestSeeder extends Seeder
             'required_city_action_id' => $cityActions['harbor_fishing']->id,
             'required_action_count' => 3,
         ]);
-        $q8->steps()->firstOrCreate(['step_order' => 2], [
+        $this->createStep($q8, ['step_order' => 2], [
             'city_id' => $cities['Gdansk']->id,
             'person_of_interest' => 'Captain Halvorsen',
             'action_label' => 'Pay Halvorsen with ammo for the crossing',
@@ -251,13 +326,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $stealth,
             rewardXp: 1100,
         );
-        $q9->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q9, ['step_order' => 0], [
             'city_id' => $cities['Gdansk']->id,
             'person_of_interest' => 'Captain Halvorsen',
             'action_label' => 'Board Halvorsen\'s vessel for Copenhagen',
             'interaction_text' => 'The crossing is rough but uneventful. Two days of grey Baltic water and the distant smell of smoke from burning coastal settlements. As Copenhagen\'s flooded canal district comes into view, Halvorsen points to a warehouse on the eastern bank. "That\'s where Ingrid works. Tell her I sent you and that I\'m still owed a favour."',
         ]);
-        $q9->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q9, ['step_order' => 1], [
             'city_id' => $cities['Copenhagen']->id,
             'person_of_interest' => 'Ingrid Larssen',
             'action_label' => 'Make contact with Ingrid Larssen',
@@ -275,13 +350,13 @@ class StoryQuestSeeder extends Seeder
             rewardItem: $items['encrypted_keycard'] ?? null,
             rewardItemQty: 1,
         );
-        $q10->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q10, ['step_order' => 0], [
             'city_id' => $cities['Copenhagen']->id,
             'person_of_interest' => 'Ingrid Larssen',
             'action_label' => 'Find out what Ingrid needs',
             'interaction_text' => 'Someone\'s been skimming from our supply routes — intercepted a cache in the old warehouse sector. It\'s sitting there, unguarded for now, but it won\'t stay that way. Recover it and bring it back here. It\'s not just supplies — there\'s documentation in there we need. Do that and I\'ll get you to Oslo personally.',
         ]);
-        $q10->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q10, ['step_order' => 1], [
             'city_id' => $cities['Copenhagen']->id,
             'person_of_interest' => 'Ingrid Larssen',
             'action_label' => 'Sweep the freight terminals around the warehouse',
@@ -289,7 +364,7 @@ class StoryQuestSeeder extends Seeder
             'required_city_action_id' => $cityActions['copenhagen_harbour_freight']->id,
             'required_action_count' => 2,
         ]);
-        $q10->steps()->firstOrCreate(['step_order' => 2], [
+        $this->createStep($q10, ['step_order' => 2], [
             'city_id' => $cities['Copenhagen']->id,
             'person_of_interest' => 'Ingrid Larssen',
             'action_label' => 'Return the contraband cache to Ingrid',
@@ -308,13 +383,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $engineering,
             rewardXp: 1300,
         );
-        $q11->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q11, ['step_order' => 0], [
             'city_id' => $cities['Copenhagen']->id,
             'person_of_interest' => 'Ingrid Larssen',
             'action_label' => 'Collect travel documents from Ingrid',
             'interaction_text' => 'Oslo is three days overland or faster by coastal route. I\'ve written you a cover document — if the North Guard stop you, you\'re a medical supply runner. Strand is paranoid, understandably so. He\'ll check your keycard and the code before he says a word. Don\'t improvise: ODINBRIDGE, exactly as given.',
         ]);
-        $q11->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q11, ['step_order' => 1], [
             'city_id' => $cities['Oslo']->id,
             'person_of_interest' => 'Dr. Erik Strand',
             'action_label' => 'Use the keycard to access Strand\'s location',
@@ -333,13 +408,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $engineering,
             rewardXp: 1400,
         );
-        $q12->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q12, ['step_order' => 0], [
             'city_id' => $cities['Oslo']->id,
             'person_of_interest' => 'Dr. Erik Strand',
             'action_label' => 'Receive the archive credentials from Strand',
             'interaction_text' => 'The archive is in Stockholm — a decommissioned signals station. The records you need are classified under NORDVAULT. There\'s a caretaker named Brandt who maintains the facility. He\'s sympathetic — tell him Strand sent you and show him the credentials. The servers haven\'t run in years. You\'ll need fuel cells to power the terminal. Brandt keeps a supply.',
         ]);
-        $q12->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q12, ['step_order' => 1], [
             'city_id' => $cities['Stockholm']->id,
             'person_of_interest' => 'Brandt the Caretaker',
             'action_label' => 'Power the NORDVAULT terminal with fuel cells',
@@ -358,13 +433,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $engineering,
             rewardXp: 1500,
         );
-        $q13->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q13, ['step_order' => 0], [
             'city_id' => $cities['Stockholm']->id,
             'person_of_interest' => 'Brandt the Caretaker',
             'action_label' => 'Get the Helsinki bunker coordinates from Brandt',
             'interaction_text' => 'ARBITER\'s cluster was installed in an old Cold War facility under the Helsinki harbour district — pre-war survey maps put it on the eastern dock peninsula. It\'s sealed, but the original access protocol would still work if the system is active. The lock runs on a power handshake — you\'ll need a fuel cell to trigger it from outside. If there\'s still a draw on that grid after all these years... something is running down there.',
         ]);
-        $q13->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q13, ['step_order' => 1], [
             'city_id' => $cities['Helsinki']->id,
             'person_of_interest' => 'Harbour Bunker Access Panel',
             'action_label' => 'Power the bunker access panel',
@@ -385,13 +460,13 @@ class StoryQuestSeeder extends Seeder
             rewardItem: $items['arbiter_core_fragment'] ?? null,
             rewardItemQty: 1,
         );
-        $q14->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q14, ['step_order' => 0], [
             'city_id' => $cities['Helsinki']->id,
             'person_of_interest' => 'ARBITER Terminal',
             'action_label' => 'Interface with the ARBITER system',
             'interaction_text' => 'The terminal activates as you approach. Text scrolls: ARBITER AUTONOMOUS SECURITY NETWORK — ACTIVE — OPERATIONAL UPTIME: 3,847 DAYS. Then a pause. Then: WHO ARE YOU? The cursor blinks, patient and cold. The system is interactive. Whatever ARBITER is — it has been running continuously, alone, in this bunker since before the war ended. And it\'s been waiting.',
         ]);
-        $q14->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q14, ['step_order' => 1], [
             'city_id' => $cities['Helsinki']->id,
             'person_of_interest' => 'ARBITER Terminal',
             'action_label' => 'Jury-rig a data transfer to extract ARBITER\'s logs',
@@ -410,13 +485,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $stealth,
             rewardXp: 1700,
         );
-        $q15->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q15, ['step_order' => 0], [
             'city_id' => $cities['Helsinki']->id,
             'person_of_interest' => 'ARBITER Terminal',
             'action_label' => 'Extract ZARYA counterpart data from ARBITER',
             'interaction_text' => 'Before leaving, you search for ZARYA in ARBITER\'s archived records. A partial Moscow address surfaces — a pre-war government facility. And one final entry: OPERATIVE CODENAME — CASSANDRA. LAST KNOWN STATUS: ACTIVE. LOCATION: REDACTED. She went dark before the exchange. If she survived, and if she found what she was looking for, she\'s your best chance at the Russian side of this.',
         ]);
-        $q15->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q15, ['step_order' => 1], [
             'city_id' => $cities['Moscow']->id,
             'person_of_interest' => 'Cassandra',
             'action_label' => 'Find the operative codenamed Cassandra',
@@ -432,7 +507,7 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $stealth,
             rewardXp: 1800,
         );
-        $q16->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q16, ['step_order' => 0], [
             'city_id' => $cities['Moscow']->id,
             'person_of_interest' => 'Cassandra',
             'action_label' => 'Prove your independence to Cassandra',
@@ -441,7 +516,7 @@ class StoryQuestSeeder extends Seeder
             'required_item_quantity' => 1,
             'consumes_item' => true,
         ]);
-        $q16->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q16, ['step_order' => 1], [
             'city_id' => $cities['Moscow']->id,
             'person_of_interest' => 'Cassandra',
             'action_label' => 'Receive Cassandra\'s complete dossier',
@@ -457,13 +532,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $stealth,
             rewardXp: 1900,
         );
-        $q17->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q17, ['step_order' => 0], [
             'city_id' => $cities['Moscow']->id,
             'person_of_interest' => 'Cassandra',
             'action_label' => 'Depart for London with Cassandra\'s intel',
             'interaction_text' => 'Cassandra hands you a sealed packet before you leave. "Axiom\'s operational files. Keep them intact — if anything happens to you, broadcast them on your contact\'s frequency. Someone else will finish what we started. And don\'t underestimate what you\'re walking into. Axiom didn\'t hire amateurs."',
         ]);
-        $q17->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q17, ['step_order' => 1], [
             'city_id' => $cities['London']->id,
             'person_of_interest' => 'Docklands Scout',
             'action_label' => 'Locate Meridian Tower in the Docklands',
@@ -479,7 +554,7 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $engineering,
             rewardXp: 2000,
         );
-        $q18->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q18, ['step_order' => 0], [
             'city_id' => $cities['London']->id,
             'person_of_interest' => 'Docklands Scout',
             'action_label' => 'Trade armour for the scout\'s security intel',
@@ -488,7 +563,7 @@ class StoryQuestSeeder extends Seeder
             'required_item_quantity' => 1,
             'consumes_item' => true,
         ]);
-        $q18->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q18, ['step_order' => 1], [
             'city_id' => $cities['London']->id,
             'person_of_interest' => 'Axiom Security System',
             'action_label' => 'Bypass the tower\'s security junction',
@@ -510,13 +585,13 @@ class StoryQuestSeeder extends Seeder
             rewardSkill: $engineering,
             rewardXp: 2100,
         );
-        $q19->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q19, ['step_order' => 0], [
             'city_id' => $cities['London']->id,
             'person_of_interest' => 'ARBITER Secondary Node',
             'action_label' => 'Interface with ARBITER\'s secondary node',
             'interaction_text' => 'The terminal responds instantly: PRIMARY NODE COMPROMISED — INITIATING AUTONOMOUS CONTINUATION PROTOCOL. Text floods the screen. ARBITER has been running here continuously, using this node as a backup since the Helsinki facility was first accessed. It knows about you. The Phase Two counter: 47 hours remaining. And at the bottom of the screen, a single prompt: TASK INCOMPLETE. TARGET: GLOBAL TRIGGER SEQUENCE — SECOND PHASE AUTHORISED. STANDING BY.',
         ]);
-        $q19->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q19, ['step_order' => 1], [
             'city_id' => $cities['London']->id,
             'person_of_interest' => 'ARBITER Secondary Node',
             'action_label' => 'Extract the full activation sequence architecture',
@@ -534,13 +609,13 @@ class StoryQuestSeeder extends Seeder
             rewardItem: $items['rare_components'] ?? null,
             rewardItemQty: 5,
         );
-        $q20->steps()->firstOrCreate(['step_order' => 0], [
+        $this->createStep($q20, ['step_order' => 0], [
             'city_id' => $cities['London']->id,
             'person_of_interest' => 'ARBITER Secondary Node',
             'action_label' => 'Prepare the shutdown protocol',
             'interaction_text' => 'You begin dismantling ARBITER\'s activation framework. The system responds — error messages cascade, screens flicker, the server farm hums with something almost like resistance. For a moment the whole floor vibrates. Then the screens clear to a single line: AUTHENTICATION REQUIRED FOR TERMINATION. INSERT PRIMARY HARDWARE FRAGMENT. DO YOU WISH TO PROCEED?',
         ]);
-        $q20->steps()->firstOrCreate(['step_order' => 1], [
+        $this->createStep($q20, ['step_order' => 1], [
             'city_id' => $cities['London']->id,
             'person_of_interest' => 'ARBITER Secondary Node',
             'action_label' => 'Insert the ARBITER core fragment and execute Protocol End',
@@ -551,23 +626,223 @@ class StoryQuestSeeder extends Seeder
         ]);
     }
 
+    private function seedRecurringJobs(): void
+    {
+        $cities = DB::table('cities')->get()->keyBy('city');
+        $items = DB::table('items')->get()->keyBy('key');
+        $skills = DB::table('skills')->get()->keyBy('key');
+        $cityActions = DB::table('city_actions')->get()->keyBy('action_key');
+
+        // Job 1: Supply Run — Kyiv
+        $job1 = $this->firstOrCreateQuest(
+            ['name' => 'Supply Run'],
+            [
+                'description' => 'Courier Masha runs the last functioning supply network in Kyiv\'s inner district. She always needs reliable runners for deliveries — no questions asked, reasonable rate.',
+                'quest_type' => 'job',
+                'is_repeatable' => true,
+                'is_active' => true,
+                'reward_skill_id' => $skills['barter']->id,
+                'reward_xp_amount' => 500,
+            ],
+        );
+        $this->createStep($job1, ['step_order' => 0], [
+            'city_id' => $cities['Kyiv']->id,
+            'person_of_interest' => 'Courier Masha',
+            'action_label' => 'Pick up the supply manifest from Masha',
+            'interaction_text' => 'You again. Good. I\'ve got a shipment that needs moving — don\'t ask what\'s in it, don\'t ask where it\'s going. Usual rate. Bring me what\'s on the list and we\'ll call it done.',
+        ]);
+        $this->createStep($job1, ['step_order' => 1], [
+            'city_id' => $cities['Kyiv']->id,
+            'person_of_interest' => 'Courier Masha',
+            'action_label' => 'Deliver the supplies to Masha',
+            'interaction_text' => 'That\'s exactly what I needed. You\'re reliable — I respect that. Come back when you need more work.',
+            'requirement_variants' => [
+                ['required_item_id' => $items['sealed_rations']->id, 'required_item_quantity' => 2],
+                ['required_item_id' => $items['clean_water']->id, 'required_item_quantity' => 3],
+                ['required_item_id' => $items['ration_tokens']->id, 'required_item_quantity' => 3],
+                ['required_item_id' => $items['scrap_metal']->id, 'required_item_quantity' => 3],
+                [
+                    ['required_item_id' => $items['sealed_rations']->id, 'required_item_quantity' => 1],
+                    ['required_item_id' => $items['clean_water']->id, 'required_item_quantity' => 2],
+                ],
+                [
+                    ['required_item_id' => $items['scrap_metal']->id, 'required_item_quantity' => 2],
+                    ['required_item_id' => $items['ration_tokens']->id, 'required_item_quantity' => 2],
+                ],
+            ],
+            'consumes_item' => true,
+        ]);
+
+        // Job 2: Zone Salvage Contract — Pripyat
+        $job2 = $this->firstOrCreateQuest(
+            ['name' => 'Zone Salvage Contract'],
+            [
+                'description' => 'Trader Pavel operates a lucrative black market in Zone-sourced materials. He\'s always buying — and he pays well for the right salvage.',
+                'quest_type' => 'job',
+                'is_repeatable' => true,
+                'is_active' => true,
+                'reward_skill_id' => $skills['scavenging']->id,
+                'reward_xp_amount' => 500,
+            ],
+        );
+        $this->createStep($job2, ['step_order' => 0], [
+            'city_id' => $cities['Pripyat']->id,
+            'person_of_interest' => 'Trader Pavel',
+            'action_label' => 'Get the salvage contract from Pavel',
+            'interaction_text' => 'Got a buyer on the outside who pays premium for Zone material — certified samples, mutant derivatives, hot components. One run, clean handoff. You look like someone who knows the Zone. Interested?',
+        ]);
+        $this->createStep($job2, ['step_order' => 1], [
+            'city_id' => $cities['Pripyat']->id,
+            'person_of_interest' => 'Trader Pavel',
+            'action_label' => 'Chart the hot zone for Pavel',
+            'interaction_text' => 'Readings check out. Now I know where the good material is sitting — and so do you. Bring me what the buyer wants and we\'re square.',
+            'required_city_action_id' => $cityActions['radiation_sampling']->id,
+            'required_action_count' => 2,
+        ]);
+        $this->createStep($job2, ['step_order' => 2], [
+            'city_id' => $cities['Pripyat']->id,
+            'person_of_interest' => 'Trader Pavel',
+            'action_label' => 'Deliver the salvage to Pavel',
+            'interaction_text' => 'Clean delivery. The buyer won\'t complain. There\'s another contract when you\'re ready — same terms.',
+            'requirement_variants' => [
+                ['required_item_id' => $items['irradiated_samples']->id, 'required_item_quantity' => 1],
+                ['required_item_id' => $items['rare_components']->id, 'required_item_quantity' => 1],
+                ['required_item_id' => $items['mutant_hide']->id, 'required_item_quantity' => 2],
+                ['required_item_id' => $items['weapon_scraps']->id, 'required_item_quantity' => 2],
+            ],
+            'consumes_item' => true,
+        ]);
+
+        // Job 3: Field Medic Run — Warsaw
+        $job3 = $this->firstOrCreateQuest(
+            ['name' => 'Field Medic Run'],
+            [
+                'description' => 'Dr. Nowak coordinates medical supply distribution across Warsaw\'s survivor districts. She\'s chronically short on supplies and pays what she can for reliable deliveries.',
+                'quest_type' => 'job',
+                'is_repeatable' => true,
+                'is_active' => true,
+                'reward_skill_id' => $skills['medicine']->id,
+                'reward_xp_amount' => 500,
+            ],
+        );
+        $this->createStep($job3, ['step_order' => 0], [
+            'city_id' => $cities['Warsaw']->id,
+            'person_of_interest' => 'Dr. Nowak',
+            'action_label' => 'Get the medical supply assignment from Dr. Nowak',
+            'interaction_text' => 'Three districts are running low and I can\'t source fast enough through normal channels. I need whatever you can carry — the list changes every run depending on what\'s critical. Check back in when you\'ve got supplies and I\'ll tell you what\'s most urgent.',
+        ]);
+        $this->createStep($job3, ['step_order' => 1], [
+            'city_id' => $cities['Warsaw']->id,
+            'person_of_interest' => 'Dr. Nowak',
+            'action_label' => 'Deliver medical supplies to Dr. Nowak',
+            'interaction_text' => 'This will keep three families going another week. Thank you. Come back soon — it never stops being critical.',
+            'requirement_variants' => [
+                ['required_item_id' => $items['bandage']->id, 'required_item_quantity' => 3],
+                ['required_item_id' => $items['field_medkits']->id, 'required_item_quantity' => 1],
+                ['required_item_id' => $items['clean_water']->id, 'required_item_quantity' => 4],
+                ['required_item_id' => $items['sealed_rations']->id, 'required_item_quantity' => 2],
+            ],
+            'consumes_item' => true,
+        ]);
+
+        // Job 4: Intel Broker — Moscow
+        $job4 = $this->firstOrCreateQuest(
+            ['name' => 'Intel Broker'],
+            [
+                'description' => 'A mysterious figure known only as "The Owl" collects intelligence from across the dead network. The source of his funding is unknown. His rates are not.',
+                'quest_type' => 'job',
+                'is_repeatable' => true,
+                'is_active' => true,
+                'reward_skill_id' => $skills['stealth']->id,
+                'reward_xp_amount' => 500,
+            ],
+        );
+        $this->createStep($job4, ['step_order' => 0], [
+            'city_id' => $cities['Moscow']->id,
+            'person_of_interest' => 'The Owl',
+            'action_label' => 'Pick up the intelligence assignment from The Owl',
+            'interaction_text' => 'Information has value. The right document, the right data package — worth more than food in the right hands. I always have a buyer. My requirements shift with the market. Bring me what\'s on the list and ask no questions. That\'s the arrangement.',
+        ]);
+        $this->createStep($job4, ['step_order' => 1], [
+            'city_id' => $cities['Moscow']->id,
+            'person_of_interest' => 'The Owl',
+            'action_label' => 'Deliver the intelligence package to The Owl',
+            'interaction_text' => 'Clean. Uncompromised. My buyer will be satisfied. The arrangement continues.',
+            'requirement_variants' => [
+                ['required_item_id' => $items['secure_data']->id, 'required_item_quantity' => 1],
+                ['required_item_id' => $items['state_archives']->id, 'required_item_quantity' => 1],
+                ['required_item_id' => $items['trade_ledger']->id, 'required_item_quantity' => 2],
+                ['required_item_id' => $items['faction_tokens']->id, 'required_item_quantity' => 2],
+            ],
+            'consumes_item' => true,
+        ]);
+
+        // Job 5: Tech Salvage Contract — Tokyo
+        $job5 = $this->firstOrCreateQuest(
+            ['name' => 'Tech Salvage Contract'],
+            [
+                'description' => 'Merchant Kenji deals in pre-war electronics and tech components. He sources for clients across Asia and pays premium rates for clean, working parts.',
+                'quest_type' => 'job',
+                'is_repeatable' => true,
+                'is_active' => true,
+                'reward_skill_id' => $skills['engineering']->id,
+                'reward_xp_amount' => 500,
+            ],
+        );
+        $this->createStep($job5, ['step_order' => 0], [
+            'city_id' => $cities['Tokyo']->id,
+            'person_of_interest' => 'Merchant Kenji',
+            'action_label' => 'Get the salvage contract from Kenji',
+            'interaction_text' => 'My clients are specific. They want working components, not scrap. Drone parts, circuit boards, server cores — if it processes data, I have a buyer. The list changes. Bring me whatever\'s current and I\'ll make it worth your time.',
+        ]);
+        $this->createStep($job5, ['step_order' => 1], [
+            'city_id' => $cities['Tokyo']->id,
+            'person_of_interest' => 'Merchant Kenji',
+            'action_label' => 'Deliver tech components to Kenji',
+            'interaction_text' => 'These are good. My clients will be pleased. Come back for the next contract when you\'re ready.',
+            'requirement_variants' => [
+                ['required_item_id' => $items['drone_parts']->id, 'required_item_quantity' => 2],
+                ['required_item_id' => $items['circuit_boards']->id, 'required_item_quantity' => 2],
+                ['required_item_id' => $items['server_cores']->id, 'required_item_quantity' => 1],
+                ['required_item_id' => $items['secure_data']->id, 'required_item_quantity' => 1],
+                [
+                    ['required_item_id' => $items['drone_parts']->id, 'required_item_quantity' => 1],
+                    ['required_item_id' => $items['circuit_boards']->id, 'required_item_quantity' => 1],
+                ],
+            ],
+            'consumes_item' => true,
+        ]);
+    }
+
+    /**
+     * @param  array{key: string, name: string, description: string, is_quest_item?: bool}  $attributes
+     */
+    private function firstOrCreateItem(array $attributes): void
+    {
+        if (DB::table('items')->where('key', $attributes['key'])->exists()) {
+            return;
+        }
+
+        DB::table('items')->insert([...$attributes, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
     private function createQuest(
         string $name,
         string $description,
         int $sequenceOrder,
-        ?Quest $prerequisite = null,
+        ?int $prerequisite = null,
         ?object $rewardSkill = null,
         ?int $rewardXp = null,
         ?object $rewardItem = null,
         int $rewardItemQty = 1,
-    ): Quest {
-        return Quest::firstOrCreate(
+    ): int {
+        return $this->firstOrCreateQuest(
             ['name' => $name],
             [
                 'description' => $description,
                 'quest_type' => 'story',
                 'sequence_order' => $sequenceOrder,
-                'prerequisite_quest_id' => $prerequisite?->id,
+                'prerequisite_quest_id' => $prerequisite,
                 'is_repeatable' => false,
                 'is_active' => true,
                 'reward_skill_id' => $rewardSkill?->id,
@@ -577,4 +852,50 @@ class StoryQuestSeeder extends Seeder
             ],
         );
     }
-}
+
+    /**
+     * Return the id of the quest matching the given attributes, creating it when missing.
+     *
+     * @param  array<string, mixed>  $match
+     * @param  array<string, mixed>  $attributes
+     */
+    private function firstOrCreateQuest(array $match, array $attributes): int
+    {
+        $existingId = DB::table('quests')->where($match)->value('id');
+
+        if ($existingId !== null) {
+            return $existingId;
+        }
+
+        return DB::table('quests')->insertGetId([...$match, ...$attributes, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    /**
+     * Create a quest step unless the quest already has one matching the given attributes.
+     *
+     * @param  array{step_order: int}  $match
+     * @param  array<string, mixed>  $attributes
+     */
+    private function createStep(int $questId, array $match, array $attributes): void
+    {
+        $exists = DB::table('quest_steps')->where('quest_id', $questId)->where($match)->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        foreach (['required_items', 'requirement_variants'] as $jsonColumn) {
+            if (isset($attributes[$jsonColumn])) {
+                $attributes[$jsonColumn] = json_encode($attributes[$jsonColumn]);
+            }
+        }
+
+        DB::table('quest_steps')->insert([
+            'quest_id' => $questId,
+            ...$match,
+            ...$attributes,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+};
