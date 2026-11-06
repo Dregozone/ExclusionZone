@@ -45,7 +45,7 @@ test('a travelling player is shown in transit and cannot start another route', f
         'current_city_id' => $originId,
         'can_travel' => false,
         'travel_restriction' => 'Finish or cancel your current work before starting another action or route.',
-        'transit' => ['from' => $originId, 'to' => $warsaw->id],
+        'transit' => ['from' => $originId, 'to' => $warsaw->id, 'queued' => []],
     ]);
 });
 

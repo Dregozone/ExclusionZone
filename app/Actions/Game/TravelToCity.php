@@ -36,4 +36,37 @@ class TravelToCity
             throw new AuthorizationException('That route is not available from your current city.');
         }
     }
+
+    /**
+     * Check that the player can follow a route from their current city, one connected stop after another.
+     *
+     * @param  list<int>  $route  every city to visit in order, ending at the final destination
+     *
+     * @throws AuthorizationException
+     */
+    public function authorizeRoute(User $user, array $route): void
+    {
+        $currentCityId = $user->location?->city_id;
+        $stops = [$currentCityId, ...$route];
+
+        if ($currentCityId === null || $route === [] || count(array_unique($stops)) !== count($stops)) {
+            throw new AuthorizationException('That route is not available from your current city.');
+        }
+
+        if (City::query()->whereKey($route)->count() !== count($route)) {
+            throw new AuthorizationException('That route is not available from your current city.');
+        }
+
+        $connections = DB::table('city_connections')
+            ->whereIn('city_id', array_slice($stops, 0, -1))
+            ->get(['city_id', 'neighbor_city_id'])
+            ->map(fn (object $connection): string => $connection->city_id.'-'.$connection->neighbor_city_id)
+            ->flip();
+
+        foreach (array_slice($stops, 1) as $index => $cityId) {
+            if (! $connections->has($stops[$index].'-'.$cityId)) {
+                throw new AuthorizationException('That route is not available from your current city.');
+            }
+        }
+    }
 }

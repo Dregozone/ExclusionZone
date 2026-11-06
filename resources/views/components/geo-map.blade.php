@@ -203,7 +203,7 @@
                     <template x-if="selectedInfo.mode === 'arriving'">
                         <p class="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
                             <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
-                            You are on your way here.
+                            <span x-text="transit?.to.id === selectedInfo.node.id ? 'You are on your way here.' : 'This stop is on your route.'"></span>
                         </p>
                     </template>
                     <template x-if="selectedInfo.mode === 'direct'">
@@ -244,15 +244,15 @@
                     <div class="{{ $compact ? 'mt-2' : 'mt-3' }}">
                         <button
                             type="button"
-                            @click="travel(selectedInfo.travelTarget.id)"
+                            @click="travel(selectedInfo.node.id)"
                             :disabled="!selectedInfo.canTravel"
                             data-test="map-travel-button"
                             class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 {{ $compact ? 'py-1.5' : 'py-2' }} text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:focus-visible:ring-offset-zinc-900 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
                         >
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                            <span x-text="`Travel to ${selectedInfo.travelTarget.label}`"></span>
+                            <span x-text="`Travel to ${selectedInfo.node.label}`"></span>
                         </button>
-                        <p x-show="selectedInfo.mode === 'route'" class="mt-1.5 text-center text-[11px] text-zinc-500 dark:text-zinc-400" x-text="`First stop of ${selectedInfo.stops} on the way to ${selectedInfo.node.label}.`"></p>
+                        <p x-show="selectedInfo.mode === 'route'" class="mt-1.5 text-center text-[11px] text-zinc-500 dark:text-zinc-400" x-text="`${selectedInfo.stops} legs, each starting when the last arrives. Cancel at any stop.`"></p>
                         <p x-show="!selectedInfo.canTravel && selectedInfo.restriction" class="mt-1.5 text-center text-[11px] text-amber-700 dark:text-amber-400" x-text="selectedInfo.restriction"></p>
                     </div>
                 </template>

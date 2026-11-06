@@ -178,6 +178,7 @@ class BuildCityMenuData
             'description' => match (true) {
                 $activeWork->isCityAction() => $activeWork->cityAction?->description ?? 'This work repeats until you stop it.',
                 $activeWork->isBrainScorcher() => 'The machine is chewing on your '.$activeWork->offered_quantity.'x '.($activeWork->offeredItem?->name ?? 'offering').'. Keep it in your pack until the timer ends, or cancel to take it back.',
+                $activeWork->queuedCityIds() !== [] => 'Movement is locked in until you arrive or cancel the route. Each later leg sets off on its own as soon as you reach a stop.',
                 default => 'Movement is locked in until you arrive or cancel the route.',
             },
             'duration_seconds' => $activeWork->duration_seconds,
@@ -201,7 +202,24 @@ class BuildCityMenuData
             'skill_xp_remaining' => $activeWork->skill_key === null ? null : max(0, $nextLevelXp - $currentXp),
             'from_city' => $activeWork->originCity?->city,
             'to_city' => $activeWork->destinationCity?->city,
+            'route_stops' => $this->queuedStopNamesFor($activeWork),
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function queuedStopNamesFor(UserWork $activeWork): array
+    {
+        $queuedCityIds = $activeWork->queuedCityIds();
+
+        if ($queuedCityIds === []) {
+            return [];
+        }
+
+        $names = City::query()->withTrashed()->whereKey($queuedCityIds)->pluck('city', 'id');
+
+        return array_values(array_map(fn (int $cityId): string => $names[$cityId] ?? 'Unknown city', $queuedCityIds));
     }
 
     /**

@@ -9,16 +9,21 @@ use Illuminate\Support\Facades\DB;
 
 class CancelUserWork
 {
-    public function __construct(public AdvanceWorkLoop $advanceWorkLoop) {}
+    public function __construct(
+        public AdvanceWorkLoop $advanceWorkLoop,
+        public AdvanceTravel $advanceTravel,
+    ) {}
 
     /**
-     * Cycles that have already finished are paid out; only the unfinished one is forfeited.
+     * Cycles that have already finished are paid out and finished travel legs are arrived at;
+     * only the unfinished cycle or leg is forfeited.
      *
      * @throws AuthorizationException
      */
     public function __invoke(User $user): UserWork
     {
         ($this->advanceWorkLoop)($user);
+        ($this->advanceTravel)($user);
 
         return DB::transaction(function () use ($user): UserWork {
             $work = UserWork::query()

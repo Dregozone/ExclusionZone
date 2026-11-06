@@ -24,12 +24,21 @@ class GameActionController extends Controller
     {
         try {
             $this->authorizeTask($request, 'city_action_perform');
-            $work = $startUserWork->forTravel($request->user(), City::query()->findOrFail($request->integer('city_id')));
+            $destination = City::query()->findOrFail($request->integer('city_id'));
+            $work = $startUserWork->forTravel(
+                $request->user(),
+                $destination,
+                array_map('intval', $request->array('via')),
+            );
         } catch (AuthorizationException $exception) {
             return back()->with('toast', $this->dangerToast($exception->getMessage()));
         }
 
-        return to_route('dashboard')->with('status', 'Travel started. Arrive in '.max(10, $work->duration_seconds).' seconds or cancel the route.');
+        $arrivalSeconds = max(10, $work->duration_seconds);
+
+        return to_route('dashboard')->with('status', $work->queuedCityIds() === []
+            ? "Travel started. Arrive in {$arrivalSeconds} seconds or cancel the route."
+            : "Travel started for {$destination->city}. Reach {$work->destinationCity?->city} in {$arrivalSeconds} seconds, then the next leg starts on its own. Cancel at any time to stay where you are.");
     }
 
     public function performAction(PerformCityActionRequest $request, StartUserWork $startUserWork): RedirectResponse
@@ -83,7 +92,7 @@ class GameActionController extends Controller
             $work->isCityAction() && $work->cycles_completed > 0 => "Work stopped after {$work->cycles_completed} ".str('cycle')->plural($work->cycles_completed)." (+{$work->xp_earned} XP). The unfinished cycle earned nothing.",
             $work->isCityAction() => 'Work canceled. No rewards were granted.',
             $work->isBrainScorcher() => 'Offering withdrawn. Your items are still in your pack.',
-            default => 'Travel canceled. You stayed in your current city.',
+            default => 'Travel canceled. You stayed in '.($work->originCity?->city ?? 'your current city').'.',
         };
 
         return to_route('dashboard')->with('status', $message);
