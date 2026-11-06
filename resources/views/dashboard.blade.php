@@ -18,6 +18,7 @@
                     deadline: Date.parse(@js($active_work['available_at_iso'])),
                     timerId: null,
                     isLoop: @js($active_work['type'] === 'city_action'),
+                    isTravel: @js($active_work['type'] === 'travel'),
                     nextRefreshAt: 0,
                     init() {
                         this.tick();
@@ -29,6 +30,11 @@
                         if (this.isLoop && this.remainingSeconds === 0 && Date.now() >= this.nextRefreshAt) {
                             this.nextRefreshAt = Date.now() + 5000;
                             this.refreshLoop();
+                        }
+
+                        if (this.isTravel && this.remainingSeconds === 0 && Date.now() >= this.nextRefreshAt) {
+                            this.nextRefreshAt = Date.now() + 5000;
+                            window.location.reload();
                         }
                     },
                     async refreshLoop() {
@@ -95,6 +101,8 @@
                                 <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                                     @if ($active_work['type'] === 'city_action')
                                         Until the next payout. Repeats automatically.
+                                    @elseif ($active_work['type'] === 'travel')
+                                        Until you reach {{ $active_work['to_city'] }}. You arrive automatically.
                                     @else
                                         Server unlocks completion {{ $active_work['available_at_human'] }}.
                                     @endif
@@ -151,13 +159,24 @@
                             </div>
                         @else
                             <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-300">
-                                <span class="font-medium text-zinc-900 dark:text-zinc-100">Travel note:</span>
-                                This route does not grant skill experience. Cancel before arrival if you want to stay in {{ $active_work['from_city'] }}.
+                                @if ($active_work['route_stops'] !== [])
+                                    <p data-test="travel-route">
+                                        <span class="font-medium text-zinc-900 dark:text-zinc-100">Route:</span>
+                                        {{ implode(' → ', [$active_work['from_city'], $active_work['to_city'], ...$active_work['route_stops']]) }}
+                                    </p>
+                                    <p class="mt-2">
+                                        After {{ $active_work['to_city'] }} the journey carries on to {{ Arr::last($active_work['route_stops']) }} on its own.
+                                    </p>
+                                @endif
+                                <p @class(['mt-2' => $active_work['route_stops'] !== []])>
+                                    <span class="font-medium text-zinc-900 dark:text-zinc-100">Travel note:</span>
+                                    This route does not grant skill experience. Cancel before arrival if you want to stay in {{ $active_work['from_city'] }}.
+                                </p>
                             </div>
                         @endif
 
                         <div class="flex flex-wrap gap-3">
-                            @if ($active_work['type'] !== 'city_action')
+                            @if ($active_work['type'] === 'brain_scorcher')
                                 <form method="POST" action="{{ route('work.complete') }}">
                                     @csrf
                                     <flux:button type="submit" variant="primary" x-bind:disabled="remainingSeconds > 0">
@@ -174,7 +193,11 @@
                             </form>
 
                             <p class="self-center text-xs text-zinc-500 dark:text-zinc-400">
-                                {{ $active_work['type'] === 'city_action' ? 'Stopping pays out finished cycles. The unfinished one earns nothing.' : 'Completion is always verified on the server, even if the local timer is modified.' }}
+                                {{ match ($active_work['type']) {
+                                    'city_action' => 'Stopping pays out finished cycles. The unfinished one earns nothing.',
+                                    'travel' => 'Canceling keeps you in '.$active_work['from_city'].'. Arrival is always verified on the server.',
+                                    default => 'Completion is always verified on the server, even if the local timer is modified.',
+                                } }}
                             </p>
                         </div>
                     </div>

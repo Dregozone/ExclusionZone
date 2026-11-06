@@ -532,8 +532,9 @@ export function geoMap(data, options = {}) {
 
             const from = this.node(transit.from);
             const to = this.node(transit.to);
+            const queued = (transit.queued ?? []).map((id) => this.node(id)).filter(Boolean);
 
-            return from && to ? { from, to } : null;
+            return from && to ? { from, to, queued } : null;
         },
 
         get currentCity() {
@@ -570,7 +571,7 @@ export function geoMap(data, options = {}) {
                 return info;
             }
 
-            if (this.transit?.to.id === node.id) {
+            if (this.transit?.to.id === node.id || this.transit?.queued.some((stop) => stop.id === node.id)) {
                 info.mode = 'arriving';
 
                 return info;
@@ -1079,7 +1080,9 @@ export function geoMap(data, options = {}) {
         },
 
         travel(id) {
-            if (!this.player?.can_travel || !this.isReachable(id)) {
+            const path = this.shortestPath(this.currentCityId, id);
+
+            if (!this.player?.can_travel || path.length < 2) {
                 return;
             }
 
@@ -1090,6 +1093,16 @@ export function geoMap(data, options = {}) {
             }
 
             form.querySelector('[name="city_id"]').value = id;
+            form.querySelectorAll('[name="via[]"]').forEach((input) => input.remove());
+
+            for (const stopId of path.slice(1, -1)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'via[]';
+                input.value = stopId;
+                form.append(input);
+            }
+
             form.submit();
         },
 

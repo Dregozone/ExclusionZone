@@ -41,6 +41,7 @@ class UserWork extends Model
         'city_action_id',
         'origin_city_id',
         'destination_city_id',
+        'queued_city_ids',
         'offered_item_id',
         'offered_quantity',
         'skill_key',
@@ -56,6 +57,7 @@ class UserWork extends Model
     {
         return [
             'available_at' => 'immutable_datetime',
+            'queued_city_ids' => 'array',
             'offered_quantity' => 'integer',
             'cycles_completed' => 'integer',
             'xp_earned' => 'integer',
@@ -101,6 +103,16 @@ class UserWork extends Model
     public function isTravel(): bool
     {
         return $this->work_type === 'travel';
+    }
+
+    /**
+     * The cities still to visit after this leg of a travel route, in order.
+     *
+     * @return list<int>
+     */
+    public function queuedCityIds(): array
+    {
+        return array_values(array_map('intval', $this->queued_city_ids ?? []));
     }
 
     public function isBrainScorcher(): bool

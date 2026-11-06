@@ -44,22 +44,32 @@ class StartUserWork
     }
 
     /**
+     * Set off for the destination, through each stop in $viaCityIds first. Only the first leg is timed
+     * now; each later leg starts when the one before it arrives.
+     *
+     * @param  list<int>  $viaCityIds
+     *
      * @throws AuthorizationException
      */
-    public function forTravel(User $user, City $destination): UserWork
+    public function forTravel(User $user, City $destination, array $viaCityIds = []): UserWork
     {
         $user->loadMissing('location.city');
 
         $this->ensureNoActiveWork($user);
-        $this->travelToCity->authorize($user, $destination);
+
+        $route = [...$viaCityIds, $destination->id];
+        $this->travelToCity->authorizeRoute($user, $route);
+
+        $firstStop = $route[0] === $destination->id ? $destination : City::query()->findOrFail($route[0]);
 
         return $this->createWork($user, [
             'work_type' => 'travel',
             'city_action_id' => null,
             'origin_city_id' => $user->location?->city_id,
-            'destination_city_id' => $destination->id,
+            'destination_city_id' => $firstStop->id,
+            'queued_city_ids' => array_slice($route, 1),
             'skill_key' => null,
-            'duration_seconds' => $this->calculateWorkDuration->forTravel($user, $destination),
+            'duration_seconds' => $this->calculateWorkDuration->forTravel($user, $firstStop),
             'weather' => $this->calculateWorkDuration->currentWeather($user),
         ]);
     }
@@ -98,7 +108,7 @@ class StartUserWork
     }
 
     /**
-     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,offered_item_id?:int,offered_quantity?:int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
+     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,queued_city_ids?:list<int>,offered_item_id?:int,offered_quantity?:int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
      *
      * @throws AuthorizationException
      */

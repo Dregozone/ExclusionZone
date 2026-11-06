@@ -11,7 +11,7 @@ class CompleteUserWork
 {
     public function __construct(
         public AdvanceWorkLoop $advanceWorkLoop,
-        public TravelToCity $travelToCity,
+        public AdvanceTravel $advanceTravel,
         public FeedBrainScorcher $feedBrainScorcher,
     ) {}
 
@@ -24,6 +24,10 @@ class CompleteUserWork
     {
         if ($user->activeWork()->where('work_type', 'city_action')->exists()) {
             return $this->finishWorkLoop($user);
+        }
+
+        if ($user->activeWork()->where('work_type', 'travel')->exists()) {
+            return $this->finishTravelLegs($user);
         }
 
         return DB::transaction(function () use ($user): array {
@@ -41,10 +45,7 @@ class CompleteUserWork
                 throw new AuthorizationException('That work is still in progress. Wait for the timer to finish or cancel it.');
             }
 
-            $result = match (true) {
-                $work->isBrainScorcher() => $this->completeBrainScorcher($user, $work),
-                default => $this->completeTravel($user, $work),
-            };
+            $result = $this->completeBrainScorcher($user, $work);
 
             $work->delete();
 
@@ -114,21 +115,23 @@ class CompleteUserWork
     }
 
     /**
+     * Arrive at every stop whose leg has finished. A route with stops still queued carries on to the next one.
+     *
      * @return array{type:string,status:string}
+     *
+     * @throws AuthorizationException
      */
-    private function completeTravel(User $user, UserWork $work): array
+    private function finishTravelLegs(User $user): array
     {
-        $destination = $work->destinationCity;
+        $settled = ($this->advanceTravel)($user);
 
-        if ($destination === null) {
-            throw new AuthorizationException('That route is no longer available.');
+        if ($settled['last_status'] === null) {
+            throw new AuthorizationException('That work is still in progress. Wait for the timer to finish or cancel it.');
         }
-
-        ($this->travelToCity)($user, $destination);
 
         return [
             'type' => 'travel',
-            'status' => 'You arrived in '.$destination->city.' and refreshed your options.',
+            'status' => $settled['last_status'],
         ];
     }
 }

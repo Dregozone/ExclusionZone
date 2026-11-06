@@ -14,7 +14,7 @@ class BuildWorldMapData
      * @return array{
      *     nodes: array<int, array{id: int, label: string, country: string, continent: string, biome: ?string, loot_tier: ?string, weather: ?string, has_trade_post: bool, lat: ?float, lng: ?float}>,
      *     edges: array<int, array{from: int, to: int, duration_seconds: ?int}>,
-     *     player: ?array{current_city_id: ?int, can_travel: bool, travel_restriction: ?string, transit: ?array{from: int, to: int}, objectives: array<int, array{city_id: int, quest: string, action: ?string}>}
+     *     player: ?array{current_city_id: ?int, can_travel: bool, travel_restriction: ?string, transit: ?array{from: int, to: int, queued: list<int>}, objectives: array<int, array{city_id: int, quest: string, action: ?string}>}
      * }
      */
     public function __invoke(?User $user): array
@@ -58,7 +58,7 @@ class BuildWorldMapData
     }
 
     /**
-     * @return array{current_city_id: ?int, can_travel: bool, travel_restriction: ?string, transit: ?array{from: int, to: int}, objectives: array<int, array{city_id: int, quest: string, action: ?string}>}
+     * @return array{current_city_id: ?int, can_travel: bool, travel_restriction: ?string, transit: ?array{from: int, to: int, queued: list<int>}, objectives: array<int, array{city_id: int, quest: string, action: ?string}>}
      */
     private function playerDataFor(User $user): array
     {
@@ -72,7 +72,7 @@ class BuildWorldMapData
             'can_travel' => $travelRestriction === null,
             'travel_restriction' => $travelRestriction,
             'transit' => $activeWork?->isTravel() && $activeWork->origin_city_id !== null && $activeWork->destination_city_id !== null
-                ? ['from' => $activeWork->origin_city_id, 'to' => $activeWork->destination_city_id]
+                ? ['from' => $activeWork->origin_city_id, 'to' => $activeWork->destination_city_id, 'queued' => $activeWork->queuedCityIds()]
                 : null,
             'objectives' => $user->userQuests
                 ->where('status', 'active')
