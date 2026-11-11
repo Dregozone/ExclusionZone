@@ -73,11 +73,15 @@ class AdvanceTravel
             return $this->endRoute($user, $work, $exception->getMessage().' You stayed in '.($user->location?->city?->city ?? 'your current city').'.');
         }
 
-        $this->trackSurvivalNeeds->exert(
+        $collapsed = $this->trackSurvivalNeeds->exert(
             $user,
             (int) config('survival.travel.hunger_per_leg'),
             (int) config('survival.travel.fatigue_per_leg'),
         );
+
+        if ($collapsed) {
+            return ['status' => "You reached {$arrival->city}, then collapsed.", 'route_ended' => true];
+        }
 
         $queuedCityIds = $work->queuedCityIds();
 

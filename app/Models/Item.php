@@ -42,10 +42,10 @@ class Item extends Model
     }
 
     /**
-     * Food is anything that eases hunger or fatigue when eaten.
+     * Food is anything that eases hunger or fatigue, or restores health, when eaten.
      */
     public function isFood(): bool
     {
-        return $this->hunger_restored > 0 || $this->fatigue_restored > 0;
+        return $this->hunger_restored > 0 || $this->fatigue_restored > 0 || $this->health_restored > 0;
     }
 }

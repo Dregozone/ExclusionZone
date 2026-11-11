@@ -65,7 +65,7 @@
                         <flux:field>
                             <flux:label>{{ __('Health restored') }}</flux:label>
                             <flux:input type="number" wire:model="health_restored" min="0" max="100" />
-                            <flux:description>{{ __('Stored for the upcoming health stat; no effect yet.') }}</flux:description>
+                            <flux:description>{{ __('Health given back when eaten.') }}</flux:description>
                             <flux:error name="health_restored" />
                         </flux:field>
                     </div>

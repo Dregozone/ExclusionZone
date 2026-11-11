@@ -198,7 +198,7 @@ test('eating is refused without changing anything', function (string $itemKey, i
 })->with([
     'not food' => ['scrap_metal', 3, 60, 'Scrap Metal is not something you can eat.'],
     'not carried' => ['borscht', 0, 60, 'You are not carrying any Borscht.'],
-    'not hungry or tired' => ['borscht', 1, 0, 'You are neither hungry nor tired. Save it for later.'],
+    'not hungry, tired or hurt' => ['borscht', 1, 0, 'You are not hungry, tired or hurt. Save it for later.'],
 ]);
 
 test('eating needs an item', function () {

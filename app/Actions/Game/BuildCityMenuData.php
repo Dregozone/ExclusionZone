@@ -65,6 +65,7 @@ class BuildCityMenuData
             'city_action_restriction' => $cityActionRestriction,
             'active_work' => $activeWork === null ? null : $this->activeWorkData($user, $activeWork),
             'last_work_report' => $user->last_work_report,
+            'death_report' => $user->death_report,
             'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions): array {
                 $requiredItems = (new PerformCityAction)->requiredItemsFor($user, $action);
                 $hasRequiredItems = collect($requiredItems)->every(
@@ -143,25 +144,27 @@ class BuildCityMenuData
     }
 
     /**
-     * The survivor's hunger and fatigue, how much they slow work timers, and the food they carry.
+     * The survivor's health, hunger and fatigue, how much they slow work timers, and the food they carry.
      *
-     * @return array{hunger: array{value: int, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: int, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, hunger_restored: int, fatigue_restored: int}>}
+     * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: int, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: int, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>}
      */
     private function conditionFor(User $user): array
     {
         $trackSurvivalNeeds = new TrackSurvivalNeeds;
 
         return [
+            'health' => $trackSurvivalNeeds->condition($user, 'health'),
             'hunger' => $trackSurvivalNeeds->condition($user, 'hunger'),
             'fatigue' => $trackSurvivalNeeds->condition($user, 'fatigue'),
             'timer_increase_percent' => $trackSurvivalNeeds->timerIncreasePercent($user),
             'foods' => $user->inventoryItems
                 ->filter(fn ($inventoryItem): bool => $inventoryItem->item?->isFood() === true && $inventoryItem->quantity > 0)
-                ->sortByDesc(fn ($inventoryItem): int => $inventoryItem->item->hunger_restored + $inventoryItem->item->fatigue_restored)
+                ->sortByDesc(fn ($inventoryItem): int => $inventoryItem->item->health_restored + $inventoryItem->item->hunger_restored + $inventoryItem->item->fatigue_restored)
                 ->map(fn ($inventoryItem): array => [
                     'item_id' => $inventoryItem->item->id,
                     'name' => $inventoryItem->item->name,
                     'owned' => $inventoryItem->quantity,
+                    'health_restored' => $inventoryItem->item->health_restored,
                     'hunger_restored' => $inventoryItem->item->hunger_restored,
                     'fatigue_restored' => $inventoryItem->item->fatigue_restored,
                 ])

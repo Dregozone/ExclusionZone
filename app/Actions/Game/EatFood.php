@@ -16,7 +16,7 @@ class EatFood
     /**
      * Eat one of the item from the survivor's pack. Eating is allowed while work or travel runs.
      *
-     * @return array{hunger_relieved: int, fatigue_relieved: int}
+     * @return array{hunger_relieved: int, fatigue_relieved: int, health_restored: int}
      *
      * @throws AuthorizationException
      */
@@ -28,8 +28,8 @@ class EatFood
 
         $this->trackSurvivalNeeds->rest($user);
 
-        if ($user->hunger === 0 && $user->fatigue === 0) {
-            throw new AuthorizationException('You are neither hungry nor tired. Save it for later.');
+        if ($user->hunger === 0 && $user->fatigue === 0 && $user->health >= (int) config('survival.maximum')) {
+            throw new AuthorizationException('You are not hungry, tired or hurt. Save it for later.');
         }
 
         return DB::transaction(function () use ($user, $item): array {
@@ -50,12 +50,14 @@ class EatFood
 
             $hungerBefore = $user->hunger;
             $fatigueBefore = $user->fatigue;
+            $healthBefore = $user->health;
 
-            $this->trackSurvivalNeeds->relieve($user, $item->hunger_restored, $item->fatigue_restored);
+            $this->trackSurvivalNeeds->relieve($user, $item->hunger_restored, $item->fatigue_restored, $item->health_restored);
 
             return [
                 'hunger_relieved' => $hungerBefore - $user->hunger,
                 'fatigue_relieved' => $fatigueBefore - $user->fatigue,
+                'health_restored' => $user->health - $healthBefore,
             ];
         });
     }

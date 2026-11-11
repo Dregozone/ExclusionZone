@@ -4,6 +4,18 @@
             <x-session-toast :toast="['text' => session('status')]" />
         @endif
 
+        @if ($death_report)
+            <div class="overflow-hidden rounded-[2rem] border border-red-300/70 bg-linear-to-br from-red-50 via-zinc-50 to-white p-6 shadow-sm dark:border-red-500/30 dark:from-red-500/10 dark:via-zinc-900 dark:to-zinc-900" role="alert" data-test="death-report">
+                <p class="text-xs font-medium uppercase tracking-[0.25em] text-red-600 dark:text-red-400">You died</p>
+                <h2 class="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Someone pulled you back</h2>
+                <p class="mt-3 max-w-3xl text-sm leading-6 text-zinc-700 dark:text-zinc-300">{{ $death_report }}</p>
+                <form method="POST" action="{{ route('death-report.dismiss') }}" class="mt-5">
+                    @csrf
+                    <flux:button type="submit" variant="primary" data-test="dismiss-death-report">I'll be more careful</flux:button>
+                </form>
+            </div>
+        @endif
+
         @if ($last_work_report)
             <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100" data-test="last-work-report">
                 {{ $last_work_report }}
@@ -259,7 +271,7 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Survivor condition</h2>
-                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">Work and travel make you hungry and tired. You can keep going, but every timer runs slower. Eat to ease hunger; fatigue also fades while you rest between jobs.</p>
+                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">Work and travel make you hungry and tired. You can keep going, but every timer runs slower, and pushing on while starving or spent wears down your health. Eat to ease hunger and heal; fatigue also fades while you rest between jobs. If your health reaches zero, you die.</p>
                 </div>
                 <span @class([
                     'rounded-full px-2.5 py-1 text-xs font-medium',
@@ -270,7 +282,26 @@
                 </span>
             </div>
 
-            <div class="mt-5 grid gap-4 md:grid-cols-2">
+            <div class="mt-5 grid gap-4 md:grid-cols-3">
+                @php($health = $condition['health'])
+                <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70" data-test="condition-health">
+                    <div class="flex items-baseline justify-between gap-3">
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400">Health</p>
+                        <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $health['label'] }} · {{ $health['value'] }} / {{ $health['maximum'] }}</p>
+                    </div>
+                    <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                        <div @class([
+                            'h-full rounded-full transition-all duration-500',
+                            'bg-emerald-500' => $health['timer_increase_percent'] === 0,
+                            'bg-amber-500' => $health['timer_increase_percent'] > 0 && $health['timer_increase_percent'] < 50,
+                            'bg-red-500' => $health['timer_increase_percent'] >= 50,
+                        ]) style="width: {{ (int) round($health['value'] / max(1, $health['maximum']) * 100) }}%"></div>
+                    </div>
+                    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ $health['timer_increase_percent'] === 0 ? 'No effect on timers.' : "Timers +{$health['timer_increase_percent']}%." }}
+                    </p>
+                </div>
+
                 @foreach (['hunger' => 'Hunger', 'fatigue' => 'Fatigue'] as $need => $needLabel)
                     @php($state = $condition[$need])
                     <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70" data-test="condition-{{ $need }}">
@@ -302,7 +333,7 @@
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $food['name'] }} <span class="text-zinc-500 dark:text-zinc-400">×{{ $food['owned'] }}</span></p>
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {{ collect(['hunger' => $food['hunger_restored'], 'fatigue' => $food['fatigue_restored']])->filter()->map(fn ($amount, $need) => Str::ucfirst($need)." -{$amount}")->implode(' · ') }}
+                                    {{ collect(['Health +'.$food['health_restored'] => $food['health_restored'], 'Hunger -'.$food['hunger_restored'] => $food['hunger_restored'], 'Fatigue -'.$food['fatigue_restored'] => $food['fatigue_restored']])->filter()->keys()->implode(' · ') }}
                                 </p>
                             </div>
                             <flux:button type="submit" size="sm" data-test="eat-{{ $food['item_id'] }}">Eat</flux:button>
