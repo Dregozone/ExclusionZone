@@ -150,9 +150,9 @@ class BuildCityMenuData
     }
 
     /**
-     * The survivor's health, hunger and fatigue, how much they slow work timers, and the food they carry.
+     * The survivor's health, hunger and fatigue, how much they slow work timers, and the food and medical items they carry.
      *
-     * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: int, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: int, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>}
+     * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: int, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: int, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>, medical_items: list<array{item_id: int, name: string, owned: int, health_restored: int}>}
      */
     private function conditionFor(User $user): array
     {
@@ -173,6 +173,17 @@ class BuildCityMenuData
                     'health_restored' => $inventoryItem->item->health_restored,
                     'hunger_restored' => $inventoryItem->item->hunger_restored,
                     'fatigue_restored' => $inventoryItem->item->fatigue_restored,
+                ])
+                ->values()
+                ->all(),
+            'medical_items' => $user->inventoryItems
+                ->filter(fn ($inventoryItem): bool => $inventoryItem->item?->isMedical() === true && $inventoryItem->quantity > 0)
+                ->sortByDesc(fn ($inventoryItem): int => $inventoryItem->item->health_restored)
+                ->map(fn ($inventoryItem): array => [
+                    'item_id' => $inventoryItem->item->id,
+                    'name' => $inventoryItem->item->name,
+                    'owned' => $inventoryItem->quantity,
+                    'health_restored' => $inventoryItem->item->health_restored,
                 ])
                 ->values()
                 ->all(),

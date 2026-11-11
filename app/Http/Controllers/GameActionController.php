@@ -7,11 +7,13 @@ use App\Actions\Game\CompleteUserWork;
 use App\Actions\Game\EatFood;
 use App\Actions\Game\EquipPremiumCosmetic;
 use App\Actions\Game\StartUserWork;
+use App\Actions\Game\UseMedicalItem;
 use App\Http\Requests\EatFoodRequest;
 use App\Http\Requests\EquipCosmeticRequest;
 use App\Http\Requests\FeedBrainScorcherRequest;
 use App\Http\Requests\PerformCityActionRequest;
 use App\Http\Requests\TravelRequest;
+use App\Http\Requests\UseMedicalItemRequest;
 use App\Models\City;
 use App\Models\CityAction;
 use App\Models\Item;
@@ -88,6 +90,19 @@ class GameActionController extends Controller
         ])->filter()->keys()->implode(', ');
 
         return to_route('dashboard')->with('status', "You ate 1x {$item->name}".($effects === '' ? '.' : " ({$effects})."));
+    }
+
+    public function useMedicalItem(UseMedicalItemRequest $request, UseMedicalItem $useMedicalItem): RedirectResponse
+    {
+        $item = Item::query()->findOrFail($request->integer('item_id'));
+
+        try {
+            $healthRestored = $useMedicalItem($request->user(), $item);
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
+
+        return to_route('dashboard')->with('status', "You used 1x {$item->name} (health +{$healthRestored}).");
     }
 
     /**

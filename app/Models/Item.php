@@ -18,6 +18,7 @@ class Item extends Model
         'fatigue_restored' => 0,
         'health_restored' => 0,
         'attack_bonus' => 0,
+        'is_medical' => false,
     ];
 
     protected $fillable = [
@@ -30,6 +31,7 @@ class Item extends Model
         'fatigue_restored',
         'health_restored',
         'attack_bonus',
+        'is_medical',
     ];
 
     protected function casts(): array
@@ -41,15 +43,24 @@ class Item extends Model
             'fatigue_restored' => 'integer',
             'health_restored' => 'integer',
             'attack_bonus' => 'integer',
+            'is_medical' => 'boolean',
         ];
     }
 
     /**
-     * Food is anything that eases hunger or fatigue, or restores health, when eaten.
+     * Food is anything that eases hunger or fatigue, or restores health, when eaten. Medical items are used instead.
      */
     public function isFood(): bool
     {
-        return $this->hunger_restored > 0 || $this->fatigue_restored > 0 || $this->health_restored > 0;
+        return ! $this->is_medical && ($this->hunger_restored > 0 || $this->fatigue_restored > 0 || $this->health_restored > 0);
+    }
+
+    /**
+     * Medical items, such as bandages and medkits, are used from the pack to restore health.
+     */
+    public function isMedical(): bool
+    {
+        return $this->is_medical && $this->health_restored > 0;
     }
 
     /**

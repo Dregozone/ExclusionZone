@@ -285,7 +285,7 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Survivor condition</h2>
-                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">Work and travel make you hungry and tired. You can keep going, but every timer runs slower, and pushing on while starving or spent wears down your health. Eat to ease hunger and heal; fatigue also fades while you rest between jobs. If your health reaches zero, you die.</p>
+                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">Work and travel make you hungry and tired. You can keep going, but every timer runs slower, and pushing on while starving or spent wears down your health. Eat to ease hunger, and patch up wounds with medical supplies or at a field clinic. Fatigue fades and wounds slowly mend while you rest between jobs, unless you are starving. If your health reaches zero, you die.</p>
                 </div>
                 <span @class([
                     'rounded-full px-2.5 py-1 text-xs font-medium',
@@ -359,6 +359,26 @@
                     No food in your pack. Cook borscht in Kyiv, or bring back rations and fish from your runs.
                 </p>
             @endif
+
+            @if ($condition['medical_items'] !== [])
+                <div class="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3" data-test="medical-items">
+                    @foreach ($condition['medical_items'] as $medicalItem)
+                        <form method="POST" action="{{ route('medical.use') }}" class="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 p-3 dark:border-rose-500/30">
+                            @csrf
+                            <input type="hidden" name="item_id" value="{{ $medicalItem['item_id'] }}">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $medicalItem['name'] }} <span class="text-zinc-500 dark:text-zinc-400">×{{ $medicalItem['owned'] }}</span></p>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">Health +{{ $medicalItem['health_restored'] }}</p>
+                            </div>
+                            <flux:button type="submit" size="sm" data-test="use-medical-{{ $medicalItem['item_id'] }}">Use</flux:button>
+                        </form>
+                    @endforeach
+                </div>
+            @elseif ($condition['health']['value'] < $condition['health']['maximum'])
+                <p class="mt-2 rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                    No medical supplies. Raid pharmacies in Kyiv, roll bandages in Warsaw, or pay a field clinic in Kyiv or Warsaw to patch you up.
+                </p>
+            @endif
         </div>
 
         @if ($quest_step_actions->isNotEmpty())
@@ -418,7 +438,7 @@
                                 </div>
                                 <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $entry['action']->description }}</p>
                                 <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-500">
-                                    {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ data_get($entry['action']->reward_profile, 'item_key') }}
+                                    {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ collect([data_get($entry['action']->reward_profile, 'item_key'), data_get($entry['action']->reward_profile, 'health') ? 'health +'.data_get($entry['action']->reward_profile, 'health') : null])->filter()->implode(', ') }}
                                 </p>
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="action-costs-{{ $entry['action']->action_key }}">
                                     Each cycle: hunger +{{ $entry['action']->hunger_cost }} · fatigue +{{ $entry['action']->fatigue_cost }}

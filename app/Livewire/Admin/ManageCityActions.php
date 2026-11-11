@@ -50,6 +50,8 @@ class ManageCityActions extends Component
 
     public string $reward_loot_tier = 'medium';
 
+    public int $reward_health = 0;
+
     /**
      * @var array<int, array{item_key: string, quantity: int}>
      */
@@ -118,6 +120,7 @@ class ManageCityActions extends Component
         $this->reward_item_key = $reward['item_key'] ?? '';
         $this->reward_quantity = $reward['quantity'] ?? 1;
         $this->reward_loot_tier = $reward['loot_tier'] ?? 'medium';
+        $this->reward_health = $reward['health'] ?? 0;
         $this->required_items = $action->required_items ?? [];
         $this->showForm = true;
     }
@@ -136,9 +139,10 @@ class ManageCityActions extends Component
             'hunger_cost' => ['required', 'integer', 'min:0', 'max:100'],
             'fatigue_cost' => ['required', 'integer', 'min:0', 'max:100'],
             'reward_xp' => ['required', 'integer', 'min:1'],
-            'reward_item_key' => ['required', 'string', 'max:100'],
+            'reward_item_key' => ['required_if:reward_health,0', 'nullable', 'string', 'max:100'],
             'reward_quantity' => ['required', 'integer', 'min:1'],
             'reward_loot_tier' => ['required', 'string', 'max:50'],
+            'reward_health' => ['required', 'integer', 'min:0', 'max:100'],
             'required_items' => ['array'],
             'required_items.*.item_key' => ['required', 'string', 'distinct', 'exists:items,key'],
             'required_items.*.quantity' => ['required', 'integer', 'min:1'],
@@ -155,12 +159,13 @@ class ManageCityActions extends Component
             'base_duration_seconds' => $validated['base_duration_seconds'],
             'hunger_cost' => $validated['hunger_cost'],
             'fatigue_cost' => $validated['fatigue_cost'],
-            'reward_profile' => [
+            'reward_profile' => array_filter([
                 'xp' => $validated['reward_xp'],
-                'item_key' => $validated['reward_item_key'],
+                'item_key' => $validated['reward_item_key'] ?: null,
                 'quantity' => $validated['reward_quantity'],
                 'loot_tier' => $validated['reward_loot_tier'],
-            ],
+                'health' => $validated['reward_health'],
+            ]),
             'required_items' => ($validated['required_items'] ?? []) === []
                 ? null
                 : array_map(fn (array $requiredItem): array => [
@@ -229,6 +234,7 @@ class ManageCityActions extends Component
         $this->reward_item_key = '';
         $this->reward_quantity = 1;
         $this->reward_loot_tier = 'medium';
+        $this->reward_health = 0;
         $this->required_items = [];
     }
 }
