@@ -18,6 +18,8 @@ class CityAction extends Model
         'skill_key',
         'min_level',
         'risk_level',
+        'hazard_chance_pct',
+        'hazard_damage',
         'base_duration_seconds',
         'hunger_cost',
         'fatigue_cost',
@@ -28,6 +30,8 @@ class CityAction extends Model
     protected function casts(): array
     {
         return [
+            'hazard_chance_pct' => 'integer',
+            'hazard_damage' => 'integer',
             'base_duration_seconds' => 'integer',
             'hunger_cost' => 'integer',
             'fatigue_cost' => 'integer',

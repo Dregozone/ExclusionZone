@@ -14,6 +14,7 @@ class AdvanceTravel
         public TravelToCity $travelToCity,
         public CalculateWorkDuration $calculateWorkDuration,
         public TrackSurvivalNeeds $trackSurvivalNeeds,
+        public ExposeToHazards $exposeToHazards,
         public MeetTroubleOnArrival $meetTroubleOnArrival,
     ) {}
 
@@ -83,20 +84,24 @@ class AdvanceTravel
             (int) config('survival.travel.fatigue_per_leg'),
         );
 
-        if ($collapsed) {
+        $hazards = $collapsed ? null : $this->exposeToHazards->afterTravelLeg($user, $arrival, $work->weather);
+
+        if ($collapsed || $hazards['died']) {
             return ['status' => "You reached {$arrival->city}, then collapsed.", 'route_ended' => true];
         }
+
+        $injuries = $hazards['injuries'] === '' ? '' : " {$hazards['injuries']}";
 
         if ($trouble !== null) {
             $work->delete();
 
-            return ['status' => "You arrived in {$arrival->city}, but {$trouble->troubleType->name} block the way in. Decide what to do before anything else.", 'route_ended' => true];
+            return ['status' => "You arrived in {$arrival->city}, but {$trouble->troubleType->name} block the way in. Decide what to do before anything else.{$injuries}", 'route_ended' => true];
         }
 
         if ($work->is_retreat) {
             $work->delete();
 
-            return ['status' => "You made it back to {$arrival->city} in one piece.", 'route_ended' => true];
+            return ['status' => "You made it back to {$arrival->city} in one piece.{$injuries}", 'route_ended' => true];
         }
 
         $queuedCityIds = $work->queuedCityIds();
@@ -104,7 +109,7 @@ class AdvanceTravel
         if ($queuedCityIds === []) {
             $work->delete();
 
-            return ['status' => "You arrived in {$arrival->city} and refreshed your options.", 'route_ended' => true];
+            return ['status' => "You arrived in {$arrival->city} and refreshed your options.{$injuries}", 'route_ended' => true];
         }
 
         $user->load('location.city');
@@ -112,7 +117,7 @@ class AdvanceTravel
         $stopReason = $this->reasonRouteCannotContinue($user, $nextStop);
 
         if ($stopReason !== null) {
-            return $this->endRoute($user, $work, "You arrived in {$arrival->city} but could not carry on along your route. {$stopReason}");
+            return $this->endRoute($user, $work, "You arrived in {$arrival->city} but could not carry on along your route.{$injuries} {$stopReason}");
         }
 
         $duration = $this->calculateWorkDuration->forTravel($user, $nextStop);
@@ -126,7 +131,7 @@ class AdvanceTravel
             'available_at' => $work->available_at->addSeconds($duration),
         ])->save();
 
-        return ['status' => "You arrived in {$arrival->city} and set off for {$nextStop->city}.", 'route_ended' => false];
+        return ['status' => "You arrived in {$arrival->city} and set off for {$nextStop->city}.{$injuries}", 'route_ended' => false];
     }
 
     private function reasonRouteCannotContinue(User $user, ?City $nextStop): ?string

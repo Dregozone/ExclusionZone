@@ -61,6 +61,13 @@
                     </flux:field>
 
                     <flux:field>
+                        <flux:label>{{ __('Radiation damage') }}</flux:label>
+                        <flux:input type="number" wire:model="radiation_damage" min="0" max="100" />
+                        <flux:description>{{ __('Health lost for every work cycle here and every arrival. 0 for no radiation.') }}</flux:description>
+                        <flux:error name="radiation_damage" />
+                    </flux:field>
+
+                    <flux:field>
                         <flux:label>{{ __('Latitude') }}</flux:label>
                         <flux:input type="number" wire:model="lat" step="0.00001" min="-90" max="90" placeholder="-90 to 90" />
                         <flux:error name="lat" />

@@ -141,12 +141,20 @@ class StartUserWork
     }
 
     /**
+     * One piece of work at a time, and none while the survivor is still recovering from a death.
+     *
      * @throws AuthorizationException
      */
     private function ensureNoActiveWork(User $user): void
     {
         if ($user->activeWork()->exists()) {
             throw new AuthorizationException('Finish or cancel your current work before starting something new.');
+        }
+
+        $recoveryRestriction = $user->recoveryRestriction();
+
+        if ($recoveryRestriction !== null) {
+            throw new AuthorizationException($recoveryRestriction);
         }
     }
 
