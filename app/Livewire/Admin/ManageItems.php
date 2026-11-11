@@ -37,6 +37,8 @@ class ManageItems extends Component
 
     public int $health_restored = 0;
 
+    public bool $is_medical = false;
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -51,7 +53,7 @@ class ManageItems extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'key', 'name', 'description', 'rarity', 'is_quest_item', 'hunger_restored', 'fatigue_restored', 'health_restored', 'deleted_at']);
+        return $query->get(['id', 'key', 'name', 'description', 'rarity', 'is_quest_item', 'hunger_restored', 'fatigue_restored', 'health_restored', 'is_medical', 'deleted_at']);
     }
 
     public function create(): void
@@ -73,6 +75,7 @@ class ManageItems extends Component
         $this->hunger_restored = $item->hunger_restored;
         $this->fatigue_restored = $item->fatigue_restored;
         $this->health_restored = $item->health_restored;
+        $this->is_medical = $item->is_medical;
         $this->showForm = true;
     }
 
@@ -87,6 +90,7 @@ class ManageItems extends Component
             'hunger_restored' => ['required', 'integer', 'min:0', 'max:100'],
             'fatigue_restored' => ['required', 'integer', 'min:0', 'max:100'],
             'health_restored' => ['required', 'integer', 'min:0', 'max:100'],
+            'is_medical' => ['boolean'],
         ]);
 
         if ($this->editingId !== null) {
@@ -133,5 +137,6 @@ class ManageItems extends Component
         $this->hunger_restored = 0;
         $this->fatigue_restored = 0;
         $this->health_restored = 0;
+        $this->is_medical = false;
     }
 }

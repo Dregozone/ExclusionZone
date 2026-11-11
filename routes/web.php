@@ -33,6 +33,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/trouble/attack', [GameActionController::class, 'attackTrouble'])->name('trouble.attack');
     Route::post('dashboard/trouble/buy-in', [GameActionController::class, 'buyWayPastTrouble'])->name('trouble.buy-in');
     Route::post('dashboard/trouble/run', [GameActionController::class, 'runFromTrouble'])->name('trouble.run');
+    Route::post('dashboard/medical', [GameActionController::class, 'useMedicalItem'])->name('medical.use');
     Route::post('dashboard/death-report/dismiss', [GameActionController::class, 'dismissDeathReport'])->name('death-report.dismiss');
     Route::post('dashboard/work/complete', [GameActionController::class, 'completeWork'])->name('work.complete');
     Route::post('dashboard/work/cancel', [GameActionController::class, 'cancelWork'])->name('work.cancel');

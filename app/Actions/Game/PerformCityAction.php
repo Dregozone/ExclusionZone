@@ -14,8 +14,12 @@ use Illuminate\Support\Lottery;
 
 class PerformCityAction
 {
+    public function __construct(
+        public TrackSurvivalNeeds $trackSurvivalNeeds = new TrackSurvivalNeeds,
+    ) {}
+
     /**
-     * @return array{xp:int,item_name:?string,quantity:int,levels_gained:int,item_lost:bool,items_used:string}
+     * @return array{xp:int,item_name:?string,quantity:int,levels_gained:int,item_lost:bool,items_used:string,health_restored:int}
      *
      * @throws AuthorizationException
      */
@@ -31,8 +35,9 @@ class PerformCityAction
         $levelsGained = 0;
         $itemName = null;
         $itemLost = false;
+        $healthBefore = $user->health;
 
-        DB::transaction(function () use ($user, $requiredItems, $skillProgress, $xp, $quantity, $itemKey, $weather, &$levelsGained, &$itemName, &$itemLost): void {
+        DB::transaction(function () use ($user, $action, $requiredItems, $skillProgress, $xp, $quantity, $itemKey, $weather, &$levelsGained, &$itemName, &$itemLost): void {
             $this->consumeRequiredItems($user, $requiredItems);
 
             $levelsGained = $skillProgress->gainExperience($xp);
@@ -52,6 +57,10 @@ class PerformCityAction
                 }
             }
 
+            if ($this->healthRestoredBy($action) > 0) {
+                $this->trackSurvivalNeeds->relieve($user, 0, 0, $this->healthRestoredBy($action));
+            }
+
             $user->location()->update([
                 'updated_at' => now(),
             ]);
@@ -64,7 +73,16 @@ class PerformCityAction
             'levels_gained' => $levelsGained,
             'item_lost' => $itemLost,
             'items_used' => $this->describeRequiredItems($requiredItems),
+            'health_restored' => $user->health - $healthBefore,
         ];
+    }
+
+    /**
+     * How much health each cycle of a healing action, such as a field clinic, gives back.
+     */
+    public function healthRestoredBy(CityAction $action): int
+    {
+        return (int) data_get($action->reward_profile, 'health', 0);
     }
 
     /**
@@ -88,6 +106,10 @@ class PerformCityAction
 
         if ($missingItems !== []) {
             throw new AuthorizationException('You need '.$this->describeRequiredItems($missingItems).' to do that.');
+        }
+
+        if ($this->healthRestoredBy($action) > 0 && $user->health >= (int) config('survival.maximum')) {
+            throw new AuthorizationException('You are not hurt, so there is nothing to patch up.');
         }
 
         return $skillProgress;
