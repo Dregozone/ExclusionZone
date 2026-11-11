@@ -12,6 +12,7 @@ class CancelUserWork
     public function __construct(
         public AdvanceWorkLoop $advanceWorkLoop,
         public AdvanceTravel $advanceTravel,
+        public TrackSurvivalNeeds $trackSurvivalNeeds,
     ) {}
 
     /**
@@ -37,6 +38,8 @@ class CancelUserWork
             }
 
             $work->delete();
+
+            $this->trackSurvivalNeeds->startResting($user);
 
             return $work;
         });

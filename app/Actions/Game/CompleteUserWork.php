@@ -13,6 +13,7 @@ class CompleteUserWork
         public AdvanceWorkLoop $advanceWorkLoop,
         public AdvanceTravel $advanceTravel,
         public FeedBrainScorcher $feedBrainScorcher,
+        public TrackSurvivalNeeds $trackSurvivalNeeds,
     ) {}
 
     /**
@@ -48,6 +49,12 @@ class CompleteUserWork
             $result = $this->completeBrainScorcher($user, $work);
 
             $work->delete();
+
+            $this->trackSurvivalNeeds->exert(
+                $user,
+                (int) config('survival.brain_scorcher.hunger'),
+                (int) config('survival.brain_scorcher.fatigue'),
+            );
 
             return $result;
         });

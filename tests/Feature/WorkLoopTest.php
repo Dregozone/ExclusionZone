@@ -13,7 +13,7 @@ function startWorkLoop(): array
 {
     $user = User::factory()->create();
     $action = CityAction::query()->where('action_key', 'district_patrols')->firstOrFail();
-    $action->update(['base_duration_seconds' => 100, 'reward_profile' => ['xp' => 1, 'item_key' => null]]);
+    $action->update(['base_duration_seconds' => 100, 'hunger_cost' => 0, 'fatigue_cost' => 0, 'reward_profile' => ['xp' => 1, 'item_key' => null]]);
 
     test()->actingAs($user)->post(route('city-action.store'), ['city_action_id' => $action->id]);
 

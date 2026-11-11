@@ -18,6 +18,7 @@ class AdvanceWorkLoop
         public PerformCityAction $performCityAction,
         public CalculateWorkDuration $calculateWorkDuration,
         public RecordQuestActionProgress $recordQuestActionProgress,
+        public TrackSurvivalNeeds $trackSurvivalNeeds,
     ) {}
 
     /**
@@ -80,6 +81,8 @@ class AdvanceWorkLoop
         $work->cycles_completed++;
         $work->xp_earned += $cycle['xp'];
         $work->last_cycle_summary = $cycle['status'];
+
+        $this->trackSurvivalNeeds->exert($user, $work->cityAction->hunger_cost, $work->cityAction->fatigue_cost);
 
         $stopReason = $this->reasonLoopCannotContinue($user, $work);
 

@@ -19,6 +19,7 @@ class StartUserWork
         public TravelToCity $travelToCity,
         public FeedBrainScorcher $feedBrainScorcher,
         public CalculateWorkDuration $calculateWorkDuration,
+        public TrackSurvivalNeeds $trackSurvivalNeeds,
     ) {}
 
     /**
@@ -29,6 +30,7 @@ class StartUserWork
         $user->loadMissing('location.city', 'skills.skill');
 
         $this->ensureNoActiveWork($user);
+        $this->trackSurvivalNeeds->rest($user);
 
         $skillProgress = $this->performCityAction->authorize($user, $action);
 
@@ -56,6 +58,7 @@ class StartUserWork
         $user->loadMissing('location.city');
 
         $this->ensureNoActiveWork($user);
+        $this->trackSurvivalNeeds->rest($user);
 
         $route = [...$viaCityIds, $destination->id];
         $this->travelToCity->authorizeRoute($user, $route);
@@ -82,6 +85,7 @@ class StartUserWork
         $user->loadMissing('location.city');
 
         $this->ensureNoActiveWork($user);
+        $this->trackSurvivalNeeds->rest($user);
         $this->feedBrainScorcher->authorize($user, $item, $quantity);
 
         return $this->createWork($user, [

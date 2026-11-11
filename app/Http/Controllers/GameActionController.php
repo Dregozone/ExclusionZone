@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Actions\Game\CancelUserWork;
 use App\Actions\Game\CompleteUserWork;
+use App\Actions\Game\EatFood;
 use App\Actions\Game\EquipPremiumCosmetic;
 use App\Actions\Game\StartUserWork;
+use App\Http\Requests\EatFoodRequest;
 use App\Http\Requests\EquipCosmeticRequest;
 use App\Http\Requests\FeedBrainScorcherRequest;
 use App\Http\Requests\PerformCityActionRequest;
@@ -67,6 +69,24 @@ class GameActionController extends Controller
         }
 
         return to_route('dashboard')->with('status', 'The Brain Scorcher accepted your offering. See what it gives back in '.max(10, $work->duration_seconds).' seconds, or cancel to take your items back.');
+    }
+
+    public function eat(EatFoodRequest $request, EatFood $eatFood): RedirectResponse
+    {
+        $item = Item::query()->findOrFail($request->integer('item_id'));
+
+        try {
+            $relieved = $eatFood($request->user(), $item);
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
+
+        $effects = collect([
+            'hunger' => $relieved['hunger_relieved'],
+            'fatigue' => $relieved['fatigue_relieved'],
+        ])->filter()->map(fn (int $amount, string $need): string => "{$need} -{$amount}")->implode(', ');
+
+        return to_route('dashboard')->with('status', "You ate 1x {$item->name}".($effects === '' ? '.' : " ({$effects})."));
     }
 
     public function completeWork(Request $request, CompleteUserWork $completeUserWork): RedirectResponse

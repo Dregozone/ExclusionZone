@@ -71,6 +71,20 @@
                         <flux:description>{{ __('Minimum 10 s. Reduced by skill level — 1% per level above 1.') }}</flux:description>
                         <flux:error name="base_duration_seconds" />
                     </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Hunger per cycle') }}</flux:label>
+                        <flux:input type="number" wire:model="hunger_cost" min="0" max="100" />
+                        <flux:description>{{ __('Hunger (0-100) the survivor gains after each finished cycle.') }}</flux:description>
+                        <flux:error name="hunger_cost" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Fatigue per cycle') }}</flux:label>
+                        <flux:input type="number" wire:model="fatigue_cost" min="0" max="100" />
+                        <flux:description>{{ __('Fatigue (0-100) the survivor gains after each finished cycle.') }}</flux:description>
+                        <flux:error name="fatigue_cost" />
+                    </flux:field>
                 </div>
 
                 <flux:field>
