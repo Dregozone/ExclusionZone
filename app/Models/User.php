@@ -42,6 +42,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'premium_active' => 'bool',
             'last_active_at' => 'datetime',
+            'hunger' => 'integer',
+            'fatigue' => 'integer',
+            'rested_at' => 'datetime',
         ];
     }
 

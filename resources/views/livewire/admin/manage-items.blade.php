@@ -46,6 +46,31 @@
                     <flux:error name="is_quest_item" />
                 </flux:field>
 
+                <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                    <flux:heading size="sm">{{ __('Food') }}</flux:heading>
+                    <flux:text class="mt-1 text-xs">{{ __('How much eating one eases each need (0–100). An item that eases hunger or fatigue can be eaten from the dashboard.') }}</flux:text>
+                    <div class="mt-3 grid gap-4 sm:grid-cols-3">
+                        <flux:field>
+                            <flux:label>{{ __('Hunger restored') }}</flux:label>
+                            <flux:input type="number" wire:model="hunger_restored" min="0" max="100" />
+                            <flux:error name="hunger_restored" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>{{ __('Fatigue restored') }}</flux:label>
+                            <flux:input type="number" wire:model="fatigue_restored" min="0" max="100" />
+                            <flux:error name="fatigue_restored" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>{{ __('Health restored') }}</flux:label>
+                            <flux:input type="number" wire:model="health_restored" min="0" max="100" />
+                            <flux:description>{{ __('Stored for the upcoming health stat; no effect yet.') }}</flux:description>
+                            <flux:error name="health_restored" />
+                        </flux:field>
+                    </div>
+                </div>
+
                 <flux:field>
                     <flux:label>{{ __('Description') }}</flux:label>
                     <flux:textarea wire:model="description" placeholder="{{ __('What this item is and how it might be used…') }}" rows="3" />
@@ -90,6 +115,9 @@
                             {{ $item->rarity->label() }}
                             @if ($item->is_quest_item)
                                 <span class="ml-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{{ __('Quest') }}</span>
+                            @endif
+                            @if ($item->isFood())
+                                <span class="ml-2 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{{ __('Food') }}</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden truncate max-w-xs">{{ $item->description }}</td>

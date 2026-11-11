@@ -255,6 +255,67 @@
             </div>
         </div>
 
+        <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900" data-work-live="condition" data-test="survivor-condition">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Survivor condition</h2>
+                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">Work and travel make you hungry and tired. You can keep going, but every timer runs slower. Eat to ease hunger; fatigue also fades while you rest between jobs.</p>
+                </div>
+                <span @class([
+                    'rounded-full px-2.5 py-1 text-xs font-medium',
+                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' => $condition['timer_increase_percent'] === 0,
+                    'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' => $condition['timer_increase_percent'] > 0,
+                ]) data-test="condition-timer-penalty">
+                    {{ $condition['timer_increase_percent'] === 0 ? 'No timer penalty' : "Timers +{$condition['timer_increase_percent']}%" }}
+                </span>
+            </div>
+
+            <div class="mt-5 grid gap-4 md:grid-cols-2">
+                @foreach (['hunger' => 'Hunger', 'fatigue' => 'Fatigue'] as $need => $needLabel)
+                    @php($state = $condition[$need])
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70" data-test="condition-{{ $need }}">
+                        <div class="flex items-baseline justify-between gap-3">
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $needLabel }}</p>
+                            <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $state['label'] }} · {{ $state['value'] }} / {{ $state['maximum'] }}</p>
+                        </div>
+                        <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                            <div @class([
+                                'h-full rounded-full transition-all duration-500',
+                                'bg-emerald-500' => $state['timer_increase_percent'] === 0,
+                                'bg-amber-500' => $state['timer_increase_percent'] > 0 && $state['value'] < $state['maximum'],
+                                'bg-red-500' => $state['value'] >= $state['maximum'],
+                            ]) style="width: {{ (int) round($state['value'] / max(1, $state['maximum']) * 100) }}%"></div>
+                        </div>
+                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            {{ $state['timer_increase_percent'] === 0 ? 'No effect on timers.' : "Timers +{$state['timer_increase_percent']}%." }}
+                        </p>
+                    </div>
+                @endforeach
+            </div>
+
+            @if ($condition['foods'] !== [])
+                <div class="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($condition['foods'] as $food)
+                        <form method="POST" action="{{ route('food.eat') }}" class="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 p-3 dark:border-zinc-700">
+                            @csrf
+                            <input type="hidden" name="item_id" value="{{ $food['item_id'] }}">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $food['name'] }} <span class="text-zinc-500 dark:text-zinc-400">×{{ $food['owned'] }}</span></p>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                    {{ collect(['hunger' => $food['hunger_restored'], 'fatigue' => $food['fatigue_restored']])->filter()->map(fn ($amount, $need) => Str::ucfirst($need)." -{$amount}")->implode(' · ') }}
+                                </p>
+                            </div>
+                            <flux:button type="submit" size="sm" data-test="eat-{{ $food['item_id'] }}">Eat</flux:button>
+                        </form>
+                    @endforeach
+                </div>
+            @else
+                <p class="mt-5 rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                    No food in your pack. Cook borscht in Kyiv, or bring back rations and fish from your runs.
+                </p>
+            @endif
+        </div>
+
         @if ($quest_step_actions->isNotEmpty())
             <div class="rounded-3xl border border-emerald-200/60 bg-white p-6 dark:border-emerald-800/40 dark:bg-zinc-900">
                 <div class="flex items-center gap-3">
@@ -313,6 +374,9 @@
                                 <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $entry['action']->description }}</p>
                                 <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-500">
                                     {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ data_get($entry['action']->reward_profile, 'item_key') }}
+                                </p>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="action-costs-{{ $entry['action']->action_key }}">
+                                    Each cycle: hunger +{{ $entry['action']->hunger_cost }} · fatigue +{{ $entry['action']->fatigue_cost }}
                                 </p>
                                 @if (count($entry['required_items']) > 0)
                                     <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="required-items-{{ $entry['action']->action_key }}">

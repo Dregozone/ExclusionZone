@@ -84,6 +84,7 @@ class BuildCityMenuData
             }),
             'skills' => $user->skills->sortBy(fn ($skill) => $skill->skill?->display_name)->values(),
             'inventory' => $user->inventoryItems->sortBy(fn ($item) => $item->item?->name)->values(),
+            'condition' => $this->conditionFor($user),
             'brain_scorcher' => $this->brainScorcherDataFor($user, $city, $canPerformCityActions),
             'quest_step_actions' => $this->questStepActionsFor($user, $city),
             'jobs' => $this->jobsDataFor($user),
@@ -135,6 +136,34 @@ class BuildCityMenuData
                     'odds_by_quantity' => collect(range(1, min($inventoryItem->quantity, FeedBrainScorcher::MAX_EFFECTIVE_QUANTITY)))
                         ->mapWithKeys(fn (int $quantity): array => [$quantity => $feedBrainScorcher->oddsFor($inventoryItem->item->rarity, $quantity)])
                         ->all(),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * The survivor's hunger and fatigue, how much they slow work timers, and the food they carry.
+     *
+     * @return array{hunger: array{value: int, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: int, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, hunger_restored: int, fatigue_restored: int}>}
+     */
+    private function conditionFor(User $user): array
+    {
+        $trackSurvivalNeeds = new TrackSurvivalNeeds;
+
+        return [
+            'hunger' => $trackSurvivalNeeds->condition($user, 'hunger'),
+            'fatigue' => $trackSurvivalNeeds->condition($user, 'fatigue'),
+            'timer_increase_percent' => $trackSurvivalNeeds->timerIncreasePercent($user),
+            'foods' => $user->inventoryItems
+                ->filter(fn ($inventoryItem): bool => $inventoryItem->item?->isFood() === true && $inventoryItem->quantity > 0)
+                ->sortByDesc(fn ($inventoryItem): int => $inventoryItem->item->hunger_restored + $inventoryItem->item->fatigue_restored)
+                ->map(fn ($inventoryItem): array => [
+                    'item_id' => $inventoryItem->item->id,
+                    'name' => $inventoryItem->item->name,
+                    'owned' => $inventoryItem->quantity,
+                    'hunger_restored' => $inventoryItem->item->hunger_restored,
+                    'fatigue_restored' => $inventoryItem->item->fatigue_restored,
                 ])
                 ->values()
                 ->all(),

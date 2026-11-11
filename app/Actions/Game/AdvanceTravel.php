@@ -13,6 +13,7 @@ class AdvanceTravel
     public function __construct(
         public TravelToCity $travelToCity,
         public CalculateWorkDuration $calculateWorkDuration,
+        public TrackSurvivalNeeds $trackSurvivalNeeds,
     ) {}
 
     /**
@@ -71,6 +72,12 @@ class AdvanceTravel
         } catch (AuthorizationException $exception) {
             return $this->endRoute($user, $work, $exception->getMessage().' You stayed in '.($user->location?->city?->city ?? 'your current city').'.');
         }
+
+        $this->trackSurvivalNeeds->exert(
+            $user,
+            (int) config('survival.travel.hunger_per_leg'),
+            (int) config('survival.travel.fatigue_per_leg'),
+        );
 
         $queuedCityIds = $work->queuedCityIds();
 

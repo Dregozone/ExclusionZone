@@ -38,6 +38,10 @@ class ManageCityActions extends Component
 
     public int $base_duration_seconds = 30;
 
+    public int $hunger_cost = 2;
+
+    public int $fatigue_cost = 2;
+
     public int $reward_xp = 20;
 
     public string $reward_item_key = '';
@@ -67,7 +71,7 @@ class ManageCityActions extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'city_id', 'action_key', 'label', 'description', 'skill_key', 'min_level', 'risk_level', 'base_duration_seconds', 'reward_profile', 'deleted_at']);
+        return $query->get(['id', 'city_id', 'action_key', 'label', 'description', 'skill_key', 'min_level', 'risk_level', 'base_duration_seconds', 'hunger_cost', 'fatigue_cost', 'reward_profile', 'deleted_at']);
     }
 
     #[Computed]
@@ -108,6 +112,8 @@ class ManageCityActions extends Component
         $this->min_level = $action->min_level;
         $this->risk_level = $action->risk_level;
         $this->base_duration_seconds = $action->base_duration_seconds;
+        $this->hunger_cost = $action->hunger_cost;
+        $this->fatigue_cost = $action->fatigue_cost;
         $this->reward_xp = $reward['xp'] ?? 20;
         $this->reward_item_key = $reward['item_key'] ?? '';
         $this->reward_quantity = $reward['quantity'] ?? 1;
@@ -127,6 +133,8 @@ class ManageCityActions extends Component
             'min_level' => ['required', 'integer', 'min:1', 'max:100'],
             'risk_level' => ['required', 'string', 'in:low,medium,high,extreme'],
             'base_duration_seconds' => ['required', 'integer', 'min:10', 'max:65535'],
+            'hunger_cost' => ['required', 'integer', 'min:0', 'max:100'],
+            'fatigue_cost' => ['required', 'integer', 'min:0', 'max:100'],
             'reward_xp' => ['required', 'integer', 'min:1'],
             'reward_item_key' => ['required', 'string', 'max:100'],
             'reward_quantity' => ['required', 'integer', 'min:1'],
@@ -145,6 +153,8 @@ class ManageCityActions extends Component
             'min_level' => $validated['min_level'],
             'risk_level' => $validated['risk_level'],
             'base_duration_seconds' => $validated['base_duration_seconds'],
+            'hunger_cost' => $validated['hunger_cost'],
+            'fatigue_cost' => $validated['fatigue_cost'],
             'reward_profile' => [
                 'xp' => $validated['reward_xp'],
                 'item_key' => $validated['reward_item_key'],
@@ -213,6 +223,8 @@ class ManageCityActions extends Component
         $this->min_level = 1;
         $this->risk_level = 'medium';
         $this->base_duration_seconds = 30;
+        $this->hunger_cost = 2;
+        $this->fatigue_cost = 2;
         $this->reward_xp = 20;
         $this->reward_item_key = '';
         $this->reward_quantity = 1;

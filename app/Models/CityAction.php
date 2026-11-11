@@ -19,6 +19,8 @@ class CityAction extends Model
         'min_level',
         'risk_level',
         'base_duration_seconds',
+        'hunger_cost',
+        'fatigue_cost',
         'reward_profile',
         'required_items',
     ];
@@ -27,6 +29,8 @@ class CityAction extends Model
     {
         return [
             'base_duration_seconds' => 'integer',
+            'hunger_cost' => 'integer',
+            'fatigue_cost' => 'integer',
             'reward_profile' => 'array',
             'required_items' => 'array',
         ];
