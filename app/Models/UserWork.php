@@ -33,6 +33,7 @@ class UserWork extends Model
         'weather' => 'clear',
         'cycles_completed' => 0,
         'xp_earned' => 0,
+        'is_retreat' => false,
     ];
 
     protected $fillable = [
@@ -42,6 +43,7 @@ class UserWork extends Model
         'origin_city_id',
         'destination_city_id',
         'queued_city_ids',
+        'is_retreat',
         'offered_item_id',
         'offered_quantity',
         'skill_key',
@@ -60,6 +62,7 @@ class UserWork extends Model
         return [
             'available_at' => 'immutable_datetime',
             'queued_city_ids' => 'array',
+            'is_retreat' => 'boolean',
             'offered_quantity' => 'integer',
             'cycles_completed' => 'integer',
             'xp_earned' => 'integer',

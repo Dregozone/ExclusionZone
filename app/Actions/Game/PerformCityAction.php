@@ -40,7 +40,7 @@ class PerformCityAction
         DB::transaction(function () use ($user, $action, $requiredItems, $skillProgress, $xp, $quantity, $itemKey, $weather, &$levelsGained, &$itemName, &$itemLost): void {
             $this->consumeRequiredItems($user, $requiredItems);
 
-            $levelsGained = $this->applyExperience($skillProgress, $xp);
+            $levelsGained = $skillProgress->gainExperience($xp);
 
             if ($itemKey !== null && $quantity > 0) {
                 $item = Item::query()->where('key', $itemKey)->firstOrFail();

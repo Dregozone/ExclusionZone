@@ -41,6 +41,8 @@ class BuildCityMenuData
             'userQuests.quest.steps.requiredCityAction',
             'userQuests.quest.rewardSkill',
             'userQuests.quest.rewardItem',
+            'troubleEncounter.troubleType.skill',
+            'troubleEncounter.originCity',
         ]);
 
         $location = $user->location;
@@ -71,6 +73,7 @@ class BuildCityMenuData
             'active_work' => $activeWork === null ? null : $this->activeWorkData($user, $activeWork),
             'last_work_report' => $user->last_work_report,
             'death_report' => $user->death_report,
+            'trouble' => $this->troubleDataFor($user),
             'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions, $enemyNamesBySkill): array {
                 $requiredItems = (new PerformCityAction)->requiredItemsFor($user, $action);
                 $hasRequiredItems = collect($requiredItems)->every(
@@ -112,6 +115,45 @@ class BuildCityMenuData
                 ...$hook,
                 'available' => $user->canPerformTask($hook['key']),
             ]),
+        ];
+    }
+
+    /**
+     * The trouble holding the survivor at the city's edge, with what each way out of it would take.
+     *
+     * @return array{name: string, description: string, skill_name: ?string, fighter_level: int, damage_min: int, damage_max: int, win_chance_percent: int, can_attack: bool, demand_value: int, barter_goods: list<array{item_id: int, name: string, rarity: string, owned: int, value: int}>, can_buy_in: bool, origin_city: ?string, can_run: bool, route_stops: list<string>}|null
+     */
+    private function troubleDataFor(User $user): ?array
+    {
+        $encounter = $user->troubleEncounter;
+
+        if ($encounter === null) {
+            return null;
+        }
+
+        $dealWithTrouble = app(DealWithTrouble::class);
+        $troubleType = $encounter->troubleType;
+        $barterGoods = $dealWithTrouble->barterGoodsFor($user);
+        $canActHere = $user->canPerformTask('city_action_perform');
+        $origin = $encounter->originCity;
+        $queuedCityIds = $encounter->queuedCityIds();
+        $queuedCityNames = City::query()->withTrashed()->whereKey($queuedCityIds)->pluck('city', 'id');
+
+        return [
+            'name' => $troubleType->name,
+            'description' => $troubleType->description,
+            'skill_name' => $troubleType->skill?->display_name,
+            'fighter_level' => $troubleType->fighter_level,
+            'damage_min' => $troubleType->damage_min,
+            'damage_max' => $troubleType->damage_max,
+            'win_chance_percent' => $dealWithTrouble->winChancePercent($user, $troubleType),
+            'can_attack' => $user->canPerformTask('combat_initiate'),
+            'demand_value' => $troubleType->demand_value,
+            'barter_goods' => $barterGoods,
+            'can_buy_in' => $canActHere && collect($barterGoods)->sum(fn (array $goods): int => $goods['value'] * $goods['owned']) >= $troubleType->demand_value,
+            'origin_city' => $origin?->city,
+            'can_run' => $canActHere && $origin !== null && ! $origin->trashed(),
+            'route_stops' => array_values(array_map(fn (int $cityId): string => $queuedCityNames[$cityId] ?? 'Unknown city', $queuedCityIds)),
         ];
     }
 
@@ -217,15 +259,18 @@ class BuildCityMenuData
         $title = match (true) {
             $activeWork->isCityAction() => 'Working on '.($activeWork->cityAction?->label ?? 'city action'),
             $activeWork->isBrainScorcher() => 'Feeding the Brain Scorcher',
+            $activeWork->is_retreat => 'Running from '.($activeWork->originCity?->city ?? 'trouble').' back to '.($activeWork->destinationCity?->city ?? 'safety'),
             default => 'Traveling from '.($activeWork->originCity?->city ?? 'your current city').' to '.($activeWork->destinationCity?->city ?? 'your destination'),
         };
 
         return [
             'type' => $activeWork->work_type,
+            'is_retreat' => $activeWork->is_retreat,
             'title' => $title,
             'image_url' => asset($activeWork->sceneImagePath()),
             'description' => match (true) {
                 $activeWork->isCityAction() => $activeWork->cityAction?->description ?? 'This work repeats until you stop it.',
+                $activeWork->is_retreat => 'You turned tail on the trouble. There is no turning back until you reach safety.',
                 $activeWork->isBrainScorcher() => 'The machine is chewing on your '.$activeWork->offered_quantity.'x '.($activeWork->offeredItem?->name ?? 'offering').'. Keep it in your pack until the timer ends, or cancel to take it back.',
                 $activeWork->queuedCityIds() !== [] => 'Movement is locked in until you arrive or cancel the route. Each later leg sets off on its own as soon as you reach a stop.',
                 default => 'Movement is locked in until you arrive or cancel the route.',
@@ -282,7 +327,7 @@ class BuildCityMenuData
      */
     private function questStepActionsFor(User $user, ?City $city): Collection
     {
-        if ($city === null) {
+        if ($city === null || $user->isHeldByTrouble()) {
             return collect();
         }
 
