@@ -15,11 +15,13 @@ class AdvanceTravel
         public CalculateWorkDuration $calculateWorkDuration,
         public TrackSurvivalNeeds $trackSurvivalNeeds,
         public ExposeToHazards $exposeToHazards,
+        public MeetTroubleOnArrival $meetTroubleOnArrival,
     ) {}
 
     /**
      * Move the player along every leg of their route whose timer has run out, setting off on
-     * the next queued leg straight away. A leg that can't be followed by the next one ends the route.
+     * the next queued leg straight away. A leg that can't be followed by the next one ends the route,
+     * and so does trouble met on arrival.
      *
      * @return array{legs:int,last_status:?string,route_ended:bool}
      */
@@ -74,6 +76,8 @@ class AdvanceTravel
             return $this->endRoute($user, $work, $exception->getMessage().' You stayed in '.($user->location?->city?->city ?? 'your current city').'.');
         }
 
+        $trouble = ($this->meetTroubleOnArrival)($user, $arrival, $work);
+
         $collapsed = $this->trackSurvivalNeeds->exert(
             $user,
             (int) config('survival.travel.hunger_per_leg'),
@@ -87,6 +91,19 @@ class AdvanceTravel
         }
 
         $injuries = $hazards['injuries'] === '' ? '' : " {$hazards['injuries']}";
+
+        if ($trouble !== null) {
+            $work->delete();
+
+            return ['status' => "You arrived in {$arrival->city}, but {$trouble->troubleType->name} block the way in. Decide what to do before anything else.{$injuries}", 'route_ended' => true];
+        }
+
+        if ($work->is_retreat) {
+            $work->delete();
+
+            return ['status' => "You made it back to {$arrival->city} in one piece.{$injuries}", 'route_ended' => true];
+        }
+
         $queuedCityIds = $work->queuedCityIds();
 
         if ($queuedCityIds === []) {

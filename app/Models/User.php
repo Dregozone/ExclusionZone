@@ -89,6 +89,16 @@ class User extends Authenticatable
         return $this->hasOne(UserWork::class);
     }
 
+    public function troubleEncounter(): HasOne
+    {
+        return $this->hasOne(TroubleEncounter::class);
+    }
+
+    public function cityVisits(): HasMany
+    {
+        return $this->hasMany(CityVisit::class);
+    }
+
     public function userQuests(): HasMany
     {
         return $this->hasMany(UserQuest::class);
@@ -143,11 +153,12 @@ class User extends Authenticatable
      */
     public function cityActionRestriction(): ?string
     {
-        if ($this->hasActiveWork()) {
-            return 'Finish or cancel your current work before starting another action or route.';
-        }
-
-        return $this->recoveryRestriction() ?? $this->denialReasonForTask('city_action_perform');
+        return match (true) {
+            $this->hasActiveWork() => 'Finish or cancel your current work before starting another action or route.',
+            $this->recoveryRestriction() !== null => $this->recoveryRestriction(),
+            $this->isHeldByTrouble() => 'Trouble is blocking your way. Deal with it before doing anything else here.',
+            default => $this->denialReasonForTask('city_action_perform'),
+        };
     }
 
     /**
@@ -160,6 +171,16 @@ class User extends Authenticatable
         }
 
         return "You are still recovering from your collapse. You can work or travel again {$this->recovering_until->diffForHumans()}.";
+    }
+
+    /**
+     * Whether trouble met on arrival still has to be dealt with before the survivor can act in this city.
+     */
+    public function isHeldByTrouble(): bool
+    {
+        return $this->relationLoaded('troubleEncounter')
+            ? $this->troubleEncounter !== null
+            : $this->troubleEncounter()->exists();
     }
 
     public function denialReasonForTask(string $taskKey): ?string
@@ -219,6 +240,10 @@ class User extends Authenticatable
                     'country_id' => $defaultCity->country_id,
                     'city_id' => $defaultCity->id,
                 ]);
+
+                if (Schema::hasTable('city_visits')) {
+                    $this->cityVisits()->firstOrCreate(['city_id' => $defaultCity->id]);
+                }
             }
         }
 

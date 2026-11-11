@@ -16,6 +16,78 @@
             </div>
         @endif
 
+        @if ($trouble)
+            <div class="overflow-hidden rounded-[2rem] border border-rose-300/70 bg-linear-to-br from-rose-50 via-zinc-50 to-white p-6 shadow-sm dark:border-rose-500/30 dark:from-rose-500/10 dark:via-zinc-900 dark:to-zinc-900" role="alert" data-test="trouble-panel">
+                <p class="text-xs font-medium uppercase tracking-[0.25em] text-rose-600 dark:text-rose-400">Trouble at the edge of {{ $city?->city }}</p>
+                <h2 class="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $trouble['name'] }} block the way in</h2>
+                <p class="mt-3 max-w-3xl text-sm leading-6 text-zinc-700 dark:text-zinc-300">{{ $trouble['description'] }} Nothing else can be done here until you deal with them.</p>
+                @if ($trouble['route_stops'] !== [])
+                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400" data-test="trouble-route">
+                        Get past them and your route carries on to {{ implode(' → ', $trouble['route_stops']) }}.
+                    </p>
+                @endif
+
+                <div class="mt-5 grid gap-4 lg:grid-cols-3">
+                    <div class="flex flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80">
+                        <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Attack</h3>
+                        <p class="mt-2 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
+                            Tests your {{ $trouble['skill_name'] }} against fighters of level {{ $trouble['fighter_level'] }}.
+                            You take {{ $trouble['damage_min'] }}–{{ $trouble['damage_max'] }} damage if you lose, and {{ config('trouble.fight.damage_taken_on_win_percent') }}% of that if you win. Winning clears the way and pays XP and loot.
+                        </p>
+                        <p class="mt-3 text-sm font-medium text-zinc-900 dark:text-zinc-100" data-test="trouble-win-chance">{{ $trouble['win_chance_percent'] }}% chance to win</p>
+                        <form method="POST" action="{{ route('trouble.attack') }}" class="mt-3">
+                            @csrf
+                            <flux:button type="submit" variant="danger" :disabled="! $trouble['can_attack']" data-test="trouble-attack">Attack</flux:button>
+                        </form>
+                    </div>
+
+                    <div
+                        x-data="{ quantities: {}, demand: @js($trouble['demand_value']), values: @js(collect($trouble['barter_goods'])->mapWithKeys(fn ($goods) => [$goods['item_id'] => $goods['value']])), get offered() { return Object.entries(this.quantities).reduce((total, [itemId, quantity]) => total + (this.values[itemId] ?? 0) * Math.max(0, Number(quantity) || 0), 0); } }"
+                        class="flex flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80"
+                    >
+                        <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Buy your way in</h3>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                            They want goods worth {{ $trouble['demand_value'] }}. Each item is worth its rarity: Common 1, Uncommon 2, Rare 3, Epic 4, Scorched 5.
+                        </p>
+                        @if ($trouble['can_buy_in'])
+                            <form method="POST" action="{{ route('trouble.buy-in') }}" class="mt-3 flex flex-1 flex-col gap-3">
+                                @csrf
+                                <div class="max-h-56 space-y-2 overflow-y-auto pr-1">
+                                    @foreach ($trouble['barter_goods'] as $goods)
+                                        <label class="flex items-center justify-between gap-3 text-sm">
+                                            <span class="min-w-0 truncate text-zinc-700 dark:text-zinc-300">{{ $goods['name'] }} <span class="text-zinc-500 dark:text-zinc-400">· {{ $goods['rarity'] }} · ×{{ $goods['owned'] }}</span></span>
+                                            <input type="number" name="items[{{ $goods['item_id'] }}]" min="0" max="{{ $goods['owned'] }}" value="0" x-model="quantities[{{ $goods['item_id'] }}]" class="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" data-test="trouble-offer-{{ $goods['item_id'] }}">
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Offer worth <span class="font-medium text-zinc-900 dark:text-zinc-100" x-text="offered">0</span> of {{ $trouble['demand_value'] }}</p>
+                                <flux:button type="submit" variant="primary" x-bind:disabled="offered < demand" data-test="trouble-buy-in">Hand it over</flux:button>
+                            </form>
+                        @else
+                            <p class="mt-3 rounded-xl border border-dashed border-zinc-300 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400" data-test="trouble-cannot-buy-in">
+                                You don't carry enough to pay them off.
+                            </p>
+                        @endif
+                    </div>
+
+                    <div class="flex flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80">
+                        <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Run away</h3>
+                        <p class="mt-2 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
+                            @if ($trouble['origin_city'])
+                                Head back to {{ $trouble['origin_city'] }} on the usual travel timer. Once you run, you cannot turn back, and the rest of your route is dropped.
+                            @else
+                                There is nowhere to run back to.
+                            @endif
+                        </p>
+                        <form method="POST" action="{{ route('trouble.run') }}" class="mt-3">
+                            @csrf
+                            <flux:button type="submit" variant="ghost" :disabled="! $trouble['can_run']" data-test="trouble-run">Run back</flux:button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if ($last_work_report)
             <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100" data-test="last-work-report">
                 {{ $last_work_report }}
@@ -182,7 +254,11 @@
                                 @endif
                                 <p @class(['mt-2' => $active_work['route_stops'] !== []])>
                                     <span class="font-medium text-zinc-900 dark:text-zinc-100">Travel note:</span>
-                                    This route does not grant skill experience. Cancel before arrival if you want to stay in {{ $active_work['from_city'] }}.
+                                    @if ($active_work['is_retreat'])
+                                        This route does not grant skill experience, and there is no turning back.
+                                    @else
+                                        This route does not grant skill experience. Cancel before arrival if you want to stay in {{ $active_work['from_city'] }}.
+                                    @endif
                                 </p>
                             </div>
                         @endif
@@ -197,17 +273,20 @@
                                 </form>
                             @endif
 
-                            <form method="POST" action="{{ route('work.cancel') }}">
-                                @csrf
-                                <flux:button type="submit" variant="ghost" data-test="cancel-work">
-                                    {{ $active_work['type'] === 'city_action' ? 'Stop working' : 'Cancel' }}
-                                </flux:button>
-                            </form>
+                            @unless ($active_work['is_retreat'])
+                                <form method="POST" action="{{ route('work.cancel') }}">
+                                    @csrf
+                                    <flux:button type="submit" variant="ghost" data-test="cancel-work">
+                                        {{ $active_work['type'] === 'city_action' ? 'Stop working' : 'Cancel' }}
+                                    </flux:button>
+                                </form>
+                            @endunless
 
                             <p class="self-center text-xs text-zinc-500 dark:text-zinc-400">
-                                {{ match ($active_work['type']) {
-                                    'city_action' => 'Stopping pays out finished cycles. The unfinished one earns nothing.',
-                                    'travel' => 'Canceling keeps you in '.$active_work['from_city'].'. Arrival is always verified on the server.',
+                                {{ match (true) {
+                                    $active_work['is_retreat'] => 'Running from trouble cannot be canceled.',
+                                    $active_work['type'] === 'city_action' => 'Stopping pays out finished cycles. The unfinished one earns nothing.',
+                                    $active_work['type'] === 'travel' => 'Canceling keeps you in '.$active_work['from_city'].'. Arrival is always verified on the server.',
                                     default => 'Completion is always verified on the server, even if the local timer is modified.',
                                 } }}
                             </p>

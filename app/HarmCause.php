@@ -3,7 +3,7 @@
 namespace App;
 
 /**
- * What wore a survivor's health down. Combat and trouble will join these.
+ * What wore a survivor's health down. Combat will join these.
  */
 enum HarmCause: string
 {
@@ -12,6 +12,7 @@ enum HarmCause: string
     case Storm = 'storm';
     case Radiation = 'radiation';
     case Accident = 'accident';
+    case Trouble = 'trouble';
 
     /**
      * How the survivor went down, told to them when they come round.
@@ -24,6 +25,7 @@ enum HarmCause: string
             self::Storm => 'The storm threw you down and kept you there',
             self::Radiation => 'The radiation burned through you until you could not stand',
             self::Accident => 'One wrong step on dangerous work left you bleeding in the dirt',
+            self::Trouble => 'The fight at the edge of town went badly, and you went down hard',
         };
     }
 
@@ -38,6 +40,7 @@ enum HarmCause: string
             self::Storm => 'The storm battered you',
             self::Radiation => 'Radiation seeped into you',
             self::Accident => 'You were hurt on the job',
+            self::Trouble => 'You were hurt in a fight',
         };
     }
 }

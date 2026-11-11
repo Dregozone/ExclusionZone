@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Actions\Game\CancelUserWork;
 use App\Actions\Game\CompleteUserWork;
+use App\Actions\Game\DealWithTrouble;
 use App\Actions\Game\EatFood;
 use App\Actions\Game\EquipPremiumCosmetic;
 use App\Actions\Game\StartUserWork;
 use App\Actions\Game\UseMedicalItem;
+use App\Http\Requests\BuyWayPastTroubleRequest;
 use App\Http\Requests\EatFoodRequest;
 use App\Http\Requests\EquipCosmeticRequest;
 use App\Http\Requests\FeedBrainScorcherRequest;
@@ -103,6 +105,39 @@ class GameActionController extends Controller
         }
 
         return to_route('dashboard')->with('status', "You used 1x {$item->name} (health +{$healthRestored}).");
+    }
+
+    public function attackTrouble(Request $request, DealWithTrouble $dealWithTrouble): RedirectResponse
+    {
+        try {
+            $fight = $dealWithTrouble->attack($request->user());
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
+
+        return to_route('dashboard')->with('status', $fight['status']);
+    }
+
+    public function buyWayPastTrouble(BuyWayPastTroubleRequest $request, DealWithTrouble $dealWithTrouble): RedirectResponse
+    {
+        try {
+            $status = $dealWithTrouble->buyWayIn($request->user(), $request->array('items'));
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
+
+        return to_route('dashboard')->with('status', $status);
+    }
+
+    public function runFromTrouble(Request $request, DealWithTrouble $dealWithTrouble): RedirectResponse
+    {
+        try {
+            $origin = $dealWithTrouble->runAway($request->user());
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
+
+        return to_route('dashboard')->with('status', "You turned and ran for {$origin->city}. There is no turning back until you get there.");
     }
 
     /**

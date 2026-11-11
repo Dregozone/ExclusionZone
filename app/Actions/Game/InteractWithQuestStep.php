@@ -26,6 +26,10 @@ class InteractWithQuestStep
             throw new AuthorizationException('You must be in '.$step->city->city.' to interact with this.');
         }
 
+        if ($user->isHeldByTrouble()) {
+            throw new AuthorizationException('Trouble is blocking your way. Deal with it before doing anything else here.');
+        }
+
         $userQuest = $user->userQuests()
             ->where('quest_id', $step->quest_id)
             ->where('status', 'active')
