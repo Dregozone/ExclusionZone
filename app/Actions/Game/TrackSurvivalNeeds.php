@@ -76,7 +76,7 @@ class TrackSurvivalNeeds
     }
 
     /**
-     * Let fatigue fall for every whole minute the survivor has spent without active work.
+     * Let fatigue fall, and health come back unless starving, for every whole minute the survivor has spent without active work.
      */
     public function rest(User $user): void
     {
@@ -85,8 +85,9 @@ class TrackSurvivalNeeds
         }
 
         $restedAt = $user->rested_at;
+        $healsWhileResting = $this->healsWhileResting($user);
 
-        if ($restedAt === null || $user->fatigue === 0) {
+        if ($restedAt === null || ($user->fatigue === 0 && ! $healsWhileResting)) {
             $user->forceFill(['rested_at' => now()])->save();
 
             return;
@@ -100,10 +101,24 @@ class TrackSurvivalNeeds
 
         $recovered = $minutesRested * (int) config('survival.rest.fatigue_recovered_per_minute');
 
+        $healed = $healsWhileResting ? $minutesRested * (int) config('survival.rest.health_recovered_per_minute') : 0;
+
         $user->forceFill([
             'fatigue' => max(0, $user->fatigue - $recovered),
+            'health' => $this->clamp($user->health + $healed),
             'rested_at' => $restedAt->addMinutes($minutesRested),
         ])->save();
+    }
+
+    /**
+     * Resting heals a hurt survivor who is not starving.
+     */
+    private function healsWhileResting(User $user): bool
+    {
+        return (int) config('survival.rest.health_recovered_per_minute') > 0
+            && $user->health > 0
+            && $user->health < $this->maximum()
+            && $user->hunger < $this->maximum();
     }
 
     /**

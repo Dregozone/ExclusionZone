@@ -143,6 +143,10 @@ class AdvanceWorkLoop
                 : ", +{$reward['quantity']} {$reward['item_name']}";
         }
 
+        if ($reward['health_restored'] > 0) {
+            $summary .= ", +{$reward['health_restored']} health";
+        }
+
         if ($reward['levels_gained'] > 0) {
             $summary .= ", {$reward['levels_gained']} level gained";
         }
