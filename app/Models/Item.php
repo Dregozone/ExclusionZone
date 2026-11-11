@@ -42,6 +42,14 @@ class Item extends Model
     }
 
     /**
+     * What the item is worth when handed over to buy a way past trouble. Rarer items are worth more.
+     */
+    public function barterValue(): int
+    {
+        return $this->rarity->rank();
+    }
+
+    /**
      * Food is anything that eases hunger or fatigue, or restores health, when eaten.
      */
     public function isFood(): bool

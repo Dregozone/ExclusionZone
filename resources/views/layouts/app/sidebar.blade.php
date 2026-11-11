@@ -56,6 +56,9 @@
                         <flux:sidebar.item icon="clipboard-document-list" :href="route('admin.quests')" :current="request()->routeIs('admin.quests')" wire:navigate>
                             {{ __('Quests') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="exclamation-triangle" :href="route('admin.trouble-types')" :current="request()->routeIs('admin.trouble-types')" wire:navigate>
+                            {{ __('Trouble') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                     @endif
                 </flux:sidebar.nav>

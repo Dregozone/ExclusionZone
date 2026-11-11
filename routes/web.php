@@ -13,6 +13,7 @@ use App\Livewire\Admin\ManageLocations;
 use App\Livewire\Admin\ManageQuests;
 use App\Livewire\Admin\ManageSkills;
 use App\Livewire\Admin\ManageTravelRoutes;
+use App\Livewire\Admin\ManageTroubleTypes;
 use App\Livewire\Admin\MovePlayer;
 use App\Livewire\RadioHistory;
 use App\Livewire\WorldMap;
@@ -29,6 +30,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/actions', [GameActionController::class, 'performAction'])->name('city-action.store');
     Route::post('dashboard/brain-scorcher', [GameActionController::class, 'feedBrainScorcher'])->name('brain-scorcher.store');
     Route::post('dashboard/eat', [GameActionController::class, 'eat'])->name('food.eat');
+    Route::post('dashboard/trouble/attack', [GameActionController::class, 'attackTrouble'])->name('trouble.attack');
+    Route::post('dashboard/trouble/buy-in', [GameActionController::class, 'buyWayPastTrouble'])->name('trouble.buy-in');
+    Route::post('dashboard/trouble/run', [GameActionController::class, 'runFromTrouble'])->name('trouble.run');
     Route::post('dashboard/death-report/dismiss', [GameActionController::class, 'dismissDeathReport'])->name('death-report.dismiss');
     Route::post('dashboard/work/complete', [GameActionController::class, 'completeWork'])->name('work.complete');
     Route::post('dashboard/work/cancel', [GameActionController::class, 'cancelWork'])->name('work.cancel');
@@ -49,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
         Route::livewire('admin/skills', ManageSkills::class)->name('admin.skills');
         Route::livewire('admin/quests', ManageQuests::class)->name('admin.quests');
         Route::livewire('admin/travel-routes', ManageTravelRoutes::class)->name('admin.travel-routes');
+        Route::livewire('admin/trouble-types', ManageTroubleTypes::class)->name('admin.trouble-types');
         Route::post('dashboard/admin/roles', [AdminRoleController::class, 'update'])->name('admin.roles.update');
     });
 });

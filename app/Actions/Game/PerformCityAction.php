@@ -35,7 +35,7 @@ class PerformCityAction
         DB::transaction(function () use ($user, $requiredItems, $skillProgress, $xp, $quantity, $itemKey, $weather, &$levelsGained, &$itemName, &$itemLost): void {
             $this->consumeRequiredItems($user, $requiredItems);
 
-            $levelsGained = $this->applyExperience($skillProgress, $xp);
+            $levelsGained = $skillProgress->gainExperience($xp);
 
             if ($itemKey !== null && $quantity > 0) {
                 $item = Item::query()->where('key', $itemKey)->firstOrFail();
@@ -184,21 +184,5 @@ class PerformCityAction
             'level' => 1,
             'xp' => 0,
         ]);
-    }
-
-    private function applyExperience(UserSkill $skillProgress, int $xp): int
-    {
-        $levelsGained = 0;
-        $skillProgress->xp += $xp;
-
-        while ($skillProgress->xp >= ($skillProgress->level * 100)) {
-            $skillProgress->xp -= $skillProgress->level * 100;
-            $skillProgress->level++;
-            $levelsGained++;
-        }
-
-        $skillProgress->save();
-
-        return $levelsGained;
     }
 }

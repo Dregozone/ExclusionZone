@@ -30,6 +30,7 @@ class StartUserWork
         $user->loadMissing('location.city', 'skills.skill');
 
         $this->ensureNoActiveWork($user);
+        $this->ensureNotHeldByTrouble($user);
         $this->trackSurvivalNeeds->rest($user);
 
         $skillProgress = $this->performCityAction->authorize($user, $action);
@@ -58,6 +59,7 @@ class StartUserWork
         $user->loadMissing('location.city');
 
         $this->ensureNoActiveWork($user);
+        $this->ensureNotHeldByTrouble($user);
         $this->trackSurvivalNeeds->rest($user);
 
         $route = [...$viaCityIds, $destination->id];
@@ -85,6 +87,7 @@ class StartUserWork
         $user->loadMissing('location.city');
 
         $this->ensureNoActiveWork($user);
+        $this->ensureNotHeldByTrouble($user);
         $this->trackSurvivalNeeds->rest($user);
         $this->feedBrainScorcher->authorize($user, $item, $quantity);
 
@@ -102,6 +105,42 @@ class StartUserWork
     }
 
     /**
+     * Run from trouble back to the city the survivor came from. The trip takes the normal travel
+     * time and cannot be canceled once started.
+     *
+     * @throws AuthorizationException
+     */
+    public function forRetreat(User $user, City $origin): UserWork
+    {
+        $user->loadMissing('location.city');
+
+        $this->ensureNoActiveWork($user);
+        $this->trackSurvivalNeeds->rest($user);
+        $this->travelToCity->authorize($user, $origin);
+
+        return $this->createWork($user, [
+            'work_type' => 'travel',
+            'city_action_id' => null,
+            'origin_city_id' => $user->location?->city_id,
+            'destination_city_id' => $origin->id,
+            'is_retreat' => true,
+            'skill_key' => null,
+            'duration_seconds' => $this->calculateWorkDuration->forTravel($user, $origin),
+            'weather' => $this->calculateWorkDuration->currentWeather($user),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    private function ensureNotHeldByTrouble(User $user): void
+    {
+        if ($user->troubleEncounter()->exists()) {
+            throw new AuthorizationException('Trouble is blocking your way. Deal with it before doing anything else here.');
+        }
+    }
+
+    /**
      * @throws AuthorizationException
      */
     private function ensureNoActiveWork(User $user): void
@@ -112,7 +151,7 @@ class StartUserWork
     }
 
     /**
-     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,queued_city_ids?:list<int>,offered_item_id?:int,offered_quantity?:int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
+     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,queued_city_ids?:list<int>,is_retreat?:bool,offered_item_id?:int,offered_quantity?:int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
      *
      * @throws AuthorizationException
      */
