@@ -65,10 +65,17 @@
                         <flux:field>
                             <flux:label>{{ __('Health restored') }}</flux:label>
                             <flux:input type="number" wire:model="health_restored" min="0" max="100" />
-                            <flux:description>{{ __('Health given back when eaten.') }}</flux:description>
+                            <flux:description>{{ __('Health given back when eaten or used.') }}</flux:description>
                             <flux:error name="health_restored" />
                         </flux:field>
                     </div>
+
+                    <flux:field variant="inline" class="mt-4">
+                        <flux:checkbox wire:model="is_medical" />
+                        <flux:label>{{ __('Medical item') }}</flux:label>
+                        <flux:description>{{ __('Used from the dashboard to restore its health instead of eaten, like bandages or a medkit.') }}</flux:description>
+                        <flux:error name="is_medical" />
+                    </flux:field>
                 </div>
 
                 <flux:field>
@@ -118,6 +125,9 @@
                             @endif
                             @if ($item->isFood())
                                 <span class="ml-2 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{{ __('Food') }}</span>
+                            @endif
+                            @if ($item->isMedical())
+                                <span class="ml-2 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">{{ __('Medical') }}</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden truncate max-w-xs">{{ $item->description }}</td>

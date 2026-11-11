@@ -31,10 +31,13 @@ return [
     ],
 
     /*
-    | Fatigue falls on its own while the survivor has no active work.
+    | Fatigue falls on its own while the survivor has no active work. Health
+    | slowly comes back too, unless the survivor is starving. Set it to 0 to
+    | heal only with food, medical items and clinics.
     */
     'rest' => [
         'fatigue_recovered_per_minute' => (int) env('SURVIVAL_FATIGUE_RECOVERED_PER_MINUTE', 1),
+        'health_recovered_per_minute' => (int) env('SURVIVAL_HEALTH_RECOVERED_PER_MINUTE', 1),
     ],
 
     /*

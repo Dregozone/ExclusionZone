@@ -137,6 +137,13 @@
                             </flux:select>
                             <flux:error name="reward_loot_tier" />
                         </flux:field>
+
+                        <flux:field>
+                            <flux:label>{{ __('Health') }}</flux:label>
+                            <flux:input type="number" wire:model="reward_health" min="0" max="100" />
+                            <flux:description>{{ __('Health (0-100) each cycle gives back, such as at a clinic. An action that heals needs no item.') }}</flux:description>
+                            <flux:error name="reward_health" />
+                        </flux:field>
                     </div>
                 </div>
 

@@ -29,6 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/actions', [GameActionController::class, 'performAction'])->name('city-action.store');
     Route::post('dashboard/brain-scorcher', [GameActionController::class, 'feedBrainScorcher'])->name('brain-scorcher.store');
     Route::post('dashboard/eat', [GameActionController::class, 'eat'])->name('food.eat');
+    Route::post('dashboard/medical', [GameActionController::class, 'useMedicalItem'])->name('medical.use');
     Route::post('dashboard/death-report/dismiss', [GameActionController::class, 'dismissDeathReport'])->name('death-report.dismiss');
     Route::post('dashboard/work/complete', [GameActionController::class, 'completeWork'])->name('work.complete');
     Route::post('dashboard/work/cancel', [GameActionController::class, 'cancelWork'])->name('work.cancel');
