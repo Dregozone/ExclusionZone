@@ -82,11 +82,22 @@ class GameActionController extends Controller
         }
 
         $effects = collect([
-            'hunger' => $relieved['hunger_relieved'],
-            'fatigue' => $relieved['fatigue_relieved'],
-        ])->filter()->map(fn (int $amount, string $need): string => "{$need} -{$amount}")->implode(', ');
+            'health +'.$relieved['health_restored'] => $relieved['health_restored'],
+            'hunger -'.$relieved['hunger_relieved'] => $relieved['hunger_relieved'],
+            'fatigue -'.$relieved['fatigue_relieved'] => $relieved['fatigue_relieved'],
+        ])->filter()->keys()->implode(', ');
 
         return to_route('dashboard')->with('status', "You ate 1x {$item->name}".($effects === '' ? '.' : " ({$effects})."));
+    }
+
+    /**
+     * The survivor has read how they were rescued after dying.
+     */
+    public function dismissDeathReport(Request $request): RedirectResponse
+    {
+        $request->user()->forceFill(['death_report' => null])->save();
+
+        return to_route('dashboard');
     }
 
     public function completeWork(Request $request, CompleteUserWork $completeUserWork): RedirectResponse

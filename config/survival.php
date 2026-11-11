@@ -38,9 +38,37 @@ return [
     ],
 
     /*
+    |--------------------------------------------------------------------------
+    | Health
+    |--------------------------------------------------------------------------
+    |
+    | Health runs from 0 to the maximum above and starts full. Every finished
+    | work cycle, travel leg or Brain Scorcher burn taken while starving or
+    | spent (hunger or fatigue at the maximum) costs health. Food with a
+    | health value builds it back.
+    |
+    | At 0 the survivor dies: the SurvivorDied event fires, and for now
+    | someone drags them to safety, their work stops and they wake up with
+    | the revive health below.
+    |
+    */
+    'health' => [
+        'lost_while_starving' => (int) env('SURVIVAL_HEALTH_LOST_WHILE_STARVING', 5),
+        'lost_while_spent' => (int) env('SURVIVAL_HEALTH_LOST_WHILE_SPENT', 5),
+        'revive_health' => (int) env('SURVIVAL_REVIVE_HEALTH', 25),
+    ],
+
+    /*
     | Thresholds in ascending order. The highest one reached applies.
+    | Health runs the other way: its thresholds apply at or below their value,
+    | and the lowest one reached applies.
     */
     'thresholds' => [
+        'health' => [
+            ['at' => 10, 'label' => 'Critical', 'timer_increase_percent' => 50],
+            ['at' => 25, 'label' => 'Badly hurt', 'timer_increase_percent' => 25],
+            ['at' => 50, 'label' => 'Wounded', 'timer_increase_percent' => 10],
+        ],
         'hunger' => [
             ['at' => 50, 'label' => 'Hungry', 'timer_increase_percent' => 10],
             ['at' => 75, 'label' => 'Famished', 'timer_increase_percent' => 25],

@@ -2,27 +2,77 @@
 
 namespace App\Actions\Game;
 
+use App\Events\SurvivorDied;
+use App\HarmCause;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class TrackSurvivalNeeds
 {
-    public const NEEDS = ['hunger', 'fatigue'];
+    /**
+     * Everything shown as the survivor's condition. Each one can slow work timers.
+     */
+    public const NEEDS = ['health', 'hunger', 'fatigue'];
+
+    private const DEFAULT_LABELS = ['health' => 'Healthy', 'hunger' => 'Fed', 'fatigue' => 'Rested'];
 
     /**
      * Add hunger and fatigue from finished work or travel. Resting starts over from now.
+     * Pushing on while starving or spent then costs health.
+     *
+     * @return bool Whether the survivor died from it.
      */
-    public function exert(User $user, int $hunger, int $fatigue): void
+    public function exert(User $user, int $hunger, int $fatigue): bool
     {
-        $this->change($user, $hunger, $fatigue, restartsRest: true);
+        $this->change($user, $hunger, $fatigue, 0, restartsRest: true);
+
+        $harms = [
+            [HarmCause::Starvation, $user->hunger >= $this->maximum() ? (int) config('survival.health.lost_while_starving') : 0],
+            [HarmCause::Exhaustion, $user->fatigue >= $this->maximum() ? (int) config('survival.health.lost_while_spent') : 0],
+        ];
+
+        foreach ($harms as [$cause, $healthLost]) {
+            if ($this->harm($user, $healthLost, $cause)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * Take hunger and fatigue away, such as when the survivor eats.
+     * Take hunger and fatigue away and give health back, such as when the survivor eats.
      */
-    public function relieve(User $user, int $hunger, int $fatigue): void
+    public function relieve(User $user, int $hunger, int $fatigue, int $health = 0): void
     {
-        $this->change($user, -$hunger, -$fatigue, restartsRest: false);
+        $this->change($user, -$hunger, -$fatigue, $health, restartsRest: false);
+    }
+
+    /**
+     * Take health away. Reaching 0 fires the SurvivorDied event, whose listeners decide what death means.
+     *
+     * @return bool Whether the survivor died from it.
+     */
+    public function harm(User $user, int $amount, HarmCause $cause): bool
+    {
+        if ($amount <= 0) {
+            return false;
+        }
+
+        $died = DB::transaction(function () use ($user, $amount): bool {
+            $current = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail(['id', 'health']);
+            $health = max(0, $current->health - $amount);
+
+            $user->forceFill(['health' => $health])->save();
+
+            return $current->health > 0 && $health === 0;
+        });
+
+        if ($died) {
+            SurvivorDied::dispatch($user, $cause);
+        }
+
+        return $died;
     }
 
     /**
@@ -65,7 +115,7 @@ class TrackSurvivalNeeds
     }
 
     /**
-     * How much longer every work timer runs because of the survivor's hunger and fatigue.
+     * How much longer every work timer runs because of the survivor's health, hunger and fatigue.
      */
     public function timerIncreasePercent(User $user): int
     {
@@ -83,28 +133,34 @@ class TrackSurvivalNeeds
         return [
             'value' => $value,
             'maximum' => $this->maximum(),
-            'label' => $threshold['label'] ?? ($need === 'hunger' ? 'Fed' : 'Rested'),
+            'label' => $threshold['label'] ?? self::DEFAULT_LABELS[$need],
             'timer_increase_percent' => $threshold['timer_increase_percent'] ?? 0,
         ];
     }
 
     /**
+     * Hunger and fatigue thresholds apply at or above their value; health thresholds at or below it.
+     *
      * @return array{at: int, label: string, timer_increase_percent: int}|null
      */
     private function thresholdReached(string $need, int $value): ?array
     {
-        return collect(config("survival.thresholds.{$need}", []))
-            ->filter(fn (array $threshold): bool => $value >= $threshold['at'])
-            ->sortBy('at')
-            ->last();
+        $thresholds = collect(config("survival.thresholds.{$need}", []))->sortBy('at');
+
+        if ($need === 'health') {
+            return $thresholds->first(fn (array $threshold): bool => $value <= $threshold['at']);
+        }
+
+        return $thresholds->filter(fn (array $threshold): bool => $value >= $threshold['at'])->last();
     }
 
-    private function change(User $user, int $hungerChange, int $fatigueChange, bool $restartsRest): void
+    private function change(User $user, int $hungerChange, int $fatigueChange, int $healthChange, bool $restartsRest): void
     {
-        DB::transaction(function () use ($user, $hungerChange, $fatigueChange, $restartsRest): void {
-            $current = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail(['id', 'hunger', 'fatigue']);
+        DB::transaction(function () use ($user, $hungerChange, $fatigueChange, $healthChange, $restartsRest): void {
+            $current = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail(['id', 'health', 'hunger', 'fatigue']);
 
             $user->forceFill([
+                'health' => $this->clamp($current->health + $healthChange),
                 'hunger' => $this->clamp($current->hunger + $hungerChange),
                 'fatigue' => $this->clamp($current->fatigue + $fatigueChange),
                 'rested_at' => $restartsRest ? now() : ($user->rested_at ?? now()),

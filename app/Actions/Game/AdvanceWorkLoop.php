@@ -82,7 +82,9 @@ class AdvanceWorkLoop
         $work->xp_earned += $cycle['xp'];
         $work->last_cycle_summary = $cycle['status'];
 
-        $this->trackSurvivalNeeds->exert($user, $work->cityAction->hunger_cost, $work->cityAction->fatigue_cost);
+        if ($this->trackSurvivalNeeds->exert($user, $work->cityAction->hunger_cost, $work->cityAction->fatigue_cost)) {
+            return ['status' => 'You collapsed before you could finish. '.$cycle['status'], 'rewarded' => true, 'loop_ended' => true];
+        }
 
         $stopReason = $this->reasonLoopCannotContinue($user, $work);
 

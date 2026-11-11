@@ -23,6 +23,15 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    /**
+     * New survivors start at full health.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'health' => 100,
+    ];
+
     protected static function booted(): void
     {
         static::created(function (self $user): void {
@@ -42,6 +51,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'premium_active' => 'bool',
             'last_active_at' => 'datetime',
+            'health' => 'integer',
             'hunger' => 'integer',
             'fatigue' => 'integer',
             'rested_at' => 'datetime',
