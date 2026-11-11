@@ -36,6 +36,10 @@ class ManageCityActions extends Component
 
     public string $risk_level = 'medium';
 
+    public int $hazard_chance_pct = 0;
+
+    public int $hazard_damage = 0;
+
     public int $base_duration_seconds = 30;
 
     public int $hunger_cost = 2;
@@ -71,7 +75,7 @@ class ManageCityActions extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'city_id', 'action_key', 'label', 'description', 'skill_key', 'min_level', 'risk_level', 'base_duration_seconds', 'hunger_cost', 'fatigue_cost', 'reward_profile', 'deleted_at']);
+        return $query->get(['id', 'city_id', 'action_key', 'label', 'description', 'skill_key', 'min_level', 'risk_level', 'hazard_chance_pct', 'hazard_damage', 'base_duration_seconds', 'hunger_cost', 'fatigue_cost', 'reward_profile', 'deleted_at']);
     }
 
     #[Computed]
@@ -111,6 +115,8 @@ class ManageCityActions extends Component
         $this->skill_key = $action->skill_key;
         $this->min_level = $action->min_level;
         $this->risk_level = $action->risk_level;
+        $this->hazard_chance_pct = $action->hazard_chance_pct;
+        $this->hazard_damage = $action->hazard_damage;
         $this->base_duration_seconds = $action->base_duration_seconds;
         $this->hunger_cost = $action->hunger_cost;
         $this->fatigue_cost = $action->fatigue_cost;
@@ -132,6 +138,8 @@ class ManageCityActions extends Component
             'skill_key' => ['required', 'string', 'max:100'],
             'min_level' => ['required', 'integer', 'min:1', 'max:100'],
             'risk_level' => ['required', 'string', 'in:low,medium,high,extreme'],
+            'hazard_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
+            'hazard_damage' => ['required', 'integer', 'min:0', 'max:100'],
             'base_duration_seconds' => ['required', 'integer', 'min:10', 'max:65535'],
             'hunger_cost' => ['required', 'integer', 'min:0', 'max:100'],
             'fatigue_cost' => ['required', 'integer', 'min:0', 'max:100'],
@@ -152,6 +160,8 @@ class ManageCityActions extends Component
             'skill_key' => $validated['skill_key'],
             'min_level' => $validated['min_level'],
             'risk_level' => $validated['risk_level'],
+            'hazard_chance_pct' => $validated['hazard_chance_pct'],
+            'hazard_damage' => $validated['hazard_damage'],
             'base_duration_seconds' => $validated['base_duration_seconds'],
             'hunger_cost' => $validated['hunger_cost'],
             'fatigue_cost' => $validated['fatigue_cost'],
@@ -222,6 +232,8 @@ class ManageCityActions extends Component
         $this->skill_key = '';
         $this->min_level = 1;
         $this->risk_level = 'medium';
+        $this->hazard_chance_pct = 0;
+        $this->hazard_damage = 0;
         $this->base_duration_seconds = 30;
         $this->hunger_cost = 2;
         $this->fatigue_cost = 2;

@@ -56,6 +56,7 @@ test('a travel leg finished while starving costs health', function () {
     config(['survival.health.lost_while_starving' => 7]);
     $user = survivorWithHealth(['hunger' => 100]);
     $destination = $user->location->city->neighbors()->firstOrFail();
+    $destination->update(['radiation_damage' => 0]);
     $this->actingAs($user)->post(route('travel.store'), ['city_id' => $destination->id]);
 
     $this->travel(1)->days();
@@ -137,8 +138,9 @@ test('dying during work stops it, revives the survivor and tells them on the das
         ->assertSeeText('Be more careful out there.');
 });
 
-test('dying on the road ends the route at the stop reached', function () {
+test('dying on the road ends the route at the stop reached when no trade post is near', function () {
     config(['survival.health.lost_while_spent' => 50]);
+    City::query()->update(['has_trade_post' => false]);
     $user = survivorWithHealth(['fatigue' => 100, 'health' => 40]);
     $origin = $user->location->city;
     $stopover = $origin->neighbors()->get()
@@ -153,6 +155,49 @@ test('dying on the road ends the route at the stop reached', function () {
         ->activeWork->toBeNull()
         ->location->city_id->toBe($stopover->id)
         ->death_report->toContain('exhaustion');
+});
+
+test('a fallen survivor wakes at the nearest trade post with part of their pack gone', function () {
+    config(['survival.death.pack_lost_percent' => 25]);
+    $user = survivorWithHealth(['health' => 5]);
+    $scrap = Item::query()->where('key', 'scrap_metal')->firstOrFail();
+    $borscht = Item::query()->where('key', 'borscht')->firstOrFail();
+    $questItem = Item::factory()->questItem()->create(['name' => 'Sealed Dossier']);
+    $user->inventoryItems()->createMany([
+        ['item_id' => $scrap->id, 'quantity' => 8],
+        ['item_id' => $borscht->id, 'quantity' => 3],
+        ['item_id' => $questItem->id, 'quantity' => 8],
+    ]);
+
+    app(TrackSurvivalNeeds::class)->harm($user, 5, HarmCause::Radiation);
+
+    $user = $user->fresh()->load('inventoryItems.item', 'location.city');
+    expect($user->location->city->city)->toBe('Warsaw')
+        ->and($user->inventoryItems->mapWithKeys(fn ($inventoryItem): array => [$inventoryItem->item->name => $inventoryItem->quantity])->all())
+        ->toEqual(['Scrap Metal' => 6, 'Borscht' => 3, 'Sealed Dossier' => 8])
+        ->and($user->death_report)
+        ->toContain('The radiation burned through you')
+        ->toContain('carried you all the way to the trade post in Warsaw')
+        ->toContain('you lost 2x Scrap Metal.');
+});
+
+test('a fallen survivor cannot work or travel until they have recovered', function () {
+    config(['survival.death.recovery_minutes' => 10]);
+    $user = survivorWithHealth(['health' => 5]);
+    app(TrackSurvivalNeeds::class)->harm($user, 5, HarmCause::Storm);
+    $user = $user->fresh();
+    $warsawAction = CityAction::query()->whereBelongsTo($user->location->city)->where('min_level', 1)->firstOrFail();
+
+    $this->actingAs($user)->get(route('dashboard'))
+        ->assertSeeText('You are still recovering from your collapse.');
+    $this->post(route('city-action.store'), ['city_action_id' => $warsawAction->id])
+        ->assertSessionHas('toast', fn (array $toast): bool => str_starts_with($toast['text'], 'You are still recovering'));
+    expect($user->activeWork()->exists())->toBeFalse();
+
+    $this->travel(11)->minutes();
+
+    $this->post(route('city-action.store'), ['city_action_id' => $warsawAction->id]);
+    expect($user->activeWork()->exists())->toBeTrue();
 });
 
 test('survivors dismiss the death report once they have read it', function () {

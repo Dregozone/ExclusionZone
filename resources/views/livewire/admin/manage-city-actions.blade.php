@@ -66,6 +66,20 @@
                     </flux:field>
 
                     <flux:field>
+                        <flux:label>{{ __('Accident chance (%)') }}</flux:label>
+                        <flux:input type="number" wire:model="hazard_chance_pct" min="0" max="100" />
+                        <flux:description>{{ __('Chance (0-100) that a finished cycle injures the survivor.') }}</flux:description>
+                        <flux:error name="hazard_chance_pct" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Accident damage') }}</flux:label>
+                        <flux:input type="number" wire:model="hazard_damage" min="0" max="100" />
+                        <flux:description>{{ __('Health (0-100) an accident costs. 0 makes the action safe.') }}</flux:description>
+                        <flux:error name="hazard_damage" />
+                    </flux:field>
+
+                    <flux:field>
                         <flux:label>{{ __('Base Duration (seconds)') }}</flux:label>
                         <flux:input type="number" wire:model="base_duration_seconds" min="10" max="65535" />
                         <flux:description>{{ __('Minimum 10 s. Reduced by skill level — 1% per level above 1.') }}</flux:description>

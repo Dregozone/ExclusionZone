@@ -108,7 +108,7 @@ test('work in bad weather grants bonus experience and can lose the loot', functi
 
     $this->post(route('work.complete'))
         ->assertRedirect(route('dashboard'))
-        ->assertSessionHas('status', 'Action completed: +23 XP (+25% Storm bonus), 2 Scrap Metal lost to the storm.');
+        ->assertSessionHas('status', 'Action completed: +23 XP (+25% Storm bonus), 2 Scrap Metal lost to the storm. The storm battered you (-5 health).');
 
     $user->refresh()->load('skills.skill', 'inventoryItems.item');
 

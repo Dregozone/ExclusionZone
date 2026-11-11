@@ -26,6 +26,7 @@ class City extends Model
         'weather',
         'baseline_loot_tier',
         'has_trade_post',
+        'radiation_damage',
         'lat',
         'lng',
     ];
@@ -35,6 +36,7 @@ class City extends Model
         'lng' => 'float',
         'weather' => Weather::class,
         'has_trade_post' => 'boolean',
+        'radiation_damage' => 'integer',
     ];
 
     public function country(): BelongsTo

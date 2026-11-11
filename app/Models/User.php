@@ -55,6 +55,7 @@ class User extends Authenticatable
             'hunger' => 'integer',
             'fatigue' => 'integer',
             'rested_at' => 'datetime',
+            'recovering_until' => 'datetime',
         ];
     }
 
@@ -142,9 +143,23 @@ class User extends Authenticatable
      */
     public function cityActionRestriction(): ?string
     {
-        return $this->hasActiveWork()
-            ? 'Finish or cancel your current work before starting another action or route.'
-            : $this->denialReasonForTask('city_action_perform');
+        if ($this->hasActiveWork()) {
+            return 'Finish or cancel your current work before starting another action or route.';
+        }
+
+        return $this->recoveryRestriction() ?? $this->denialReasonForTask('city_action_perform');
+    }
+
+    /**
+     * Why the survivor cannot work or travel while recovering from their last death, or null once they can.
+     */
+    public function recoveryRestriction(): ?string
+    {
+        if ($this->recovering_until === null || ! $this->recovering_until->isFuture()) {
+            return null;
+        }
+
+        return "You are still recovering from your collapse. You can work or travel again {$this->recovering_until->diffForHumans()}.";
     }
 
     public function denialReasonForTask(string $taskKey): ?string
