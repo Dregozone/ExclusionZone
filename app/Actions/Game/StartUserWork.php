@@ -20,6 +20,7 @@ class StartUserWork
         public FeedBrainScorcher $feedBrainScorcher,
         public CalculateWorkDuration $calculateWorkDuration,
         public TrackSurvivalNeeds $trackSurvivalNeeds,
+        public FightEnemy $fightEnemy,
     ) {}
 
     /**
@@ -33,6 +34,11 @@ class StartUserWork
         $this->trackSurvivalNeeds->rest($user);
 
         $skillProgress = $this->performCityAction->authorize($user, $action);
+        $enemy = $this->fightEnemy->chooseEnemy($action);
+
+        if ($enemy !== null) {
+            $this->fightEnemy->authorize($user);
+        }
 
         return $this->createWork($user, [
             'work_type' => 'city_action',
@@ -42,6 +48,8 @@ class StartUserWork
             'skill_key' => $action->skill_key,
             'duration_seconds' => $this->calculateWorkDuration->forCityAction($user, $action, $skillProgress),
             'weather' => $this->calculateWorkDuration->currentWeather($user),
+            'enemy_id' => $enemy?->id,
+            'enemy_health' => $enemy?->health,
         ]);
     }
 
@@ -112,7 +120,7 @@ class StartUserWork
     }
 
     /**
-     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,queued_city_ids?:list<int>,offered_item_id?:int,offered_quantity?:int,skill_key:?string,duration_seconds:int,weather:Weather}  $attributes
+     * @param  array{work_type:string,city_action_id:?int,origin_city_id:?int,destination_city_id:?int,queued_city_ids?:list<int>,offered_item_id?:int,offered_quantity?:int,skill_key:?string,duration_seconds:int,weather:Weather,enemy_id?:?int,enemy_health?:?int}  $attributes
      *
      * @throws AuthorizationException
      */

@@ -17,6 +17,7 @@ class Item extends Model
         'hunger_restored' => 0,
         'fatigue_restored' => 0,
         'health_restored' => 0,
+        'attack_bonus' => 0,
     ];
 
     protected $fillable = [
@@ -28,6 +29,7 @@ class Item extends Model
         'hunger_restored',
         'fatigue_restored',
         'health_restored',
+        'attack_bonus',
     ];
 
     protected function casts(): array
@@ -38,6 +40,7 @@ class Item extends Model
             'hunger_restored' => 'integer',
             'fatigue_restored' => 'integer',
             'health_restored' => 'integer',
+            'attack_bonus' => 'integer',
         ];
     }
 
@@ -47,5 +50,13 @@ class Item extends Model
     public function isFood(): bool
     {
         return $this->hunger_restored > 0 || $this->fatigue_restored > 0 || $this->health_restored > 0;
+    }
+
+    /**
+     * A weapon adds its attack bonus to every blow in a fight.
+     */
+    public function isWeapon(): bool
+    {
+        return $this->attack_bonus > 0;
     }
 }

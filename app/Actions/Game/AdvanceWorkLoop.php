@@ -2,6 +2,7 @@
 
 namespace App\Actions\Game;
 
+use App\FightOutcome;
 use App\Models\User;
 use App\Models\UserWork;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -16,6 +17,7 @@ class AdvanceWorkLoop
 
     public function __construct(
         public PerformCityAction $performCityAction,
+        public FightEnemy $fightEnemy,
         public CalculateWorkDuration $calculateWorkDuration,
         public RecordQuestActionProgress $recordQuestActionProgress,
         public TrackSurvivalNeeds $trackSurvivalNeeds,
@@ -74,6 +76,11 @@ class AdvanceWorkLoop
             return $this->endLoop($user, $work, $exception->getMessage(), $exception->getMessage(), false);
         }
 
+        // Dying in a fight already stopped the work, so there is no loop left to end.
+        if ($cycle['died'] ?? false) {
+            return ['status' => $cycle['status'], 'rewarded' => false, 'loop_ended' => true];
+        }
+
         if (! $cycle['rewarded']) {
             return $this->endLoop($user, $work, $cycle['status'], $cycle['status'], false);
         }
@@ -104,7 +111,9 @@ class AdvanceWorkLoop
     }
 
     /**
-     * @return array{status:string,rewarded:bool,xp:int}
+     * A fight pays out only for the round that brings its enemy down; earlier rounds just trade blows.
+     *
+     * @return array{status:string,rewarded:bool,xp:int,died?:bool}
      *
      * @throws AuthorizationException
      */
@@ -123,6 +132,17 @@ class AdvanceWorkLoop
                 'status' => 'Action failed: you no longer have '.$this->performCityAction->describeRequiredItems($missingItems).'. No rewards were granted.',
                 'rewarded' => false,
                 'xp' => 0,
+            ];
+        }
+
+        $round = $work->enemy_id === null ? null : $this->fightEnemy->round($user, $work);
+
+        if ($round !== null && $round['outcome'] !== FightOutcome::Won) {
+            return [
+                'status' => $round['summary'],
+                'rewarded' => $round['outcome'] === FightOutcome::Ongoing,
+                'xp' => 0,
+                'died' => $round['outcome'] === FightOutcome::Died,
             ];
         }
 
@@ -153,6 +173,10 @@ class AdvanceWorkLoop
 
         if ($questProgress !== []) {
             $summary .= ' Job progress: '.implode(', ', $questProgress).'.';
+        }
+
+        if ($round !== null) {
+            return ['status' => "{$round['summary']} {$summary}", 'rewarded' => true, 'xp' => $reward['xp'] + $round['xp']];
         }
 
         return ['status' => $summary, 'rewarded' => true, 'xp' => $reward['xp']];

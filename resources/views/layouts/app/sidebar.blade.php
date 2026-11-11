@@ -50,6 +50,9 @@
                         <flux:sidebar.item icon="archive-box" :href="route('admin.items')" :current="request()->routeIs('admin.items')" wire:navigate>
                             {{ __('Items') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="fire" :href="route('admin.enemies')" :current="request()->routeIs('admin.enemies')" wire:navigate>
+                            {{ __('Enemies') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="academic-cap" :href="route('admin.skills')" :current="request()->routeIs('admin.skills')" wire:navigate>
                             {{ __('Skills') }}
                         </flux:sidebar.item>

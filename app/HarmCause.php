@@ -9,6 +9,7 @@ enum HarmCause: string
 {
     case Starvation = 'starvation';
     case Exhaustion = 'exhaustion';
+    case Combat = 'combat';
 
     /**
      * How the survivor went down, told to them when they come round.
@@ -18,6 +19,7 @@ enum HarmCause: string
         return match ($this) {
             self::Starvation => 'Hunger finally took your legs out from under you',
             self::Exhaustion => 'Your body gave out after pushing on long past exhaustion',
+            self::Combat => 'You fell in the fight, bleeding into the dirt',
         };
     }
 }

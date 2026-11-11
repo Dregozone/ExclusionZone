@@ -51,6 +51,8 @@ class UserWork extends Model
         'cycles_completed',
         'xp_earned',
         'last_cycle_summary',
+        'enemy_id',
+        'enemy_health',
     ];
 
     protected function casts(): array
@@ -61,6 +63,7 @@ class UserWork extends Model
             'offered_quantity' => 'integer',
             'cycles_completed' => 'integer',
             'xp_earned' => 'integer',
+            'enemy_health' => 'integer',
             'weather' => Weather::class,
         ];
     }
@@ -88,6 +91,14 @@ class UserWork extends Model
     public function offeredItem(): BelongsTo
     {
         return $this->belongsTo(Item::class, 'offered_item_id')->withTrashed();
+    }
+
+    /**
+     * The enemy a fight is against. An enemy deleted mid-fight is swapped for another one in the next round.
+     */
+    public function enemy(): BelongsTo
+    {
+        return $this->belongsTo(Enemy::class);
     }
 
     public function skill(): BelongsTo

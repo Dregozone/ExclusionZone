@@ -186,7 +186,10 @@ class PerformCityAction
         ]);
     }
 
-    private function applyExperience(UserSkill $skillProgress, int $xp): int
+    /**
+     * Add XP to a skill, levelling it up as often as the XP allows.
+     */
+    public function applyExperience(UserSkill $skillProgress, int $xp): int
     {
         $levelsGained = 0;
         $skillProgress->xp += $xp;

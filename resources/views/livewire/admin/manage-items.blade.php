@@ -72,6 +72,13 @@
                 </div>
 
                 <flux:field>
+                    <flux:label>{{ __('Attack bonus') }}</flux:label>
+                    <flux:input type="number" wire:model="attack_bonus" min="0" max="100" />
+                    <flux:description>{{ __('Added to every blow in a fight. Survivors fight with the carried item with the highest bonus; 0 means it is not a weapon.') }}</flux:description>
+                    <flux:error name="attack_bonus" />
+                </flux:field>
+
+                <flux:field>
                     <flux:label>{{ __('Description') }}</flux:label>
                     <flux:textarea wire:model="description" placeholder="{{ __('What this item is and how it might be used…') }}" rows="3" />
                     <flux:error name="description" />
@@ -118,6 +125,9 @@
                             @endif
                             @if ($item->isFood())
                                 <span class="ml-2 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{{ __('Food') }}</span>
+                            @endif
+                            @if ($item->isWeapon())
+                                <span class="ml-2 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">{{ __('Weapon +:bonus', ['bonus' => $item->attack_bonus]) }}</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden truncate max-w-xs">{{ $item->description }}</td>

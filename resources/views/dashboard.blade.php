@@ -134,6 +134,20 @@
                             </div>
                         @endif
 
+                        @if ($active_work['enemy'])
+                            @php($enemy = $active_work['enemy'])
+                            <div class="rounded-[1.5rem] border border-red-300/70 bg-red-50/80 p-5 text-sm text-zinc-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-zinc-300" data-work-live="enemy" data-test="work-enemy">
+                                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                                    <p class="font-medium text-zinc-900 dark:text-zinc-100">Fighting: {{ $enemy['name'] }}</p>
+                                    <p class="text-xs">{{ $enemy['health'] }} / {{ $enemy['maximum'] }} health</p>
+                                </div>
+                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-red-100 dark:bg-red-950/60">
+                                    <div class="h-full rounded-full bg-red-500" style="width: {{ (int) round($enemy['health'] / max(1, $enemy['maximum']) * 100) }}%"></div>
+                                </div>
+                                <p class="mt-2">{{ $enemy['description'] }} One round is fought each cycle. You break off and flee if your health drops to {{ config('combat.flee_at_health') }}.</p>
+                            </div>
+                        @endif
+
                         @if ($active_work['weather']->isBad())
                             <div class="rounded-[1.5rem] border border-sky-300/70 bg-sky-50/80 p-5 text-sm text-zinc-600 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-zinc-300" data-test="active-work-weather">
                                 <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['weather']->label() }}:</span>
@@ -409,6 +423,11 @@
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="action-costs-{{ $entry['action']->action_key }}">
                                     Each cycle: hunger +{{ $entry['action']->hunger_cost }} · fatigue +{{ $entry['action']->fatigue_cost }}
                                 </p>
+                                @if ($entry['enemy_names'] !== [])
+                                    <p class="text-xs text-red-600 dark:text-red-400" data-test="action-enemies-{{ $entry['action']->action_key }}">
+                                        Fight: {{ implode(', ', $entry['enemy_names']) }} · each cycle is one round, and you can get hurt
+                                    </p>
+                                @endif
                                 @if (count($entry['required_items']) > 0)
                                     <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="required-items-{{ $entry['action']->action_key }}">
                                         Uses:
