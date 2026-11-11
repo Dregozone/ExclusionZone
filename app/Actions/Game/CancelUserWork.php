@@ -17,7 +17,7 @@ class CancelUserWork
 
     /**
      * Cycles that have already finished are paid out and finished travel legs are arrived at;
-     * only the unfinished cycle or leg is forfeited.
+     * only the unfinished cycle or leg is forfeited. Running from trouble cannot be canceled.
      *
      * @throws AuthorizationException
      */
@@ -35,6 +35,10 @@ class CancelUserWork
 
             if ($work === null) {
                 throw new AuthorizationException('There is no active work to cancel.');
+            }
+
+            if ($work->is_retreat) {
+                throw new AuthorizationException('There is no turning back now. Keep running until you reach '.($work->destinationCity?->city ?? 'safety').'.');
             }
 
             $work->delete();
