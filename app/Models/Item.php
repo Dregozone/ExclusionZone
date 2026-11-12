@@ -17,6 +17,7 @@ class Item extends Model
         'hunger_restored' => 0,
         'fatigue_restored' => 0,
         'health_restored' => 0,
+        'attack_bonus' => 0,
         'is_medical' => false,
     ];
 
@@ -29,6 +30,7 @@ class Item extends Model
         'hunger_restored',
         'fatigue_restored',
         'health_restored',
+        'attack_bonus',
         'is_medical',
     ];
 
@@ -40,6 +42,7 @@ class Item extends Model
             'hunger_restored' => 'integer',
             'fatigue_restored' => 'integer',
             'health_restored' => 'integer',
+            'attack_bonus' => 'integer',
             'is_medical' => 'boolean',
         ];
     }
@@ -66,5 +69,13 @@ class Item extends Model
     public function isMedical(): bool
     {
         return $this->is_medical && $this->health_restored > 0;
+    }
+
+    /**
+     * A weapon adds its attack bonus to every blow in a fight.
+     */
+    public function isWeapon(): bool
+    {
+        return $this->attack_bonus > 0;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Actions\Game;
 
 use App\Models\City;
 use App\Models\CityAction;
+use App\Models\Enemy;
 use App\Models\Item;
 use App\Models\PremiumCosmetic;
 use App\Models\Quest;
@@ -31,6 +32,7 @@ class BuildCityMenuData
             'activeWork.destinationCity',
             'activeWork.skill',
             'activeWork.offeredItem',
+            'activeWork.enemy',
             'cosmeticLoadout.outfitSkin',
             'cosmeticLoadout.uiTheme',
             'cosmeticLoadout.profileFlair',
@@ -56,6 +58,9 @@ class BuildCityMenuData
                 ->whereBelongsTo($city)
                 ->orderBy('label')
                 ->get();
+        $enemyNamesBySkill = $city === null
+            ? collect()
+            : Enemy::query()->whereBelongsTo($city)->orderBy('name')->get(['name', 'skill_key'])->groupBy('skill_key')->map->pluck('name');
 
         return [
             'player' => $user,
@@ -69,7 +74,7 @@ class BuildCityMenuData
             'last_work_report' => $user->last_work_report,
             'death_report' => $user->death_report,
             'trouble' => $this->troubleDataFor($user),
-            'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions): array {
+            'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions, $enemyNamesBySkill): array {
                 $requiredItems = (new PerformCityAction)->requiredItemsFor($user, $action);
                 $hasRequiredItems = collect($requiredItems)->every(
                     fn (array $requiredItem): bool => $requiredItem['owned'] >= $requiredItem['quantity'],
@@ -81,6 +86,7 @@ class BuildCityMenuData
                     'user_level' => $user->skillFor($action->skill_key)?->level ?? 1,
                     'required_items' => $requiredItems,
                     'has_required_items' => $hasRequiredItems,
+                    'enemy_names' => $enemyNamesBySkill->get($action->skill_key, collect())->all(),
                     'available' => $canPerformCityActions
                         && $hasRequiredItems
                         && ($user->skillFor($action->skill_key)?->level ?? 1) >= $action->min_level,
@@ -291,6 +297,12 @@ class BuildCityMenuData
             'from_city' => $activeWork->originCity?->city,
             'to_city' => $activeWork->destinationCity?->city,
             'route_stops' => $this->queuedStopNamesFor($activeWork),
+            'enemy' => $activeWork->enemy === null ? null : [
+                'name' => $activeWork->enemy->name,
+                'description' => $activeWork->enemy->description,
+                'health' => $activeWork->enemy_health ?? $activeWork->enemy->health,
+                'maximum' => $activeWork->enemy->health,
+            ],
         ];
     }
 
