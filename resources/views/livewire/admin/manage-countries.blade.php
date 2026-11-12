@@ -1,14 +1,15 @@
 <section class="w-full">
     <div class="mb-6 flex items-center justify-between gap-4">
         <div>
-            <flux:heading size="xl">{{ __('Manage Countries') }}</flux:heading>
+            <p class="ez-label !text-amber-400">{{ __('Admin console') }}</p>
+            <flux:heading size="xl" class="ez-display !text-4xl !font-normal sm:!text-5xl">{{ __('Manage Countries') }}</flux:heading>
             <flux:text class="mt-1">{{ __('Create, edit, and soft-delete countries that house cities.') }}</flux:text>
         </div>
         <flux:button wire:click="create" variant="primary" icon="plus">{{ __('New Country') }}</flux:button>
     </div>
 
     @if ($showForm)
-        <div class="mb-6 rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="ez-panel mb-6 p-6">
             <div class="mb-4">
                 <flux:heading size="lg">{{ $editingId ? __('Edit Country') : __('Create Country') }}</flux:heading>
             </div>
@@ -65,7 +66,7 @@
         <label for="showTrashed" class="cursor-pointer text-sm text-zinc-600 dark:text-zinc-400">{{ __('Show deleted countries') }}</label>
     </div>
 
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div class="ez-panel overflow-hidden">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-zinc-200 dark:border-zinc-700">

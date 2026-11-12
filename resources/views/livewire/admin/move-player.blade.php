@@ -1,10 +1,11 @@
 <section class="w-full">
     <div class="mb-6">
-        <flux:heading size="xl">{{ __('Move Player') }}</flux:heading>
+        <p class="ez-label !text-amber-400">{{ __('Admin console') }}</p>
+            <flux:heading size="xl" class="ez-display !text-4xl !font-normal sm:!text-5xl">{{ __('Move Player') }}</flux:heading>
         <flux:text class="mt-1">{{ __('Select a player and a destination city, then confirm to teleport them.') }}</flux:text>
     </div>
 
-    <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+    <div class="ez-panel p-6">
         <form wire:submit="movePlayer" class="space-y-6">
             <flux:field>
                 <flux:label>{{ __('Player') }}</flux:label>

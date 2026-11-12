@@ -8,42 +8,166 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Exclusion Zone · "Living Map" design system.
+ * The world map is the interface: contour lines and radiation heat blooms sit behind
+ * every screen, panels float over the terrain like annotations, and place names are
+ * set in an atlas italic. Borrowed motifs: Geiger segmented meters, phosphor radio
+ * text, hazard-stripe alarms, journal paper for death and quest notes, gallery
+ * numerals and thermal heat on risky actions.
+ *
+ * Tailwind's zinc / emerald / amber / red / rose / sky scales are re-tuned to this
+ * palette so every existing utility class picks up the theme without per-view edits.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+    --font-numeral: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
 
-    --color-zinc-50: #fafafa;
-    --color-zinc-100: #f5f5f5;
-    --color-zinc-200: #e5e5e5;
-    --color-zinc-300: #d4d4d4;
-    --color-zinc-400: #a3a3a3;
-    --color-zinc-500: #737373;
-    --color-zinc-600: #525252;
-    --color-zinc-700: #404040;
-    --color-zinc-800: #262626;
-    --color-zinc-900: #171717;
-    --color-zinc-950: #0a0a0a;
+    /* Living Map tokens */
+    --color-ez-ground: #0c1315;
+    --color-ez-surface: #101a1c;
+    --color-ez-surface-raised: #14211f;
+    --color-ez-ink: #e9efe9;
+    --color-ez-muted: #a9bbb5;
+    --color-ez-line: #2a3d3a;
+    --color-ez-signal: #6fd3c8;
+    --color-ez-signal-ink: #06100f;
+    --color-ez-heat: #ff6b4a;
+    --color-ez-warn: #ffb04a;
+    --color-ez-safe: #8fdc9a;
+    --color-ez-cherenkov: #6f9bff;
+    --color-ez-phosphor: #8dff9a;
+    --color-ez-paper: #ece2cc;
+    --color-ez-paper-ink: #2a221c;
+    --color-ez-paper-muted: #5b4c3e;
+    --color-ez-stamp: #a3261b;
+    --color-ez-hazard: #f5c400;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
+    /* Neutrals: teal-biased, so greys belong to the map */
+    --color-zinc-50: #f4f8f6;
+    --color-zinc-100: #e9efe9;
+    --color-zinc-200: #dde7e3;
+    --color-zinc-300: #c8d6d1;
+    --color-zinc-400: #a9bbb5;
+    --color-zinc-500: #7e9893;
+    --color-zinc-600: #4d6762;
+    --color-zinc-700: #2a3d3a;
+    --color-zinc-800: #142123;
+    --color-zinc-900: rgb(15 24 26 / 0.86);
+    --color-zinc-950: #070d0e;
+
+    /* Signal (success / active): map teal */
+    --color-emerald-50: #effcfa;
+    --color-emerald-100: #d3f6f1;
+    --color-emerald-200: #a8ece3;
+    --color-emerald-300: #86e0d5;
+    --color-emerald-400: #6fd3c8;
+    --color-emerald-500: #3fb8ac;
+    --color-emerald-600: #2a9a8f;
+    --color-emerald-700: #1f7a72;
+    --color-emerald-800: #18605a;
+    --color-emerald-900: #124a45;
+    --color-emerald-950: #0a2b28;
+
+    /* Warning: lantern amber */
+    --color-amber-50: #fff7eb;
+    --color-amber-100: #ffecd0;
+    --color-amber-200: #ffdcab;
+    --color-amber-300: #ffcf85;
+    --color-amber-400: #ffb04a;
+    --color-amber-500: #f59a2a;
+    --color-amber-600: #d97d16;
+    --color-amber-700: #a95e10;
+    --color-amber-800: #7a440d;
+    --color-amber-900: #55300b;
+    --color-amber-950: #2e1905;
+
+    /* Danger: radiation heat */
+    --color-red-50: #fff3ef;
+    --color-red-100: #ffe1d8;
+    --color-red-200: #ffc6b6;
+    --color-red-300: #ffab96;
+    --color-red-400: #ff8a6e;
+    --color-red-500: #ff6b4a;
+    --color-red-600: #e04a2c;
+    --color-red-700: #b23620;
+    --color-red-800: #7f2718;
+    --color-red-900: #551a11;
+    --color-red-950: #2e0d08;
+    --color-rose-300: #ffab96;
+    --color-rose-400: #ff8a6e;
+    --color-rose-500: #ff6b4a;
+    --color-rose-600: #e04a2c;
+
+    /* Weather / info: Cherenkov blue */
+    --color-sky-50: #f1f5ff;
+    --color-sky-100: #dfe8ff;
+    --color-sky-200: #c3d4ff;
+    --color-sky-300: #a9c3ff;
+    --color-sky-400: #8aadff;
+    --color-sky-500: #6f9bff;
+    --color-sky-600: #4f7ff0;
+    --color-sky-700: #3b62c4;
+    --color-sky-800: #2a4791;
+    --color-sky-900: #1d3266;
+    --color-sky-950: #101c3a;
+
+    --color-accent: var(--color-ez-signal);
+    --color-accent-content: var(--color-ez-signal);
+    --color-accent-foreground: var(--color-ez-signal-ink);
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: var(--color-ez-signal);
+        --color-accent-content: var(--color-ez-signal);
+        --color-accent-foreground: var(--color-ez-signal-ink);
+    }
+
+    /* High-contrast mode: opaque surfaces, brighter secondary text and lines */
+    .ez-high-contrast {
+        --color-zinc-400: #d3dfdb;
+        --color-zinc-500: #b8c8c3;
+        --color-zinc-600: #8fa6a0;
+        --color-zinc-700: #5b7671;
+        --color-zinc-900: #0b1213;
+        --color-ez-muted: #d3dfdb;
+        --color-ez-line: #5b7671;
     }
 }
 
 @layer base {
-
     *,
     ::after,
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+        border-color: var(--color-zinc-700, currentColor);
+    }
+
+    html {
+        color-scheme: dark;
+        background-color: var(--color-ez-ground);
+    }
+
+    body {
+        color: var(--color-ez-ink);
+    }
+
+    ::selection {
+        background: color-mix(in oklab, var(--color-ez-signal) 40%, transparent);
+        color: var(--color-ez-ink);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-ez-signal);
+        outline-offset: 2px;
+    }
+
+    [x-cloak] {
+        display: none !important;
     }
 }
 
@@ -58,9 +182,347 @@
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-ez-ground;
 }
 
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
+/* Flux sidebar and header sit on the map as frosted glass */
+[data-flux-sidebar],
+[data-flux-header] {
+    background-color: rgb(12 19 21 / 0.78) !important;
+    backdrop-filter: blur(10px);
+}
+
+/* ------------------------------------------------------------------ */
+/* World backdrop: contour rings, survey grid and a radiation bloom    */
+/* ------------------------------------------------------------------ */
+@utility ez-world {
+    background-color: var(--color-ez-ground);
+    background-image:
+        radial-gradient(circle at 78% 18%, rgb(255 98 51 / 0.22), transparent 26%),
+        radial-gradient(circle at 82% 22%, rgb(255 170 60 / 0.10), transparent 40%),
+        repeating-radial-gradient(circle at 76% 20%, transparent 0 34px, rgb(160 200 190 / 0.075) 34px 35px),
+        repeating-radial-gradient(circle at 8% 92%, transparent 0 42px, rgb(160 200 190 / 0.055) 42px 43px),
+        linear-gradient(rgb(160 200 190 / 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(160 200 190 / 0.035) 1px, transparent 1px);
+    background-size: auto, auto, auto, auto, 64px 64px, 64px 64px;
+    background-attachment: fixed;
+}
+
+/* Film grain over the whole world, off in reduced-effects mode */
+@utility ez-grain {
+    &::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 60;
+        opacity: 0.06;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Type                                                                 */
+/* ------------------------------------------------------------------ */
+@utility ez-display {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    text-wrap: balance;
+}
+
+@utility ez-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ez-muted);
+}
+
+@utility ez-numeral {
+    font-family: var(--font-numeral);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 0.85;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* Surfaces                                                             */
+/* ------------------------------------------------------------------ */
+@utility ez-panel {
+    position: relative;
+    background-color: rgb(12 19 21 / 0.74);
+    border: 1px solid rgb(160 200 190 / 0.2);
+    border-radius: 4px;
+    backdrop-filter: blur(8px);
+}
+
+@utility ez-card {
+    position: relative;
+    background-color: rgb(16 26 28 / 0.86);
+    border: 1px solid rgb(160 200 190 / 0.2);
+    border-radius: 4px;
+}
+
+/* Map pin on top edge of a card; add ez-pin-heat for danger */
+@utility ez-pin {
+    &::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 16px;
+        width: 11px;
+        height: 11px;
+        border-radius: 9999px;
+        background: var(--color-ez-signal);
+        box-shadow: 0 0 0 4px rgb(111 211 200 / 0.18), 0 0 16px var(--color-ez-signal);
+    }
+}
+
+@utility ez-pin-heat {
+    &::before {
+        background: var(--color-ez-heat);
+        box-shadow: 0 0 0 4px rgb(255 107 74 / 0.2), 0 0 16px var(--color-ez-heat);
+    }
+}
+
+/* Thermal: risky things radiate heat */
+@utility ez-heat {
+    border-color: rgb(255 107 74 / 0.55);
+    box-shadow: inset 0 0 28px rgb(255 107 74 / 0.16), 0 0 22px rgb(255 107 74 / 0.12);
+}
+
+/* Hazard stripes for alarm bars */
+@utility ez-hazard {
+    background-image: repeating-linear-gradient(-45deg, var(--color-ez-hazard) 0 10px, #111 10px 20px);
+}
+
+/* Geiger: segmented LED meter track + fill */
+@utility ez-meter {
+    height: 0.75rem;
+    border-radius: 2px;
+    overflow: hidden;
+    background: repeating-linear-gradient(90deg, rgb(160 200 190 / 0.12) 0 6px, transparent 6px 8px);
+}
+
+@utility ez-meter-fill {
+    height: 100%;
+    background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 8px);
+    transition: width 0.5s ease;
+}
+
+/* Journal: lined paper with tape, used for death reports and quest notes */
+@utility ez-paper {
+    position: relative;
+    color: var(--color-ez-paper-ink);
+    background-color: var(--color-ez-paper);
+    background-image: repeating-linear-gradient(180deg, transparent 0 23px, rgb(70 100 140 / 0.16) 23px 24px);
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.45);
+    border-radius: 2px;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        width: 88px;
+        height: 22px;
+        transform: translateX(-50%) rotate(-3deg);
+        background: rgb(220 210 170 / 0.6);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+    }
+}
+
+@utility ez-stamp {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ez-stamp);
+    border: 3px solid var(--color-ez-stamp);
+    padding: 0.25rem 0.625rem;
+    transform: rotate(-6deg);
+    opacity: 0.85;
+}
+
+/* Phosphor: terminal text used for radio and live logs */
+@utility ez-phosphor {
+    font-family: var(--font-mono);
+    color: var(--color-ez-phosphor);
+    text-shadow: 0 0 6px rgb(141 255 154 / 0.35);
+}
+
+@utility ez-scanlines {
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            repeating-linear-gradient(180deg, transparent 0 2px, rgb(0 0 0 / 0.22) 2px 3px),
+            radial-gradient(ellipse at center, transparent 60%, rgb(0 0 0 / 0.45) 100%);
+    }
+}
+
+/* Primary call-to-action styled as a signal flare */
+@utility ez-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 4px;
+    border: 1px solid var(--color-ez-signal);
+    background: var(--color-ez-signal);
+    color: var(--color-ez-signal-ink);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        box-shadow: 0 0 24px rgb(111 211 200 / 0.35);
+    }
+}
+
+@utility ez-button-ghost {
+    background: transparent;
+    color: var(--color-ez-signal);
+
+    &:hover {
+        background: rgb(111 211 200 / 0.1);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion                                                               */
+/* ------------------------------------------------------------------ */
+@keyframes ez-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes ez-pulse-ring {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(2.4);
+        opacity: 0;
+    }
+}
+
+@keyframes ez-needle {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    40% {
+        transform: rotate(6deg);
+    }
+
+    70% {
+        transform: rotate(2deg);
+    }
+}
+
+@keyframes ez-sweep {
+    to {
+        background-position: 0 -220%;
+    }
+}
+
+.ez-cursor::after {
+    content: '▍';
+    margin-left: 0.15em;
+    animation: ez-blink 1s steps(1) infinite;
+}
+
+.ez-ping {
+    position: relative;
+}
+
+.ez-ping::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: ez-pulse-ring 2.4s ease-out infinite;
+}
+
+.ez-needle {
+    transform-box: view-box;
+    transform-origin: 60px 64px;
+    animation: ez-needle 2.8s ease-in-out infinite;
+}
+
+.ez-sweep {
+    background: linear-gradient(180deg, transparent 0, rgb(255 176 46 / 0.07) 50%, transparent 100%) 0 0 / 100% 220%;
+    animation: ez-sweep 5s linear infinite;
+}
+
+/* Reduced effects: honoured from the OS and from the in-game setting */
+.ez-reduce-effects .ez-grain::after,
+.ez-reduce-effects .ez-scanlines::after,
+.ez-reduce-effects .ez-sweep {
+    display: none;
+}
+
+.ez-reduce-effects *,
+.ez-reduce-effects *::before,
+.ez-reduce-effects *::after {
+    animation: none !important;
+    transition-duration: 0s !important;
+}
+
+.ez-reduce-effects .ez-phosphor {
+    text-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition-duration: 0s !important;
+    }
+}
+
+/* Brand wordmark set in the atlas italic */
+[data-flux-sidebar-brand],
+[data-flux-brand] {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+}
+
+/* Sidebar group headings read as map legend labels */
+[data-flux-sidebar-group] > div:first-child,
+[data-flux-navlist-group] > div:first-child {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.6875rem;
+}
+
+/* High contrast: solid surfaces */
+.ez-high-contrast .ez-panel,
+.ez-high-contrast .ez-card {
+    background-color: #0b1213;
+    backdrop-filter: none;
+    border-color: var(--color-ez-line);
+}

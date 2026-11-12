@@ -1,14 +1,15 @@
 <section class="w-full">
     <div class="mb-6 flex items-center justify-between gap-4">
         <div>
-            <flux:heading size="xl">{{ __('Manage City Actions') }}</flux:heading>
+            <p class="ez-label !text-amber-400">{{ __('Admin console') }}</p>
+            <flux:heading size="xl" class="ez-display !text-4xl !font-normal sm:!text-5xl">{{ __('Manage City Actions') }}</flux:heading>
             <flux:text class="mt-1">{{ __('Create, edit, and soft-delete actions available in each city.') }}</flux:text>
         </div>
         <flux:button wire:click="create" variant="primary" icon="plus">{{ __('New Action') }}</flux:button>
     </div>
 
     @if ($showForm)
-        <div class="mb-6 rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="ez-panel mb-6 p-6">
             <div class="mb-4">
                 <flux:heading size="lg">{{ $editingId ? __('Edit Action') : __('Create Action') }}</flux:heading>
             </div>
@@ -107,7 +108,7 @@
                     <flux:error name="description" />
                 </flux:field>
 
-                <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                <div class="ez-card p-4">
                     <flux:heading size="sm" class="mb-3">{{ __('Reward Profile') }}</flux:heading>
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <flux:field>
@@ -147,7 +148,7 @@
                     </div>
                 </div>
 
-                <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                <div class="ez-card p-4">
                     <div class="mb-3 flex items-center justify-between gap-4">
                         <div>
                             <flux:heading size="sm">{{ __('Required Items') }}</flux:heading>
@@ -197,7 +198,7 @@
         <label for="showTrashed" class="cursor-pointer text-sm text-zinc-600 dark:text-zinc-400">{{ __('Show deleted actions') }}</label>
     </div>
 
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div class="ez-panel overflow-hidden">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-zinc-200 dark:border-zinc-700">

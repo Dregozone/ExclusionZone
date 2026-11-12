@@ -12,12 +12,12 @@
             return [...this.$root.querySelectorAll('[data-search]')].some(el => this.matches(el.dataset.search));
         },
     }"
-    class="mx-auto flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950"
+    class="ez-panel mx-auto flex w-full max-w-3xl flex-col overflow-hidden"
 >
     <div class="sticky top-0 z-10 space-y-2 border-b border-zinc-800/80 bg-zinc-900/95 px-4 py-3 backdrop-blur">
         <div class="flex items-center gap-2">
             <div class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.85)]" aria-hidden="true"></div>
-            <h1 class="font-mono text-xs uppercase tracking-[0.3em] text-zinc-400">Radio log · {{ today()->format('d M Y') }}</h1>
+            <h1 class="ez-label">Radio log · {{ today()->format('d M Y') }}</h1>
             <span class="ml-auto font-mono text-[10px] text-zinc-600">{{ trans_choice(':count transmission|:count transmissions', $this->messages->count()) }}</span>
         </div>
         <label for="radio-search" class="sr-only">Search today's transmissions</label>
@@ -28,7 +28,7 @@
             autofocus
             autocomplete="off"
             placeholder="Search callsigns or messages…"
-            class="w-full rounded-full border border-zinc-800 bg-zinc-950 px-4 py-1.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-emerald-500/60 focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
+            class="w-full rounded-sm border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-ez-phosphor placeholder:text-zinc-500 focus:border-emerald-500/60 focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
         />
     </div>
 

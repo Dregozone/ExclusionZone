@@ -4,6 +4,7 @@
     'compact' => false,
 ])
 
+{{-- Radio traffic reads like a phosphor terminal log; your own transmissions sit right in signal teal. --}}
 <div {{ $attributes->class([
     'flex items-end gap-2',
     'flex-row-reverse' => $isOwn,
@@ -17,24 +18,26 @@
     />
 
     <div @class([
-        'max-w-[80%] rounded-2xl border shadow-sm',
+        'max-w-[85%] min-w-0 border',
         'px-2.5 py-1' => $compact,
         'px-3 py-1.5' => ! $compact,
-        'rounded-br-sm border-emerald-700/50 bg-emerald-900/40' => $isOwn,
-        'rounded-bl-sm border-zinc-800 bg-zinc-900' => ! $isOwn,
+        'rounded-sm border-emerald-400/40 bg-emerald-950/60' => $isOwn,
+        'rounded-sm border-zinc-700 border-l-2 border-l-ez-phosphor/60 bg-zinc-950/80' => ! $isOwn,
     ])>
         <p @class([
-            'truncate font-mono text-[10px] uppercase tracking-wide',
-            'text-right text-emerald-300' => $isOwn,
-            'text-emerald-500' => ! $isOwn,
-        ])>{{ $message->user?->name ?? 'Unknown' }}</p>
+            'flex items-baseline gap-2 font-mono text-[10px] uppercase tracking-wider',
+            'justify-end text-emerald-300' => $isOwn,
+            'text-ez-phosphor' => ! $isOwn,
+        ])>
+            <span class="truncate">{{ $message->user?->name ?? 'Unknown' }}</span>
+            <time class="shrink-0 text-zinc-500 normal-case tracking-normal" datetime="{{ $message->created_at->toIso8601String() }}">{{ $message->created_at->format($compact ? 'H:i' : 'd M, H:i') }}</time>
+        </p>
         <p @class([
-            'whitespace-pre-line break-words text-zinc-200',
+            'whitespace-pre-line break-words',
+            'text-ez-ink' => $isOwn,
+            'ez-phosphor' => ! $isOwn,
             'text-xs' => $compact,
             'text-sm' => ! $compact,
         ])>{{ $message->body }}</p>
-        <p class="mt-0.5 text-right font-mono text-[9px] text-zinc-500">
-            <time datetime="{{ $message->created_at->toIso8601String() }}">{{ $message->created_at->format($compact ? 'H:i' : 'd M, H:i') }}</time>
-        </p>
     </div>
 </div>
