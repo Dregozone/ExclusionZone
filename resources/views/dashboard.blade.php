@@ -1,96 +1,160 @@
 <x-layouts::app :title="__('City Menu')">
-    <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl">
+    @php
+        $healthTone = fn (array $state): string => match (true) {
+            $state['timer_increase_percent'] >= 50 => 'danger',
+            $state['timer_increase_percent'] > 0 => 'warn',
+            default => 'ok',
+        };
+        $needTone = fn (array $state): string => match (true) {
+            $state['value'] >= $state['maximum'] => 'danger',
+            $state['timer_increase_percent'] > 0 => 'warn',
+            default => 'ok',
+        };
+        $coordinates = $city && $city->lat !== null && $city->lng !== null
+            ? sprintf('%.4f° %s · %.4f° %s', abs($city->lat), $city->lat >= 0 ? 'N' : 'S', abs($city->lng), $city->lng >= 0 ? 'E' : 'W')
+            : null;
+    @endphp
+
+    <div class="flex h-full w-full flex-1 flex-col gap-6 pb-28">
         @if (session('status'))
             <x-session-toast :toast="['text' => session('status')]" />
         @endif
 
+        {{-- Survivor HUD: always-visible condition strip --}}
+        <div class="ez-panel sticky top-2 z-20 px-4 py-3" data-work-live="hud" data-test="survivor-hud">
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+                <div class="flex min-w-0 items-center gap-2.5">
+                    <span class="relative flex size-2.5 shrink-0 text-emerald-400" aria-hidden="true">
+                        <span class="ez-ping absolute inset-0 rounded-full"></span>
+                        <span class="relative size-2.5 rounded-full bg-current"></span>
+                    </span>
+                    <p class="truncate text-sm">
+                        <span class="font-medium text-ez-ink">{{ $player->name }}</span>
+                        <span class="text-ez-muted">in</span>
+                        <span class="ez-display text-lg text-ez-ink">{{ $city?->city }}</span>
+                    </p>
+                </div>
+
+                <div class="grid basis-full grid-cols-3 gap-3 sm:basis-auto sm:flex-1 sm:gap-4 sm:min-w-[22rem]">
+                    <x-zone.meter compact :label="__('Health')" :value="$condition['health']['value']" :maximum="$condition['health']['maximum']" :tone="$healthTone($condition['health'])" :reading="$condition['health']['value']" />
+                    <x-zone.meter compact :label="__('Hunger')" :value="$condition['hunger']['value']" :maximum="$condition['hunger']['maximum']" :tone="$needTone($condition['hunger'])" :reading="$condition['hunger']['value']" />
+                    <x-zone.meter compact :label="__('Fatigue')" :value="$condition['fatigue']['value']" :maximum="$condition['fatigue']['maximum']" :tone="$needTone($condition['fatigue'])" :reading="$condition['fatigue']['value']" />
+                </div>
+
+                <span @class([
+                    'rounded-sm border px-2 py-1 font-mono text-[11px] whitespace-nowrap',
+                    'border-zinc-700 text-ez-muted' => $condition['timer_increase_percent'] === 0,
+                    'border-amber-400/60 text-amber-400' => $condition['timer_increase_percent'] > 0,
+                ])>
+                    {{ $condition['timer_increase_percent'] === 0 ? 'No drag on timers' : "▲ Timers +{$condition['timer_increase_percent']}%" }}
+                </span>
+            </div>
+        </div>
+
         @if ($death_report)
-            <div class="overflow-hidden rounded-[2rem] border border-red-300/70 bg-linear-to-br from-red-50 via-zinc-50 to-white p-6 shadow-sm dark:border-red-500/30 dark:from-red-500/10 dark:via-zinc-900 dark:to-zinc-900" role="alert" data-test="death-report">
-                <p class="text-xs font-medium uppercase tracking-[0.25em] text-red-600 dark:text-red-400">You died</p>
-                <h2 class="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Someone pulled you back</h2>
-                <p class="mt-3 max-w-3xl text-sm leading-6 text-zinc-700 dark:text-zinc-300">{{ $death_report }}</p>
-                <form method="POST" action="{{ route('death-report.dismiss') }}" class="mt-5">
+            {{-- Journal page: what happened, in your own notebook --}}
+            <div class="ez-paper mx-auto mt-3 w-full max-w-3xl -rotate-[0.4deg] p-6 sm:p-8" role="alert" data-test="death-report">
+                <span class="ez-stamp absolute top-5 right-5 text-xs sm:text-sm" aria-hidden="true">Pulled back</span>
+                <p class="font-mono text-xs font-semibold uppercase tracking-[0.25em] text-ez-stamp">You died</p>
+                <h2 class="ez-display mt-3 max-w-[18ch] text-4xl text-ez-paper-ink sm:text-5xl">Someone pulled you back</h2>
+                <p class="mt-4 max-w-2xl font-serif text-[15px] leading-6 text-ez-paper-ink">{{ $death_report }}</p>
+                <form method="POST" action="{{ route('death-report.dismiss') }}" class="mt-6">
                     @csrf
-                    <flux:button type="submit" variant="primary" data-test="dismiss-death-report">I'll be more careful</flux:button>
+                    <button type="submit" class="inline-flex min-h-11 items-center gap-2 rounded-sm bg-ez-paper-ink px-5 py-2.5 font-mono text-sm text-ez-paper transition hover:bg-black" data-test="dismiss-death-report">I'll be more careful</button>
                 </form>
             </div>
         @endif
 
         @if ($trouble)
-            <div class="overflow-hidden rounded-[2rem] border border-rose-300/70 bg-linear-to-br from-rose-50 via-zinc-50 to-white p-6 shadow-sm dark:border-rose-500/30 dark:from-rose-500/10 dark:via-zinc-900 dark:to-zinc-900" role="alert" data-test="trouble-panel">
-                <p class="text-xs font-medium uppercase tracking-[0.25em] text-rose-600 dark:text-rose-400">Trouble at the edge of {{ $city?->city }}</p>
-                <h2 class="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $trouble['name'] }} block the way in</h2>
-                <p class="mt-3 max-w-3xl text-sm leading-6 text-zinc-700 dark:text-zinc-300">{{ $trouble['description'] }} Nothing else can be done here until you deal with them.</p>
-                @if ($trouble['route_stops'] !== [])
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400" data-test="trouble-route">
-                        Get past them and your route carries on to {{ implode(' → ', $trouble['route_stops']) }}.
-                    </p>
-                @endif
-
-                <div class="mt-5 grid gap-4 lg:grid-cols-3">
-                    <div class="flex flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80">
-                        <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Attack</h3>
-                        <p class="mt-2 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
-                            Tests your {{ $trouble['skill_name'] }} against fighters of level {{ $trouble['fighter_level'] }}.
-                            You take {{ $trouble['damage_min'] }}–{{ $trouble['damage_max'] }} damage if you lose, and {{ config('trouble.fight.damage_taken_on_win_percent') }}% of that if you win. Winning clears the way and pays XP and loot.
+            {{-- Encounter takeover: hazard bar, heat bloom, three choices --}}
+            <section class="ez-panel overflow-hidden !border-red-500/50" role="alert" data-test="trouble-panel">
+                <div class="ez-hazard h-2" aria-hidden="true"></div>
+                <div class="relative p-5 sm:p-7">
+                    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgb(255_107_74/0.22),transparent_55%)]" aria-hidden="true"></div>
+                    <div class="relative">
+                        <p class="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.22em] text-red-400">
+                            <flux:icon.exclamation-triangle variant="micro" />
+                            Trouble at the edge of {{ $city?->city }}
                         </p>
-                        <p class="mt-3 text-sm font-medium text-zinc-900 dark:text-zinc-100" data-test="trouble-win-chance">{{ $trouble['win_chance_percent'] }}% chance to win</p>
-                        <form method="POST" action="{{ route('trouble.attack') }}" class="mt-3">
-                            @csrf
-                            <flux:button type="submit" variant="danger" :disabled="! $trouble['can_attack']" data-test="trouble-attack">Attack</flux:button>
-                        </form>
-                    </div>
-
-                    <div
-                        x-data="{ quantities: {}, demand: @js($trouble['demand_value']), values: @js(collect($trouble['barter_goods'])->mapWithKeys(fn ($goods) => [$goods['item_id'] => $goods['value']])), get offered() { return Object.entries(this.quantities).reduce((total, [itemId, quantity]) => total + (this.values[itemId] ?? 0) * Math.max(0, Number(quantity) || 0), 0); } }"
-                        class="flex flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80"
-                    >
-                        <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Buy your way in</h3>
-                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                            They want goods worth {{ $trouble['demand_value'] }}. Each item is worth its rarity: Common 1, Uncommon 2, Rare 3, Epic 4, Scorched 5.
-                        </p>
-                        @if ($trouble['can_buy_in'])
-                            <form method="POST" action="{{ route('trouble.buy-in') }}" class="mt-3 flex flex-1 flex-col gap-3">
-                                @csrf
-                                <div class="max-h-56 space-y-2 overflow-y-auto pr-1">
-                                    @foreach ($trouble['barter_goods'] as $goods)
-                                        <label class="flex items-center justify-between gap-3 text-sm">
-                                            <span class="min-w-0 truncate text-zinc-700 dark:text-zinc-300">{{ $goods['name'] }} <span class="text-zinc-500 dark:text-zinc-400">· {{ $goods['rarity'] }} · ×{{ $goods['owned'] }}</span></span>
-                                            <input type="number" name="items[{{ $goods['item_id'] }}]" min="0" max="{{ $goods['owned'] }}" value="0" x-model="quantities[{{ $goods['item_id'] }}]" class="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" data-test="trouble-offer-{{ $goods['item_id'] }}">
-                                        </label>
-                                    @endforeach
-                                </div>
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Offer worth <span class="font-medium text-zinc-900 dark:text-zinc-100" x-text="offered">0</span> of {{ $trouble['demand_value'] }}</p>
-                                <flux:button type="submit" variant="primary" x-bind:disabled="offered < demand" data-test="trouble-buy-in">Hand it over</flux:button>
-                            </form>
-                        @else
-                            <p class="mt-3 rounded-xl border border-dashed border-zinc-300 p-3 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400" data-test="trouble-cannot-buy-in">
-                                You don't carry enough to pay them off.
+                        <h2 class="ez-display mt-3 max-w-[20ch] text-4xl text-ez-ink sm:text-6xl">{{ $trouble['name'] }} block the way in</h2>
+                        <p class="mt-4 max-w-3xl text-sm leading-6 text-ez-muted">{{ $trouble['description'] }} Nothing else can be done here until you deal with them.</p>
+                        @if ($trouble['route_stops'] !== [])
+                            <p class="mt-2 text-sm text-ez-muted" data-test="trouble-route">
+                                Get past them and your route carries on to {{ implode(' → ', $trouble['route_stops']) }}.
                             </p>
                         @endif
                     </div>
 
-                    <div class="flex flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80">
-                        <h3 class="font-medium text-zinc-900 dark:text-zinc-100">Run away</h3>
-                        <p class="mt-2 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
-                            @if ($trouble['origin_city'])
-                                Head back to {{ $trouble['origin_city'] }} on the usual travel timer. Once you run, you cannot turn back, and the rest of your route is dropped.
+                    <div class="relative mt-6 grid gap-4 lg:grid-cols-3">
+                        <div class="ez-card ez-heat flex min-w-0 flex-col p-4">
+                            <h3 class="ez-display text-2xl text-ez-ink">Attack</h3>
+                            <p class="mt-1 font-numeral text-5xl font-light text-ez-ink tabular-nums" aria-hidden="true">{{ $trouble['win_chance_percent'] }}<span class="ml-1 font-mono text-xs tracking-widest text-ez-muted">% TO WIN</span></p>
+                            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800" aria-hidden="true">
+                                <div class="h-full bg-linear-to-r from-red-500 via-amber-400 to-emerald-400" style="width: {{ $trouble['win_chance_percent'] }}%"></div>
+                            </div>
+                            <p class="mt-3 flex-1 text-sm text-ez-muted">
+                                Tests your {{ $trouble['skill_name'] }} against fighters of level {{ $trouble['fighter_level'] }}.
+                                You take {{ $trouble['damage_min'] }}–{{ $trouble['damage_max'] }} damage if you lose, and {{ config('trouble.fight.damage_taken_on_win_percent') }}% of that if you win. Winning clears the way and pays XP and loot.
+                            </p>
+                            <p class="mt-3 text-sm font-medium text-ez-ink" data-test="trouble-win-chance">{{ $trouble['win_chance_percent'] }}% chance to win</p>
+                            <form method="POST" action="{{ route('trouble.attack') }}" class="mt-3">
+                                @csrf
+                                <flux:button type="submit" variant="danger" class="w-full" :disabled="! $trouble['can_attack']" data-test="trouble-attack">Attack</flux:button>
+                            </form>
+                        </div>
+
+                        <div
+                            x-data="{ quantities: {}, demand: @js($trouble['demand_value']), values: @js(collect($trouble['barter_goods'])->mapWithKeys(fn ($goods) => [$goods['item_id'] => $goods['value']])), get offered() { return Object.entries(this.quantities).reduce((total, [itemId, quantity]) => total + (this.values[itemId] ?? 0) * Math.max(0, Number(quantity) || 0), 0); } }"
+                            class="ez-card flex min-w-0 flex-col p-4"
+                        >
+                            <h3 class="ez-display text-2xl text-ez-ink">Buy your way in</h3>
+                            <p class="mt-2 text-sm text-ez-muted">
+                                They want goods worth {{ $trouble['demand_value'] }}. Each item is worth its rarity: Common 1, Uncommon 2, Rare 3, Epic 4, Scorched 5.
+                            </p>
+                            @if ($trouble['can_buy_in'])
+                                <form method="POST" action="{{ route('trouble.buy-in') }}" class="mt-3 flex flex-1 flex-col gap-3">
+                                    @csrf
+                                    <div class="max-h-56 space-y-1.5 overflow-y-auto pr-1">
+                                        @foreach ($trouble['barter_goods'] as $goods)
+                                            <label class="flex items-center justify-between gap-3 border-b border-dashed border-zinc-700 pb-1.5 text-sm">
+                                                <span class="min-w-0 truncate text-ez-ink">{{ $goods['name'] }} <span class="text-ez-muted">· {{ $goods['rarity'] }} · ×{{ $goods['owned'] }}</span></span>
+                                                <input type="number" name="items[{{ $goods['item_id'] }}]" min="0" max="{{ $goods['owned'] }}" value="0" x-model="quantities[{{ $goods['item_id'] }}]" class="w-16 shrink-0 rounded-sm border border-zinc-600 bg-zinc-950 px-2 py-1 text-right font-mono text-sm text-ez-ink" data-test="trouble-offer-{{ $goods['item_id'] }}">
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <p class="font-mono text-sm text-ez-muted">Offer worth <span class="font-semibold text-ez-ink" x-text="offered">0</span> of {{ $trouble['demand_value'] }}</p>
+                                    <flux:button type="submit" variant="primary" class="w-full" x-bind:disabled="offered < demand" data-test="trouble-buy-in">Hand it over</flux:button>
+                                </form>
                             @else
-                                There is nowhere to run back to.
+                                <p class="mt-3 rounded-sm border border-dashed border-zinc-600 p-3 text-sm text-ez-muted" data-test="trouble-cannot-buy-in">
+                                    You don't carry enough to pay them off.
+                                </p>
                             @endif
-                        </p>
-                        <form method="POST" action="{{ route('trouble.run') }}" class="mt-3">
-                            @csrf
-                            <flux:button type="submit" variant="ghost" :disabled="! $trouble['can_run']" data-test="trouble-run">Run back</flux:button>
-                        </form>
+                        </div>
+
+                        <div class="ez-card flex min-w-0 flex-col p-4">
+                            <h3 class="ez-display text-2xl text-ez-ink">Run away</h3>
+                            <p class="mt-2 flex-1 text-sm text-ez-muted">
+                                @if ($trouble['origin_city'])
+                                    Head back to {{ $trouble['origin_city'] }} on the usual travel timer. Once you run, you cannot turn back, and the rest of your route is dropped.
+                                @else
+                                    There is nowhere to run back to.
+                                @endif
+                            </p>
+                            <form method="POST" action="{{ route('trouble.run') }}" class="mt-3">
+                                @csrf
+                                <flux:button type="submit" variant="ghost" class="w-full" :disabled="! $trouble['can_run']" data-test="trouble-run">Run back</flux:button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
         @endif
 
         @if ($last_work_report)
-            <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-100" data-test="last-work-report">
-                {{ $last_work_report }}
+            <div class="ez-panel flex items-start gap-3 px-4 py-3" data-test="last-work-report">
+                <span class="ez-label shrink-0 pt-0.5 !text-amber-400">Report</span>
+                <p class="ez-phosphor text-sm">{{ $last_work_report }}</p>
             </div>
         @endif
 
@@ -99,6 +163,7 @@
                 @if ($active_work['type'] === 'city_action') data-work-loop data-available-at="{{ $active_work['available_at_iso'] }}" @endif
                 x-data="{
                     remainingSeconds: {{ $active_work['remaining_seconds'] }},
+                    totalSeconds: {{ max(1, (int) ($active_work['duration_seconds'] ?? $active_work['remaining_seconds'])) }},
                     deadline: Date.parse(@js($active_work['available_at_iso'])),
                     timerId: null,
                     isLoop: @js($active_work['type'] === 'city_action'),
@@ -158,71 +223,82 @@
                         const seconds = String(this.remainingSeconds % 60).padStart(2, '0');
 
                         return `${minutes}:${seconds}`;
+                    },
+                    ringOffset() {
+                        return 276.46 * Math.min(1, this.remainingSeconds / this.totalSeconds);
                     }
                 }"
                 x-init="init()"
-                class="overflow-hidden rounded-[2rem] border border-amber-300/70 bg-linear-to-br from-amber-50 via-orange-50 to-white p-6 shadow-sm dark:border-amber-500/30 dark:from-amber-500/10 dark:via-zinc-900 dark:to-zinc-900"
+                class="ez-panel overflow-hidden !border-amber-400/40"
             >
-                <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-                    <img
-                        src="{{ $active_work['image_url'] }}"
-                        alt=""
-                        class="aspect-3/2 w-full self-start rounded-[1.75rem] border border-amber-300/70 object-cover dark:border-amber-500/30"
-                        data-test="active-work-image"
-                    >
-
-                    <div class="space-y-5">
-                        <div class="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                                <p class="text-xs uppercase tracking-[0.3em] text-amber-700 dark:text-amber-200">Active timer</p>
-                                <h2 class="mt-3 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $active_work['title'] }}</h2>
-                                <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-300">{{ $active_work['description'] }}</p>
+                <div class="grid gap-0 xl:grid-cols-[0.9fr_1.1fr]">
+                    <div class="relative min-h-56">
+                        <img
+                            src="{{ $active_work['image_url'] }}"
+                            alt=""
+                            class="absolute inset-0 h-full w-full object-cover opacity-70 saturate-[.7]"
+                            data-test="active-work-image"
+                        >
+                        <div class="absolute inset-0 bg-linear-to-t from-ez-ground via-ez-ground/40 to-transparent xl:bg-linear-to-r" aria-hidden="true"></div>
+                        <div class="relative flex h-full flex-col items-center justify-center gap-2 p-6">
+                            <div class="relative size-44">
+                                <svg viewBox="0 0 100 100" class="size-full -rotate-90" aria-hidden="true">
+                                    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" class="text-zinc-700" stroke-width="5" />
+                                    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" class="text-amber-400" stroke-width="5" stroke-linecap="round" stroke-dasharray="276.46" x-bind:stroke-dashoffset="ringOffset()" style="transition: stroke-dashoffset 1s linear" />
+                                </svg>
+                                <div class="absolute inset-0 grid place-content-center text-center">
+                                    <p class="ez-numeral text-5xl text-ez-ink" x-text="formattedRemaining()" role="timer" aria-live="off"></p>
+                                    <p class="ez-label mt-1">Remaining</p>
+                                </div>
                             </div>
+                            <p class="max-w-xs text-center text-xs text-ez-muted">
+                                @if ($active_work['type'] === 'city_action')
+                                    Until the next payout. Repeats automatically.
+                                @elseif ($active_work['type'] === 'travel')
+                                    Until you reach {{ $active_work['to_city'] }}. You arrive automatically.
+                                @else
+                                    Server unlocks completion {{ $active_work['available_at_human'] }}.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
 
-                            <div class="rounded-[1.5rem] border border-amber-300/70 bg-white/80 px-5 py-4 text-right dark:border-amber-500/30 dark:bg-zinc-900/80">
-                                <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">Time remaining</p>
-                                <p class="mt-2 text-3xl font-semibold text-zinc-900 dark:text-zinc-100" x-text="formattedRemaining()"></p>
-                                <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                                    @if ($active_work['type'] === 'city_action')
-                                        Until the next payout. Repeats automatically.
-                                    @elseif ($active_work['type'] === 'travel')
-                                        Until you reach {{ $active_work['to_city'] }}. You arrive automatically.
-                                    @else
-                                        Server unlocks completion {{ $active_work['available_at_human'] }}.
-                                    @endif
-                                </p>
-                            </div>
+                    <div class="space-y-4 p-5 sm:p-6">
+                        <div>
+                            <p class="ez-label !text-amber-400">Active timer</p>
+                            <h2 class="ez-display mt-2 text-4xl text-ez-ink">{{ $active_work['title'] }}</h2>
+                            <p class="mt-2 max-w-2xl text-sm text-ez-muted">{{ $active_work['description'] }}</p>
                         </div>
 
                         @if ($active_work['type'] === 'city_action')
-                            <div class="rounded-[1.5rem] border border-emerald-300/70 bg-emerald-50/80 p-5 text-sm text-zinc-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-zinc-300" data-work-live="loop-progress" data-test="work-loop-progress">
-                                <p>
-                                    <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['cycles_completed'] }} {{ Str::plural('cycle', $active_work['cycles_completed']) }} completed</span>
+                            <div class="rounded-sm border border-zinc-700 bg-zinc-950/60 p-4 text-sm" data-work-live="loop-progress" data-test="work-loop-progress">
+                                <p class="ez-phosphor">
+                                    &gt; {{ $active_work['cycles_completed'] }} {{ Str::plural('cycle', $active_work['cycles_completed']) }} completed
                                     · +{{ $active_work['xp_earned'] }} XP so far. Keeps running if you leave, and stops {{ $active_work['loop_ends_at_human'] }}.
                                 </p>
                                 @if ($active_work['last_cycle_summary'])
-                                    <p class="mt-2">Last cycle: {{ $active_work['last_cycle_summary'] }}</p>
+                                    <p class="ez-phosphor mt-2 opacity-80">&gt; Last cycle: {{ $active_work['last_cycle_summary'] }}</p>
                                 @endif
                             </div>
                         @endif
 
                         @if ($active_work['enemy'])
                             @php($enemy = $active_work['enemy'])
-                            <div class="rounded-[1.5rem] border border-red-300/70 bg-red-50/80 p-5 text-sm text-zinc-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-zinc-300" data-work-live="enemy" data-test="work-enemy">
+                            <div class="ez-card ez-heat p-4 text-sm text-ez-muted" data-work-live="enemy" data-test="work-enemy">
                                 <div class="flex flex-wrap items-baseline justify-between gap-2">
-                                    <p class="font-medium text-zinc-900 dark:text-zinc-100">Fighting: {{ $enemy['name'] }}</p>
-                                    <p class="text-xs">{{ $enemy['health'] }} / {{ $enemy['maximum'] }} health</p>
+                                    <p class="font-medium text-red-300">Fighting: {{ $enemy['name'] }}</p>
+                                    <p class="font-mono text-xs">{{ $enemy['health'] }} / {{ $enemy['maximum'] }} health</p>
                                 </div>
-                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-red-100 dark:bg-red-950/60">
-                                    <div class="h-full rounded-full bg-red-500" style="width: {{ (int) round($enemy['health'] / max(1, $enemy['maximum']) * 100) }}%"></div>
+                                <div class="ez-meter mt-2" aria-hidden="true">
+                                    <div class="ez-meter-fill text-red-400" style="width: {{ (int) round($enemy['health'] / max(1, $enemy['maximum']) * 100) }}%"></div>
                                 </div>
                                 <p class="mt-2">{{ $enemy['description'] }} One round is fought each cycle. You break off and flee if your health drops to {{ config('combat.flee_at_health') }}.</p>
                             </div>
                         @endif
 
                         @if ($active_work['weather']->isBad())
-                            <div class="rounded-[1.5rem] border border-sky-300/70 bg-sky-50/80 p-5 text-sm text-zinc-600 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-zinc-300" data-test="active-work-weather">
-                                <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['weather']->label() }}:</span>
+                            <div class="rounded-sm border border-sky-400/40 bg-sky-500/10 p-4 text-sm text-ez-muted" data-test="active-work-weather">
+                                <span class="font-medium text-sky-300">{{ $active_work['weather']->label() }}:</span>
                                 {{ match ($active_work['type']) {
                                     'travel' => "This route takes {$active_work['weather']->timerIncreasePercent()}% longer in the {$active_work['weather']->value}.",
                                     'brain_scorcher' => "The Brain Scorcher runs {$active_work['weather']->timerIncreasePercent()}% slower in the {$active_work['weather']->value}.",
@@ -232,34 +308,34 @@
                         @endif
 
                         @if ($active_work['skill_name'])
-                            <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 dark:border-zinc-700 dark:bg-zinc-900/80" data-work-live="training-focus">
+                            <div class="rounded-sm border border-zinc-700 p-4" data-work-live="training-focus">
                                 <div class="flex flex-wrap items-start justify-between gap-4">
                                     <div>
-                                        <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">Training focus</p>
-                                        <p class="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ $active_work['skill_name'] }}</p>
-                                        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Level {{ $active_work['skill_level'] }} · {{ $active_work['skill_xp'] }} / {{ $active_work['skill_next_level_xp'] }} XP</p>
+                                        <p class="ez-label">Training focus</p>
+                                        <p class="mt-1 text-lg font-semibold text-ez-ink">{{ $active_work['skill_name'] }}</p>
+                                        <p class="mt-1 text-sm text-ez-muted">Level {{ $active_work['skill_level'] }} · {{ $active_work['skill_xp'] }} / {{ $active_work['skill_next_level_xp'] }} XP</p>
                                     </div>
 
-                                    <div class="min-w-44 text-right text-sm text-zinc-600 dark:text-zinc-400">
+                                    <div class="text-right text-sm text-ez-muted">
                                         <p>{{ $active_work['skill_xp_remaining'] }} XP to next level</p>
-                                        <p class="mt-1 font-medium text-zinc-900 dark:text-zinc-100">{{ $active_work['duration_seconds'] }}s total duration</p>
+                                        <p class="mt-1 font-mono text-ez-ink">{{ $active_work['duration_seconds'] }}s total duration</p>
                                     </div>
                                 </div>
 
-                                <div class="mt-4 h-3 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                                    <div class="h-full rounded-full bg-amber-500 transition-all duration-500" style="width: {{ $active_work['skill_progress_percent'] }}%"></div>
+                                <div class="ez-meter mt-3" aria-hidden="true">
+                                    <div class="ez-meter-fill text-amber-400" style="width: {{ $active_work['skill_progress_percent'] }}%"></div>
                                 </div>
                             </div>
                         @elseif ($active_work['type'] === 'brain_scorcher')
-                            <div class="rounded-[1.5rem] border border-fuchsia-300/70 bg-fuchsia-50/80 p-5 text-sm text-zinc-600 dark:border-fuchsia-500/30 dark:bg-fuchsia-500/10 dark:text-zinc-300">
-                                <span class="font-medium text-zinc-900 dark:text-zinc-100">Offering note:</span>
+                            <div class="rounded-sm border border-fuchsia-400/40 bg-fuchsia-500/10 p-4 text-sm text-ez-muted">
+                                <span class="font-medium text-fuchsia-300">Offering note:</span>
                                 The offering burns when you complete the work. It does not grant skill experience.
                             </div>
                         @else
-                            <div class="rounded-[1.5rem] border border-zinc-200/80 bg-white/80 p-5 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-300">
+                            <div class="rounded-sm border border-zinc-700 p-4 text-sm text-ez-muted">
                                 @if ($active_work['route_stops'] !== [])
                                     <p data-test="travel-route">
-                                        <span class="font-medium text-zinc-900 dark:text-zinc-100">Route:</span>
+                                        <span class="font-medium text-ez-ink">Route:</span>
                                         {{ implode(' → ', [$active_work['from_city'], $active_work['to_city'], ...$active_work['route_stops']]) }}
                                     </p>
                                     <p class="mt-2">
@@ -267,7 +343,7 @@
                                     </p>
                                 @endif
                                 <p @class(['mt-2' => $active_work['route_stops'] !== []])>
-                                    <span class="font-medium text-zinc-900 dark:text-zinc-100">Travel note:</span>
+                                    <span class="font-medium text-ez-ink">Travel note:</span>
                                     @if ($active_work['is_retreat'])
                                         This route does not grant skill experience, and there is no turning back.
                                     @else
@@ -277,7 +353,7 @@
                             </div>
                         @endif
 
-                        <div class="flex flex-wrap gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
                             @if ($active_work['type'] === 'brain_scorcher')
                                 <form method="POST" action="{{ route('work.complete') }}">
                                     @csrf
@@ -296,7 +372,7 @@
                                 </form>
                             @endunless
 
-                            <p class="self-center text-xs text-zinc-500 dark:text-zinc-400">
+                            <p class="text-xs text-ez-muted">
                                 {{ match (true) {
                                     $active_work['is_retreat'] => 'Running from trouble cannot be canceled.',
                                     $active_work['type'] === 'city_action' => 'Stopping pays out finished cycles. The unfinished one earns nothing.',
@@ -310,250 +386,262 @@
             </div>
         @endif
 
-        <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-            <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            {{-- Location: the place name is the hero --}}
+            <section class="flex min-w-0 flex-col gap-5 pt-2" data-test="location-hero">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Current location</p>
-                    <h1 class="mt-3 text-3xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $city?->city }}</h1>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{{ $country?->country }} · {{ $city?->biome }}</p>
+                    <p class="ez-label !text-ez-signal">{{ $coordinates ?? 'Position unknown' }} · Current location</p>
+                    <h1 class="ez-display mt-2 text-[clamp(3.75rem,11vw,8.5rem)] text-ez-ink">{{ $city?->city }}</h1>
+                    <p class="mt-3 text-sm text-ez-muted">{{ $country?->country }} · {{ $city?->biome }}</p>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
                     @if ($city?->has_trade_post)
-                        <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" data-test="trade-post-badge">
+                        <p class="inline-flex items-center gap-1.5 rounded-sm border border-emerald-400/50 px-2.5 py-1 font-mono text-[11px] text-emerald-300" data-test="trade-post-badge">
                             <flux:icon.arrows-right-left variant="micro" />
                             Trade post · open the Trade tab on your PDA
                         </p>
                     @endif
-                </div>
-
-                <div class="grid gap-2 text-right text-sm text-zinc-600 dark:text-zinc-400">
-                    <p>Role: <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ Str::headline($player->role_key) }}</span></p>
-                    <p>Premium: <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $player->hasPremiumEntitlement() ? 'Active' : 'Inactive' }}</span></p>
-                    <p>Muted: <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $player->isMuted() ? 'Yes' : 'No' }}</span></p>
-                </div>
-            </div>
-
-            <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div @class([
-                    'rounded-2xl p-4',
-                    'bg-zinc-50 dark:bg-zinc-800/70' => ! $weather?->isBad(),
-                    'border border-sky-300/70 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/10' => $weather?->isBad(),
-                ]) data-test="current-weather">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Current weather</p>
-                    <p class="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $weather?->label() }}</p>
-                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ $weather?->effectsSummary() }}</p>
-                </div>
-                <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Average temperature</p>
-                    <p class="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $country?->avg_temp_c }}°C</p>
-                </div>
-                <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Rain chance</p>
-                    <p class="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $city?->rain_chance_pct }}%</p>
-                </div>
-                <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Trouble chance</p>
-                    <p class="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{{ $city?->trouble_chance_pct }}%</p>
-                </div>
-            </div>
-
-            <div class="mt-6 rounded-2xl border border-zinc-200/70 p-4 text-sm text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
-                <span class="font-medium text-zinc-900 dark:text-zinc-100">Scout report:</span> {{ $local_event }}
-            </div>
-        </div>
-
-        <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900" data-work-live="condition" data-test="survivor-condition">
-            <div class="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Survivor condition</h2>
-                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">Work and travel make you hungry and tired. You can keep going, but every timer runs slower, and pushing on while starving or spent wears down your health. Eat to ease hunger, and patch up wounds with medical supplies or at a field clinic. Fatigue fades and wounds slowly mend while you rest between jobs, unless you are starving. If your health reaches zero, you die.</p>
-                </div>
-                <span @class([
-                    'rounded-full px-2.5 py-1 text-xs font-medium',
-                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' => $condition['timer_increase_percent'] === 0,
-                    'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' => $condition['timer_increase_percent'] > 0,
-                ]) data-test="condition-timer-penalty">
-                    {{ $condition['timer_increase_percent'] === 0 ? 'No timer penalty' : "Timers +{$condition['timer_increase_percent']}%" }}
-                </span>
-            </div>
-
-            <div class="mt-5 grid gap-4 md:grid-cols-3">
-                @php($health = $condition['health'])
-                <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70" data-test="condition-health">
-                    <div class="flex items-baseline justify-between gap-3">
-                        <p class="text-sm text-zinc-500 dark:text-zinc-400">Health</p>
-                        <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $health['label'] }} · {{ $health['value'] }} / {{ $health['maximum'] }}</p>
-                    </div>
-                    <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                        <div @class([
-                            'h-full rounded-full transition-all duration-500',
-                            'bg-emerald-500' => $health['timer_increase_percent'] === 0,
-                            'bg-amber-500' => $health['timer_increase_percent'] > 0 && $health['timer_increase_percent'] < 50,
-                            'bg-red-500' => $health['timer_increase_percent'] >= 50,
-                        ]) style="width: {{ (int) round($health['value'] / max(1, $health['maximum']) * 100) }}%"></div>
-                    </div>
-                    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                        {{ $health['timer_increase_percent'] === 0 ? 'No effect on timers.' : "Timers +{$health['timer_increase_percent']}%." }}
+                    <p class="inline-flex items-center rounded-sm border border-zinc-700 px-2.5 py-1 font-mono text-[11px] text-ez-muted">
+                        {{ Str::headline($player->role_key) }} · Premium {{ $player->hasPremiumEntitlement() ? 'active' : 'inactive' }} · {{ $player->isMuted() ? 'Muted on radio' : 'Radio open' }}
                     </p>
                 </div>
 
-                @foreach (['hunger' => 'Hunger', 'fatigue' => 'Fatigue'] as $need => $needLabel)
-                    @php($state = $condition[$need])
-                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/70" data-test="condition-{{ $need }}">
-                        <div class="flex items-baseline justify-between gap-3">
-                            <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $needLabel }}</p>
-                            <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $state['label'] }} · {{ $state['value'] }} / {{ $state['maximum'] }}</p>
-                        </div>
-                        <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                            <div @class([
-                                'h-full rounded-full transition-all duration-500',
-                                'bg-emerald-500' => $state['timer_increase_percent'] === 0,
-                                'bg-amber-500' => $state['timer_increase_percent'] > 0 && $state['value'] < $state['maximum'],
-                                'bg-red-500' => $state['value'] >= $state['maximum'],
-                            ]) style="width: {{ (int) round($state['value'] / max(1, $state['maximum']) * 100) }}%"></div>
-                        </div>
-                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            {{ $state['timer_increase_percent'] === 0 ? 'No effect on timers.' : "Timers +{$state['timer_increase_percent']}%." }}
-                        </p>
+                <div class="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-zinc-700 bg-zinc-700 md:grid-cols-4">
+                    <div @class([
+                        'col-span-2 p-4 md:col-span-1',
+                        'bg-ez-ground/90' => ! $weather?->isBad(),
+                        'bg-sky-950/90' => $weather?->isBad(),
+                    ]) data-test="current-weather">
+                        <p class="ez-label">Current weather</p>
+                        <p @class(['mt-2 text-xl font-semibold', 'text-ez-ink' => ! $weather?->isBad(), 'text-sky-300' => $weather?->isBad()])>{{ $weather?->label() }}</p>
+                        <p class="mt-1 text-xs text-ez-muted">{{ $weather?->effectsSummary() }}</p>
                     </div>
-                @endforeach
-            </div>
+                    <div class="bg-ez-ground/90 p-4">
+                        <p class="ez-label">Average temperature</p>
+                        <p class="ez-numeral mt-2 text-4xl text-ez-ink">{{ $country?->avg_temp_c }}°C</p>
+                    </div>
+                    <div class="bg-ez-ground/90 p-4">
+                        <p class="ez-label">Rain chance</p>
+                        <p class="ez-numeral mt-2 text-4xl text-ez-ink">{{ $city?->rain_chance_pct }}%</p>
+                    </div>
+                    <div @class(['col-span-2 p-4 md:col-span-1', 'bg-ez-ground/90' => $city?->trouble_chance_pct < 50, 'bg-red-950/80' => $city?->trouble_chance_pct >= 50])>
+                        <p class="ez-label">Trouble chance</p>
+                        <p @class(['ez-numeral mt-2 text-4xl', 'text-ez-ink' => $city?->trouble_chance_pct < 50, 'text-red-300' => $city?->trouble_chance_pct >= 50])>{{ $city?->trouble_chance_pct }}%</p>
+                    </div>
+                </div>
 
-            @if ($condition['foods'] !== [])
-                <div class="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                    @foreach ($condition['foods'] as $food)
-                        <form method="POST" action="{{ route('food.eat') }}" class="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 p-3 dark:border-zinc-700">
-                            @csrf
-                            <input type="hidden" name="item_id" value="{{ $food['item_id'] }}">
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $food['name'] }} <span class="text-zinc-500 dark:text-zinc-400">×{{ $food['owned'] }}</span></p>
-                                <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {{ collect(['Health +'.$food['health_restored'] => $food['health_restored'], 'Hunger -'.$food['hunger_restored'] => $food['hunger_restored'], 'Fatigue -'.$food['fatigue_restored'] => $food['fatigue_restored']])->filter()->keys()->implode(' · ') }}
-                                </p>
-                            </div>
-                            <flux:button type="submit" size="sm" data-test="eat-{{ $food['item_id'] }}">Eat</flux:button>
-                        </form>
+                <div class="ez-panel ez-scanlines flex items-start gap-3 px-4 py-3">
+                    <span class="ez-label shrink-0 pt-0.5 !text-ez-phosphor">Intercept</span>
+                    <p class="ez-phosphor text-sm"><span class="font-semibold">Scout report:</span> {{ $local_event }}</p>
+                </div>
+            </section>
+
+            {{-- Survivor condition: Geiger panel --}}
+            <section class="ez-panel min-w-0 p-5 sm:p-6" data-work-live="condition" data-test="survivor-condition">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="ez-label">Field readout</p>
+                        <h2 class="ez-display mt-1 text-3xl text-ez-ink">Survivor condition</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        @php($drag = min(100, $condition['timer_increase_percent']))
+                        <svg viewBox="0 0 120 70" class="h-12 w-20" aria-hidden="true">
+                            <path d="M10 64a50 50 0 0 1 100 0" fill="none" stroke="currentColor" class="text-zinc-700" stroke-width="7" />
+                            <path d="M85 20.7a50 50 0 0 1 25 43.3" fill="none" stroke="currentColor" class="text-red-500/80" stroke-width="7" />
+                            <g transform="rotate({{ -90 + round($drag * 1.8) }} 60 64)">
+                                <g class="ez-needle">
+                                    <line x1="60" y1="64" x2="60" y2="20" stroke="currentColor" class="text-amber-400" stroke-width="2.5" stroke-linecap="round" />
+                                </g>
+                            </g>
+                            <circle cx="60" cy="64" r="5" fill="currentColor" class="text-ez-ink" />
+                        </svg>
+                        <span @class([
+                            'rounded-sm border px-2 py-1 font-mono text-[11px]',
+                            'border-emerald-400/50 text-emerald-300' => $condition['timer_increase_percent'] === 0,
+                            'border-amber-400/60 text-amber-300' => $condition['timer_increase_percent'] > 0,
+                        ]) data-test="condition-timer-penalty">
+                            {{ $condition['timer_increase_percent'] === 0 ? 'No timer penalty' : "Timers +{$condition['timer_increase_percent']}%" }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-4">
+                    @php($health = $condition['health'])
+                    <x-zone.meter
+                        :label="__('Health')"
+                        :value="$health['value']"
+                        :maximum="$health['maximum']"
+                        :tone="$healthTone($health)"
+                        :reading="$health['label'].' · '.$health['value'].' / '.$health['maximum']"
+                        :caption="$health['timer_increase_percent'] === 0 ? 'No effect on timers.' : 'Timers +'.$health['timer_increase_percent'].'%.'"
+                        data-test="condition-health"
+                    />
+
+                    @foreach (['hunger' => 'Hunger', 'fatigue' => 'Fatigue'] as $need => $needLabel)
+                        @php($state = $condition[$need])
+                        <x-zone.meter
+                            :label="$needLabel"
+                            :value="$state['value']"
+                            :maximum="$state['maximum']"
+                            :tone="$needTone($state)"
+                            :reading="$state['label'].' · '.$state['value'].' / '.$state['maximum']"
+                            :caption="$state['timer_increase_percent'] === 0 ? 'No effect on timers.' : 'Timers +'.$state['timer_increase_percent'].'%.'"
+                            data-test="condition-{{ $need }}"
+                        />
                     @endforeach
                 </div>
-            @else
-                <p class="mt-5 rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                    No food in your pack. Cook borscht in Kyiv, or bring back rations and fish from your runs.
-                </p>
-            @endif
 
-            @if ($condition['medical_items'] !== [])
-                <div class="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3" data-test="medical-items">
-                    @foreach ($condition['medical_items'] as $medicalItem)
-                        <form method="POST" action="{{ route('medical.use') }}" class="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 p-3 dark:border-rose-500/30">
-                            @csrf
-                            <input type="hidden" name="item_id" value="{{ $medicalItem['item_id'] }}">
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $medicalItem['name'] }} <span class="text-zinc-500 dark:text-zinc-400">×{{ $medicalItem['owned'] }}</span></p>
-                                <p class="text-xs text-zinc-500 dark:text-zinc-400">Health +{{ $medicalItem['health_restored'] }}</p>
-                            </div>
-                            <flux:button type="submit" size="sm" data-test="use-medical-{{ $medicalItem['item_id'] }}">Use</flux:button>
-                        </form>
-                    @endforeach
+                <details class="group mt-4 text-sm text-ez-muted">
+                    <summary class="ez-label cursor-pointer list-none hover:!text-ez-ink"><span class="group-open:hidden">+ How condition works</span><span class="hidden group-open:inline">− How condition works</span></summary>
+                    <p class="mt-2 leading-6">Work and travel make you hungry and tired. You can keep going, but every timer runs slower, and pushing on while starving or spent wears down your health. Eat to ease hunger, and patch up wounds with medical supplies or at a field clinic. Fatigue fades and wounds slowly mend while you rest between jobs, unless you are starving. If your health reaches zero, you die.</p>
+                </details>
+
+                <div class="mt-5 border-t border-zinc-700 pt-4">
+                    <p class="ez-label">Rations</p>
+                    @if ($condition['foods'] !== [])
+                        <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                            @foreach ($condition['foods'] as $food)
+                                <form method="POST" action="{{ route('food.eat') }}" class="ez-card flex items-center justify-between gap-3 p-3">
+                                    @csrf
+                                    <input type="hidden" name="item_id" value="{{ $food['item_id'] }}">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-medium text-ez-ink">{{ $food['name'] }} <span class="font-mono text-ez-muted">×{{ $food['owned'] }}</span></p>
+                                        <p class="text-xs text-ez-muted">
+                                            {{ collect(['Health +'.$food['health_restored'] => $food['health_restored'], 'Hunger -'.$food['hunger_restored'] => $food['hunger_restored'], 'Fatigue -'.$food['fatigue_restored'] => $food['fatigue_restored']])->filter()->keys()->implode(' · ') }}
+                                        </p>
+                                    </div>
+                                    <flux:button type="submit" size="sm" data-test="eat-{{ $food['item_id'] }}">Eat</flux:button>
+                                </form>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="mt-2 rounded-sm border border-dashed border-zinc-600 p-3 text-sm text-ez-muted">
+                            No food in your pack. Cook borscht in Kyiv, or bring back rations and fish from your runs.
+                        </p>
+                    @endif
+
+                    @if ($condition['medical_items'] !== [])
+                        <p class="ez-label mt-4">Medical</p>
+                        <div class="mt-2 grid gap-2 sm:grid-cols-2" data-test="medical-items">
+                            @foreach ($condition['medical_items'] as $medicalItem)
+                                <form method="POST" action="{{ route('medical.use') }}" class="ez-card flex items-center justify-between gap-3 !border-red-400/40 p-3">
+                                    @csrf
+                                    <input type="hidden" name="item_id" value="{{ $medicalItem['item_id'] }}">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-medium text-ez-ink">{{ $medicalItem['name'] }} <span class="font-mono text-ez-muted">×{{ $medicalItem['owned'] }}</span></p>
+                                        <p class="text-xs text-red-300">Health +{{ $medicalItem['health_restored'] }}</p>
+                                    </div>
+                                    <flux:button type="submit" size="sm" data-test="use-medical-{{ $medicalItem['item_id'] }}">Use</flux:button>
+                                </form>
+                            @endforeach
+                        </div>
+                    @elseif ($condition['health']['value'] < $condition['health']['maximum'])
+                        <p class="mt-2 rounded-sm border border-dashed border-zinc-600 p-3 text-sm text-ez-muted">
+                            No medical supplies. Raid pharmacies in Kyiv, roll bandages in Warsaw, or pay a field clinic in Kyiv or Warsaw to patch you up.
+                        </p>
+                    @endif
                 </div>
-            @elseif ($condition['health']['value'] < $condition['health']['maximum'])
-                <p class="mt-2 rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                    No medical supplies. Raid pharmacies in Kyiv, roll bandages in Warsaw, or pay a field clinic in Kyiv or Warsaw to patch you up.
-                </p>
-            @endif
+            </section>
         </div>
 
         @if ($quest_step_actions->isNotEmpty())
-            <div class="rounded-3xl border border-emerald-200/60 bg-white p-6 dark:border-emerald-800/40 dark:bg-zinc-900">
-                <div class="flex items-center gap-3">
-                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
-                        <svg class="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                        </svg>
-                    </div>
+            {{-- Field contacts: notes pinned in the survivor's journal --}}
+            <section>
+                <div class="mb-5 flex items-end justify-between gap-4">
                     <div>
-                        <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Field contacts</h2>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Active quest objectives available at this location.</p>
+                        <p class="ez-label">Active quest objectives available at this location.</p>
+                        <h2 class="ez-display mt-1 text-3xl text-ez-ink">Field contacts</h2>
                     </div>
                 </div>
 
-                <div class="mt-5 grid gap-3">
+                <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($quest_step_actions as $entry)
-                        <div class="rounded-2xl border border-emerald-200/60 bg-emerald-50/50 p-4 dark:border-emerald-800/30 dark:bg-emerald-900/10">
-                            <div class="flex flex-wrap items-start justify-between gap-3">
-                                <div class="space-y-1">
-                                    <p class="text-xs font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500">{{ $entry['quest_name'] }}</p>
-                                    <h3 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $entry['step']->person_of_interest }}</h3>
-                                    @if (count($entry['requirements']) > 0)
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Requires: <span class="text-amber-600 dark:text-amber-500">{{ collect($entry['requirements'])->map(fn ($requirement) => $requirement['item']?->name.' ×'.$requirement['quantity'])->implode(', ') }}</span></p>
-                                    @endif
-                                </div>
-                                <form method="POST" action="{{ route('quest-step.interact', $entry['step']) }}">
-                                    @csrf
-                                    <flux:button type="submit" variant="primary" size="sm">
-                                        {{ $entry['step']->action_label }}
-                                    </flux:button>
-                                </form>
-                            </div>
+                        <div @class(['ez-paper p-5', '-rotate-[0.6deg]' => $loop->odd, 'rotate-[0.5deg]' => $loop->even])>
+                            <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-ez-stamp">{{ $entry['quest_name'] }}</p>
+                            <h3 class="mt-2 text-2xl leading-tight font-semibold text-ez-paper-ink">{{ $entry['step']->person_of_interest }}</h3>
+                            @if (count($entry['requirements']) > 0)
+                                <p class="mt-2 text-sm text-ez-paper-muted">Requires: <span class="font-medium text-ez-stamp">{{ collect($entry['requirements'])->map(fn ($requirement) => $requirement['item']?->name.' ×'.$requirement['quantity'])->implode(', ') }}</span></p>
+                            @endif
+                            <form method="POST" action="{{ route('quest-step.interact', $entry['step']) }}" class="mt-4">
+                                @csrf
+                                <button type="submit" class="inline-flex min-h-10 items-center rounded-sm bg-ez-paper-ink px-4 py-2 font-mono text-sm text-ez-paper transition hover:bg-black">
+                                    {{ $entry['step']->action_label }}
+                                </button>
+                            </form>
                         </div>
                     @endforeach
                 </div>
-            </div>
+            </section>
         @endif
 
-        <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-            <div class="flex items-center justify-between gap-4">
+        {{-- City actions: pins on the local map --}}
+        <section>
+            <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">City actions</h2>
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Every action grants XP and loot tied to the current city.</p>
+                    <p class="ez-label">Every action grants XP and loot tied to the current city.</p>
+                    <h2 class="ez-display mt-1 text-3xl text-ez-ink">City actions</h2>
                 </div>
+                <p class="flex items-center gap-4 font-mono text-[11px] text-ez-muted">
+                    <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-ez-signal" aria-hidden="true"></span>Safe work</span>
+                    <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-ez-heat" aria-hidden="true"></span>Combat risk</span>
+                </p>
             </div>
 
-            <div class="mt-6 grid gap-4">
+            <div class="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
                 @foreach ($actions as $entry)
-                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
-                        <div class="flex flex-wrap items-start justify-between gap-3">
-                            <div class="space-y-2">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <h3 class="font-medium text-zinc-900 dark:text-zinc-100">{{ $entry['action']->label }}</h3>
-                                    <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{{ Str::headline($entry['action']->risk_level) }}</span>
-                                </div>
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $entry['action']->description }}</p>
-                                <p class="text-xs uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-500">
-                                    {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ collect([data_get($entry['action']->reward_profile, 'item_key'), data_get($entry['action']->reward_profile, 'health') ? 'health +'.data_get($entry['action']->reward_profile, 'health') : null])->filter()->implode(', ') }}
-                                </p>
-                                <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="action-costs-{{ $entry['action']->action_key }}">
-                                    Each cycle: hunger +{{ $entry['action']->hunger_cost }} · fatigue +{{ $entry['action']->fatigue_cost }}
-                                </p>
-                                @if ($entry['enemy_names'] !== [])
-                                    <p class="text-xs text-red-600 dark:text-red-400" data-test="action-enemies-{{ $entry['action']->action_key }}">
-                                        Fight: {{ implode(', ', $entry['enemy_names']) }} · each cycle is one round, and you can get hurt
-                                    </p>
-                                @endif
-                                @if (count($entry['required_items']) > 0)
-                                    <p class="text-xs text-zinc-500 dark:text-zinc-400" data-test="required-items-{{ $entry['action']->action_key }}">
-                                        Uses:
-                                        @foreach ($entry['required_items'] as $requiredItem)
-                                            <span @class([
-                                                'text-emerald-600 dark:text-emerald-500' => $requiredItem['owned'] >= $requiredItem['quantity'],
-                                                'text-amber-600 dark:text-amber-500' => $requiredItem['owned'] < $requiredItem['quantity'],
-                                            ])>{{ $requiredItem['item']->name }} ×{{ $requiredItem['quantity'] }} ({{ $requiredItem['owned'] }} carried)</span>@if (! $loop->last), @endif
-                                        @endforeach
-                                    </p>
-                                @endif
-                            </div>
-
-                            <form method="POST" action="{{ route('city-action.store') }}">
-                                @csrf
-                                <input type="hidden" name="city_action_id" value="{{ $entry['action']->id }}">
-                                <flux:button type="submit" variant="primary" :disabled="! $entry['available']" data-test="action-{{ $entry['action']->action_key }}">
-                                    {{ $entry['available'] ? 'Begin work' : (! $can_perform_city_actions ? 'Unavailable' : ($entry['user_level'] < $entry['required_level'] ? 'Locked' : 'Missing items')) }}
-                                </flux:button>
-                            </form>
+                    @php($isHostile = $entry['enemy_names'] !== [])
+                    <div @class(['ez-card ez-pin flex min-w-0 flex-col gap-3 p-4 pt-5', 'ez-pin-heat ez-heat' => $isHostile, 'opacity-80' => ! $entry['available']])>
+                        <div class="flex items-start justify-between gap-3">
+                            <h3 class="text-lg leading-tight font-semibold text-ez-ink">{{ $entry['action']->label }}</h3>
+                            <span @class([
+                                'shrink-0 rounded-sm border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider',
+                                'border-zinc-600 text-ez-muted' => $entry['action']->risk_level === 'low',
+                                'border-amber-400/50 text-amber-300' => $entry['action']->risk_level === 'medium',
+                                'border-red-400/60 text-red-300' => ! in_array($entry['action']->risk_level, ['low', 'medium'], true),
+                            ])>{{ Str::headline($entry['action']->risk_level) }}</span>
                         </div>
+                        <p class="text-sm text-ez-muted">{{ $entry['action']->description }}</p>
+                        <p class="font-mono text-[11px] uppercase tracking-[0.12em] text-zinc-400">
+                            {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ collect([data_get($entry['action']->reward_profile, 'item_key'), data_get($entry['action']->reward_profile, 'health') ? 'health +'.data_get($entry['action']->reward_profile, 'health') : null])->filter()->implode(', ') }}
+                        </p>
+                        <div class="grid gap-1 text-xs">
+                            <p class="text-ez-muted" data-test="action-costs-{{ $entry['action']->action_key }}">
+                                Each cycle: hunger +{{ $entry['action']->hunger_cost }} · fatigue +{{ $entry['action']->fatigue_cost }}
+                            </p>
+                            @if ($isHostile)
+                                <p class="flex items-start gap-1 text-red-300" data-test="action-enemies-{{ $entry['action']->action_key }}">
+                                    <flux:icon.exclamation-triangle variant="micro" class="mt-px shrink-0" />
+                                    <span>Fight: {{ implode(', ', $entry['enemy_names']) }} · each cycle is one round, and you can get hurt</span>
+                                </p>
+                            @endif
+                            @if (count($entry['required_items']) > 0)
+                                <p class="text-ez-muted" data-test="required-items-{{ $entry['action']->action_key }}">
+                                    Uses:
+                                    @foreach ($entry['required_items'] as $requiredItem)
+                                        <span @class([
+                                            'text-emerald-300' => $requiredItem['owned'] >= $requiredItem['quantity'],
+                                            'text-amber-300' => $requiredItem['owned'] < $requiredItem['quantity'],
+                                        ])>{{ $requiredItem['item']->name }} ×{{ $requiredItem['quantity'] }} ({{ $requiredItem['owned'] }} carried)</span>@if (! $loop->last), @endif
+                                    @endforeach
+                                </p>
+                            @endif
+                        </div>
+
+                        <form method="POST" action="{{ route('city-action.store') }}" class="mt-auto pt-1">
+                            @csrf
+                            <input type="hidden" name="city_action_id" value="{{ $entry['action']->id }}">
+                            <flux:button type="submit" :variant="$isHostile ? 'danger' : 'primary'" class="w-full" :disabled="! $entry['available']" data-test="action-{{ $entry['action']->action_key }}">
+                                {{ $entry['available'] ? 'Begin work' : (! $can_perform_city_actions ? 'Unavailable' : ($entry['user_level'] < $entry['required_level'] ? 'Locked' : 'Missing items')) }}
+                            </flux:button>
+                        </form>
                     </div>
                 @endforeach
             </div>
-        </div>
+        </section>
 
         @if ($brain_scorcher)
+            {{-- Brain Scorcher: seen through a thermal scope --}}
             <div
                 x-data="{
                     offerings: @js($brain_scorcher['offerings']),
@@ -573,26 +661,27 @@
                         return this.offering.odds_by_quantity[quantity];
                     }
                 }"
-                class="rounded-3xl border border-fuchsia-300/60 bg-white p-6 dark:border-fuchsia-500/30 dark:bg-zinc-900"
+                class="ez-panel relative overflow-hidden !border-fuchsia-400/40 bg-[radial-gradient(ellipse_at_90%_110%,rgb(224_69_43/0.28),transparent_55%),radial-gradient(ellipse_at_0%_0%,rgb(107_26_143/0.45),transparent_60%)] p-5 sm:p-6"
                 data-test="brain-scorcher"
             >
-                <div class="flex flex-wrap items-start justify-between gap-4">
+                <div class="ez-sweep pointer-events-none absolute inset-0" aria-hidden="true"></div>
+                <div class="relative flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <p class="text-xs uppercase tracking-[0.3em] text-fuchsia-700 dark:text-fuchsia-300">High risk · high reward</p>
-                        <h2 class="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">The Brain Scorcher</h2>
-                        <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+                        <p class="ez-label !text-fuchsia-300">High risk · high reward</p>
+                        <h2 class="ez-display mt-2 bg-linear-to-r from-amber-100 via-amber-400 to-red-500 bg-clip-text text-4xl text-transparent sm:text-5xl">The Brain Scorcher</h2>
+                        <p class="mt-3 max-w-2xl text-sm text-ez-muted">
                             A Soviet psi-emitter still crackles under the cooling towers. Feed it an offering and it may hand back something worse, the same, something better, a Scorched item found nowhere else, or nothing at all. Rarer items and bigger offerings run hotter.
                         </p>
                     </div>
-                    <span class="rounded-full bg-fuchsia-100 px-2.5 py-1 text-xs font-medium text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-300">{{ $brain_scorcher['duration_seconds'] }}s burn</span>
+                    <span class="rounded-sm border border-fuchsia-400/50 px-2.5 py-1 font-mono text-xs text-fuchsia-200">{{ $brain_scorcher['duration_seconds'] }}s burn</span>
                 </div>
 
                 @if (count($brain_scorcher['offerings']) === 0)
-                    <p class="mt-5 rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                    <p class="relative mt-5 rounded-sm border border-dashed border-zinc-600 p-4 text-sm text-ez-muted">
                         Your pack is empty. Bring something to burn.
                     </p>
                 @else
-                    <form method="POST" action="{{ route('brain-scorcher.store') }}" class="mt-5 grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+                    <form method="POST" action="{{ route('brain-scorcher.store') }}" class="relative mt-5 grid gap-5 lg:grid-cols-[1fr_1.2fr]">
                         @csrf
 
                         <div class="space-y-4">
@@ -616,15 +705,15 @@
                             </flux:button>
                         </div>
 
-                        <div class="grid grid-cols-2 content-start gap-2 text-sm sm:grid-cols-5" x-show="odds">
+                        <div class="grid grid-cols-2 content-start gap-px overflow-hidden rounded-sm border border-zinc-700 bg-zinc-700 text-sm sm:grid-cols-5" x-show="odds">
                             @foreach (['nothing' => 'Burned', 'downgrade' => 'Worse', 'same' => 'Same', 'upgrade' => 'Better', 'jackpot' => 'Scorched'] as $outcome => $label)
                                 <div @class([
-                                    'rounded-2xl p-3',
-                                    'bg-zinc-50 dark:bg-zinc-800/70' => $outcome !== 'jackpot',
-                                    'border border-fuchsia-300/70 bg-fuchsia-50 dark:border-fuchsia-500/30 dark:bg-fuchsia-500/10' => $outcome === 'jackpot',
+                                    'p-3',
+                                    'bg-ez-ground/90' => $outcome !== 'jackpot',
+                                    'col-span-2 bg-fuchsia-950/90 sm:col-span-1' => $outcome === 'jackpot',
                                 ])>
-                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $label }}</p>
-                                    <p class="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-100" x-text="(odds?.{{ $outcome }} ?? 0) + '%'"></p>
+                                    <p class="ez-label">{{ $label }}</p>
+                                    <p @class(['ez-numeral mt-1 text-4xl', 'text-ez-ink' => $outcome !== 'jackpot', 'text-amber-300' => $outcome === 'jackpot']) x-text="(odds?.{{ $outcome }} ?? 0) + '%'"></p>
                                 </div>
                             @endforeach
                         </div>
