@@ -4,12 +4,13 @@
 
 <section class="w-full">
     <div class="mb-6">
-        <flux:heading size="xl">{{ __('Change User Role') }}</flux:heading>
+        <p class="ez-label !text-amber-400">{{ __('Admin console') }}</p>
+            <flux:heading size="xl" class="ez-display !text-4xl !font-normal sm:!text-5xl">{{ __('Change User Role') }}</flux:heading>
         <flux:text class="mt-1">{{ __('Review the selected user\'s current role and permissions, then assign a new role.') }}</flux:text>
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="ez-panel p-6">
             <form wire:submit="changeRole" class="space-y-6">
                 <flux:field>
                     <flux:label>{{ __('Player') }}</flux:label>
@@ -23,7 +24,7 @@
                 </flux:field>
 
                 @if ($selectedUser)
-                    <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                    <div class="ez-card p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $selectedUser->name }}</div>
@@ -55,7 +56,7 @@
         </div>
 
         <div class="space-y-6">
-            <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="ez-panel p-6">
                 <div class="mb-4">
                     <flux:heading size="lg">{{ __('Current Role') }}</flux:heading>
                     <flux:text class="mt-1">{{ __('The selected user\'s active role and task-derived permissions.') }}</flux:text>
@@ -63,7 +64,7 @@
 
                 @if ($currentRole)
                     <div class="mb-4 flex flex-wrap items-center gap-3">
-                        <div class="inline-flex rounded-full bg-zinc-900 px-3 py-1 text-sm font-medium text-white dark:bg-white dark:text-zinc-900">
+                        <div class="inline-flex rounded-sm border border-emerald-400/50 px-3 py-1 font-mono text-sm text-emerald-300">
                             {{ $currentRole->name }}
                         </div>
 
@@ -74,7 +75,7 @@
 
                     <div class="space-y-2">
                         @forelse ($currentRole->tasks->sortBy('description') as $task)
-                            <div wire:key="current-task-{{ $task->id }}" class="rounded-2xl border border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                            <div wire:key="current-task-{{ $task->id }}" class="ez-card px-4 py-3">
                                 <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $task->description }}</div>
                                 <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $task->key }}</div>
                             </div>
@@ -87,7 +88,7 @@
                 @endif
             </div>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="ez-panel p-6">
                 <div class="mb-4">
                     <flux:heading size="lg">{{ __('Selected Role Preview') }}</flux:heading>
                     <flux:text class="mt-1">{{ __('These permissions will apply after you save the change.') }}</flux:text>
@@ -95,7 +96,7 @@
 
                 @if ($selectedRole)
                     <div class="mb-4 flex flex-wrap items-center gap-3">
-                        <div class="inline-flex rounded-full bg-zinc-900 px-3 py-1 text-sm font-medium text-white dark:bg-white dark:text-zinc-900">
+                        <div class="inline-flex rounded-sm border border-emerald-400/50 px-3 py-1 font-mono text-sm text-emerald-300">
                             {{ $selectedRole->name }}
                         </div>
 
@@ -106,7 +107,7 @@
 
                     <div class="space-y-2">
                         @forelse ($selectedRole->tasks->sortBy('description') as $task)
-                            <div wire:key="selected-task-{{ $task->id }}" class="rounded-2xl border border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                            <div wire:key="selected-task-{{ $task->id }}" class="ez-card px-4 py-3">
                                 <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $task->description }}</div>
                                 <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $task->key }}</div>
                             </div>

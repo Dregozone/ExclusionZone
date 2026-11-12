@@ -37,12 +37,27 @@ new #[Title('Player High Scores')] class extends Component
 };
 ?>
 
-<div>
-    <div class="mb-6">
-        <flux:heading size="xl">High Scores</flux:heading>
-        <flux:text class="mt-1">The best player for each skill across the exclusion zone.</flux:text>
+<div class="mx-auto w-full max-w-6xl">
+    @php($ranked = $this->leaderboard->whereNotNull('level'))
+    <div class="mb-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+        <div>
+            <p class="ez-label !text-ez-signal">Leaderboard · every skill in the zone</p>
+            <flux:heading size="xl" class="ez-display mt-2 !text-5xl !font-normal sm:!text-7xl">High Scores</flux:heading>
+            <flux:text class="mt-3 max-w-xl">The best player for each skill across the exclusion zone.</flux:text>
+        </div>
+        <dl class="grid grid-cols-2 border-y border-zinc-700">
+            <div class="border-r border-zinc-700 py-4 pr-4">
+                <dd class="ez-numeral text-7xl text-ez-ink">{{ $this->leaderboard->count() }}</dd>
+                <dt class="ez-label mt-2">Skills tracked</dt>
+            </div>
+            <div class="py-4 pl-4">
+                <dd class="ez-numeral text-7xl text-ez-signal">{{ $ranked->max('level') ?? '—' }}</dd>
+                <dt class="ez-label mt-2">Highest level</dt>
+            </div>
+        </dl>
     </div>
 
+    <div class="ez-panel overflow-hidden px-2 sm:px-4">
     <flux:table>
         <flux:table.columns>
             <flux:table.column>Skill</flux:table.column>
@@ -55,7 +70,6 @@ new #[Title('Player High Scores')] class extends Component
             @foreach ($this->leaderboard as $row)
                 <flux:table.row :key="$row->id">
                     <flux:table.cell class="flex items-center gap-3">
-                        <div class="size-8 shrink-0 rounded bg-zinc-700 ring-1 ring-white/10"></div>
                         <div>
                             <p class="font-medium">{{ $row->display_name }}</p>
                             <p class="max-w-xs truncate text-xs text-zinc-400">{{ $row->description }}</p>
@@ -72,7 +86,7 @@ new #[Title('Player High Scores')] class extends Component
 
                     <flux:table.cell>
                         @if ($row->level !== null)
-                            <flux:badge size="sm" color="emerald">{{ $row->level }}</flux:badge>
+                            <span class="ez-numeral text-3xl text-ez-signal">{{ $row->level }}</span>
                         @else
                             <span class="text-zinc-500">—</span>
                         @endif
@@ -80,7 +94,7 @@ new #[Title('Player High Scores')] class extends Component
 
                     <flux:table.cell class="text-right">
                         @if ($row->xp !== null)
-                            <span class="font-medium tabular-nums">{{ number_format($row->xp) }}</span>
+                            <span class="font-mono tabular-nums text-ez-ink">{{ number_format($row->xp) }}</span>
                         @else
                             <span class="text-zinc-500">—</span>
                         @endif
@@ -89,4 +103,5 @@ new #[Title('Player High Scores')] class extends Component
             @endforeach
         </flux:table.rows>
     </flux:table>
+    </div>
 </div>

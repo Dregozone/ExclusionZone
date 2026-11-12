@@ -1,14 +1,15 @@
 <section class="w-full">
     <div class="mb-6 flex items-center justify-between gap-4">
         <div>
-            <flux:heading size="xl">{{ __('Manage Quests') }}</flux:heading>
+            <p class="ez-label !text-amber-400">{{ __('Admin console') }}</p>
+            <flux:heading size="xl" class="ez-display !text-4xl !font-normal sm:!text-5xl">{{ __('Manage Quests') }}</flux:heading>
             <flux:text class="mt-1">{{ __('Create and edit quests with multi-step objectives and configurable rewards.') }}</flux:text>
         </div>
         <flux:button wire:click="create" variant="primary" icon="plus">{{ __('New Quest') }}</flux:button>
     </div>
 
     @if ($showForm)
-        <div class="mb-6 rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="ez-panel mb-6 p-6">
             <div class="mb-4">
                 <flux:heading size="lg">{{ $editingId ? __('Edit Quest') : __('Create Quest') }}</flux:heading>
             </div>
@@ -81,7 +82,7 @@
                 </div>
 
                 {{-- Reward profile --}}
-                <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                <div class="ez-card p-4">
                     <flux:heading size="sm" class="mb-3">{{ __('Reward') }}</flux:heading>
                     <p class="mb-4 text-xs text-zinc-500 dark:text-zinc-400">{{ __('Leave skill or item blank for no reward of that type.') }}</p>
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -136,7 +137,7 @@
 
                     <div class="space-y-4">
                         @foreach ($steps as $index => $step)
-                            <div wire:key="step-{{ $index }}" class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                            <div wire:key="step-{{ $index }}" class="ez-card p-4">
                                 <div class="mb-3 flex items-center justify-between">
                                     <span class="font-mono text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ __('Step') }} {{ $index + 1 }}</span>
                                     <flux:button wire:click="removeStep({{ $index }})" variant="ghost" size="sm" icon="trash" class="text-red-500 hover:text-red-600">{{ __('Remove') }}</flux:button>
@@ -252,7 +253,7 @@
         <label for="showTrashed" class="cursor-pointer text-sm text-zinc-600 dark:text-zinc-400">{{ __('Show deleted quests') }}</label>
     </div>
 
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+    <div class="ez-panel overflow-hidden">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-zinc-200 dark:border-zinc-700">
