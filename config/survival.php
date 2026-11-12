@@ -50,15 +50,39 @@ return [
     | spent (hunger or fatigue at the maximum) costs health. Food with a
     | health value builds it back.
     |
-    | At 0 the survivor dies: the SurvivorDied event fires, and for now
-    | someone drags them to safety, their work stops and they wake up with
-    | the revive health below.
+    | At 0 the survivor dies: the SurvivorDied event fires, and someone
+    | drags them to the nearest trade post on their continent. Their work
+    | stops, scavengers take a share of every stack in their pack (quest
+    | items are spared), and they wake up with the revive health below,
+    | unable to work or travel until they have recovered.
     |
     */
     'health' => [
         'lost_while_starving' => (int) env('SURVIVAL_HEALTH_LOST_WHILE_STARVING', 5),
         'lost_while_spent' => (int) env('SURVIVAL_HEALTH_LOST_WHILE_SPENT', 5),
         'revive_health' => (int) env('SURVIVAL_REVIVE_HEALTH', 25),
+    ],
+
+    'death' => [
+        'pack_lost_percent' => (int) env('SURVIVAL_DEATH_PACK_LOST_PERCENT', 25),
+        'recovery_minutes' => (int) env('SURVIVAL_DEATH_RECOVERY_MINUTES', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | The Environment
+    |--------------------------------------------------------------------------
+    |
+    | Every work cycle or travel leg finished in a storm has a chance to cost
+    | health. Irradiated cities (radiation damage, edited on the locations
+    | page) cost health for every cycle worked there and every leg that
+    | arrives there, and each city action has its own chance of an accident
+    | (edited on the city actions page).
+    |
+    */
+    'environment' => [
+        'storm_harm_chance_pct' => (int) env('SURVIVAL_STORM_HARM_CHANCE_PCT', 20),
+        'storm_damage' => (int) env('SURVIVAL_STORM_DAMAGE', 5),
     ],
 
     /*

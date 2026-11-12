@@ -85,6 +85,14 @@ class AdvanceWorkLoop
             return $this->endLoop($user, $work, $cycle['status'], $cycle['status'], false);
         }
 
+        $hazards = app(ExposeToHazards::class)->afterWorkCycle($user, $work);
+
+        if ($hazards['died']) {
+            return ['status' => 'You collapsed before you could finish. '.$cycle['status'], 'rewarded' => true, 'loop_ended' => true];
+        }
+
+        $cycle['status'] = trim("{$cycle['status']} {$hazards['injuries']}");
+
         $work->cycles_completed++;
         $work->xp_earned += $cycle['xp'];
         $work->last_cycle_summary = $cycle['status'];

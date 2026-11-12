@@ -30,6 +30,8 @@ class ManageLocations extends Component
 
     public int $trouble_chance_pct = 0;
 
+    public int $radiation_damage = 0;
+
     public string $baseline_loot_tier = 'medium';
 
     public bool $has_trade_post = false;
@@ -57,7 +59,7 @@ class ManageLocations extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'country_id', 'city', 'biome', 'rain_chance_pct', 'trouble_chance_pct', 'baseline_loot_tier', 'has_trade_post', 'lat', 'lng', 'deleted_at']);
+        return $query->get(['id', 'country_id', 'city', 'biome', 'rain_chance_pct', 'trouble_chance_pct', 'radiation_damage', 'baseline_loot_tier', 'has_trade_post', 'lat', 'lng', 'deleted_at']);
     }
 
     #[Computed]
@@ -95,6 +97,7 @@ class ManageLocations extends Component
         $this->biome = $city->biome;
         $this->rain_chance_pct = $city->rain_chance_pct;
         $this->trouble_chance_pct = $city->trouble_chance_pct;
+        $this->radiation_damage = $city->radiation_damage;
         $this->baseline_loot_tier = $city->baseline_loot_tier;
         $this->has_trade_post = $city->has_trade_post;
         $this->lat = $city->lat;
@@ -111,6 +114,7 @@ class ManageLocations extends Component
             'biome' => ['required', 'string', 'max:255'],
             'rain_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
             'trouble_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
+            'radiation_damage' => ['required', 'integer', 'min:0', 'max:100'],
             'baseline_loot_tier' => ['required', 'string', 'max:50'],
             'has_trade_post' => ['boolean'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
@@ -125,6 +129,7 @@ class ManageLocations extends Component
             'biome' => $validated['biome'],
             'rain_chance_pct' => $validated['rain_chance_pct'],
             'trouble_chance_pct' => $validated['trouble_chance_pct'],
+            'radiation_damage' => $validated['radiation_damage'],
             'baseline_loot_tier' => $validated['baseline_loot_tier'],
             'has_trade_post' => $validated['has_trade_post'],
             'lat' => $validated['lat'] ?? null,
@@ -175,6 +180,7 @@ class ManageLocations extends Component
         $this->biome = '';
         $this->rain_chance_pct = 0;
         $this->trouble_chance_pct = 0;
+        $this->radiation_damage = 0;
         $this->baseline_loot_tier = 'medium';
         $this->has_trade_post = false;
         $this->lat = null;
