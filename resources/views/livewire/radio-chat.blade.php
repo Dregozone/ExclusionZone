@@ -47,12 +47,12 @@
                     maxlength="{{ \App\Models\RadioMessage::MAX_LENGTH }}"
                     autocomplete="off"
                     placeholder="Transmit on channel 7…"
-                    class="min-w-0 flex-1 rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-emerald-500/60 focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
+                    class="min-w-0 flex-1 rounded-sm border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-ez-phosphor placeholder:text-zinc-500 focus:border-emerald-500/60 focus:outline-none focus:ring-1 focus:ring-emerald-500/60"
                 />
                 <button
                     type="submit"
                     wire:loading.attr="disabled"
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:opacity-50"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-ez-signal text-ez-signal-ink transition-colors hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:opacity-50"
                     aria-label="Send message"
                 >
                     <flux:icon.paper-airplane variant="micro" />

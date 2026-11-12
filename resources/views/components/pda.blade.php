@@ -40,10 +40,10 @@
         type="button"
         :aria-expanded="open.toString()"
         aria-controls="pda-device"
-        class="fixed bottom-6 right-6 z-30 flex items-center gap-2.5 rounded-xl border px-4 py-3 font-mono text-sm tracking-widest shadow-lg transition-all select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        class="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex min-h-12 items-center gap-2.5 rounded-sm border px-4 py-3 backdrop-blur font-mono text-sm tracking-widest shadow-lg transition-all select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         :class="open
-            ? 'bg-zinc-700 border-emerald-500/60 text-emerald-400 shadow-emerald-900/20'
-            : 'bg-zinc-800 border-zinc-600 text-zinc-300 hover:border-emerald-500/40 hover:text-emerald-400'"
+            ? 'bg-zinc-800 border-emerald-400 text-emerald-300 shadow-[0_0_24px_rgba(111,211,200,0.35)]'
+            : 'bg-zinc-900 border-emerald-400/60 text-emerald-300 shadow-[0_0_18px_rgba(111,211,200,0.18)] hover:border-emerald-400 hover:shadow-[0_0_24px_rgba(111,211,200,0.35)]'"
     >
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 8.25h3v.008h-3V9.75Z" />
@@ -62,7 +62,7 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="open = false"
-        class="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
+        class="fixed inset-0 z-40 bg-ez-ground/70 backdrop-blur-sm"
         aria-hidden="true"
     ></div>
 
@@ -83,19 +83,19 @@
         class="fixed inset-x-2 top-2 bottom-2 z-50 flex flex-col sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-[85dvh] sm:w-auto sm:min-w-0 sm:aspect-[11/20] {{-- sm:max-w-2xl --}}"
     >
         {{-- Outer device body (metallic grey casing) --}}
-        <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[2rem] bg-linear-to-b from-zinc-300 via-zinc-400 to-zinc-600 p-3.5 pb-4 pt-2.5 shadow-[0_25px_80px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
+        <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[2rem] bg-linear-to-b from-[#46524f] via-[#27302f] to-[#121817] p-3.5 pb-4 pt-2.5 shadow-[0_25px_80px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.18),inset_0_-2px_4px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
 
             {{-- Corner screws (decorative) --}}
-            <div class="absolute top-2.5 left-2.5 h-3 w-3 rounded-full bg-linear-to-br from-zinc-500 to-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
-            <div class="absolute top-2.5 right-2.5 h-3 w-3 rounded-full bg-linear-to-br from-zinc-500 to-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
-            <div class="absolute bottom-3 left-2.5 h-3 w-3 rounded-full bg-linear-to-br from-zinc-500 to-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
-            <div class="absolute bottom-3 right-2.5 h-3 w-3 rounded-full bg-linear-to-br from-zinc-500 to-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
+            <div class="absolute top-2.5 left-2.5 h-3 w-3 rounded-full bg-linear-to-br from-[#5b6866] to-[#1c2423] shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
+            <div class="absolute top-2.5 right-2.5 h-3 w-3 rounded-full bg-linear-to-br from-[#5b6866] to-[#1c2423] shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
+            <div class="absolute bottom-3 left-2.5 h-3 w-3 rounded-full bg-linear-to-br from-[#5b6866] to-[#1c2423] shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
+            <div class="absolute bottom-3 right-2.5 h-3 w-3 rounded-full bg-linear-to-br from-[#5b6866] to-[#1c2423] shadow-[inset_0_1px_2px_rgba(0,0,0,0.8),0_0.5px_0_rgba(255,255,255,0.2)]" aria-hidden="true"></div>
 
             {{-- Device header strip --}}
             <div class="mb-2 flex items-center justify-between px-4" aria-hidden="true">
                 <div class="flex items-center gap-2">
                     <div class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.85)]"></div>
-                    <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-600">EX-PDA · MK VII</span>
+                    <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-400">EX-PDA · MK VII</span>
                 </div>
                 <div class="flex items-center gap-2">
                     {{-- Signal bars --}}
@@ -119,7 +119,7 @@
             <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.5rem] bg-zinc-900 p-2.5 shadow-[inset_0_3px_8px_rgba(0,0,0,0.9),inset_0_-1px_2px_rgba(255,255,255,0.04)]">
 
                 {{-- Screen --}}
-                <div class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.1rem] bg-zinc-950">
+                <div class="ez-scanlines flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.1rem] bg-zinc-950">
 
                     {{-- Status bar --}}
                     <div class="flex shrink-0 items-center gap-2 border-b border-zinc-800/80 bg-zinc-900/50 px-4 py-2">
@@ -460,52 +460,54 @@
                     <nav
                         role="tablist"
                         aria-label="PDA navigation"
-                        class="flex shrink-0 overflow-x-auto border-t border-zinc-800/80 bg-zinc-900/50"
+                        class="relative z-10 flex shrink-0 overflow-x-auto border-t border-zinc-700 bg-zinc-900"
+                        @keydown.arrow-right.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const next = tabs[(tabs.indexOf(document.activeElement) + 1) % tabs.length]; next.click(); next.focus()"
+                        @keydown.arrow-left.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const previous = tabs[(tabs.indexOf(document.activeElement) - 1 + tabs.length) % tabs.length]; previous.click(); previous.focus()"
                     >
                         <div class="flex min-w-max w-full">
 
-                            <button role="tab" type="button" @click="tab = 'map'" :aria-selected="(tab === 'map').toString()" :tabindex="tab === 'map' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'map' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Map">
+                            <button role="tab" type="button" @click="tab = 'map'" :aria-selected="(tab === 'map').toString()" :tabindex="tab === 'map' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'map' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Map">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" /></svg>
                                 <span>Map</span>
                             </button>
 
-                            <button role="tab" type="button" @click="tab = 'travel'" :aria-selected="(tab === 'travel').toString()" :tabindex="tab === 'travel' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'travel' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Travel routes">
+                            <button role="tab" type="button" @click="tab = 'travel'" :aria-selected="(tab === 'travel').toString()" :tabindex="tab === 'travel' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'travel' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Travel routes">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9l3 3m0 0-3 3m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                                 <span>Travel</span>
                             </button>
 
-                            <button role="tab" type="button" @click="tab = 'skills'" :aria-selected="(tab === 'skills').toString()" :tabindex="tab === 'skills' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'skills' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Skill tracker">
+                            <button role="tab" type="button" @click="tab = 'skills'" :aria-selected="(tab === 'skills').toString()" :tabindex="tab === 'skills' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'skills' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Skill tracker">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>
                                 <span>Skills</span>
                             </button>
 
-                            <button role="tab" type="button" @click="tab = 'pack'" :aria-selected="(tab === 'pack').toString()" :tabindex="tab === 'pack' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'pack' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Inventory">
+                            <button role="tab" type="button" @click="tab = 'pack'" :aria-selected="(tab === 'pack').toString()" :tabindex="tab === 'pack' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'pack' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Inventory">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
                                 <span>Pack</span>
                             </button>
 
-                            <button role="tab" type="button" @click="tab = 'radio'" :aria-selected="(tab === 'radio').toString()" :tabindex="tab === 'radio' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'radio' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Radio comms">
+                            <button role="tab" type="button" @click="tab = 'radio'" :aria-selected="(tab === 'radio').toString()" :tabindex="tab === 'radio' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'radio' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Radio comms">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
                                 <span>Radio</span>
                             </button>
 
-                            <button role="tab" type="button" @click="tab = 'trade'" :aria-selected="(tab === 'trade').toString()" :tabindex="tab === 'trade' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'trade' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Trade board">
+                            <button role="tab" type="button" @click="tab = 'trade'" :aria-selected="(tab === 'trade').toString()" :tabindex="tab === 'trade' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'trade' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Trade board">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
                                 <span>Trade</span>
                             </button>
 
-                            <button role="tab" type="button" @click="tab = 'contracts'" :aria-selected="(tab === 'contracts').toString()" :tabindex="tab === 'contracts' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'contracts' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Contracts">
+                            <button role="tab" type="button" @click="tab = 'contracts'" :aria-selected="(tab === 'contracts').toString()" :tabindex="tab === 'contracts' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'contracts' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Contracts">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
                                 <span>Jobs</span>
                             </button>
 
-                            <button role="tab" type="button" @click="tab = 'premium'" :aria-selected="(tab === 'premium').toString()" :tabindex="tab === 'premium' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'premium' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Cosmetics">
+                            <button role="tab" type="button" @click="tab = 'premium'" :aria-selected="(tab === 'premium').toString()" :tabindex="tab === 'premium' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'premium' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Cosmetics">
                                 <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" /></svg>
                                 <span>Premium</span>
                             </button>
 
                             @if ($player->isModerator() || $player->isAdmin())
-                                <button role="tab" type="button" @click="tab = 'admin'" :aria-selected="(tab === 'admin').toString()" :tabindex="tab === 'admin' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'admin' ? 'text-emerald-400' : 'text-zinc-600 hover:text-zinc-400'" aria-label="Admin console">
+                                <button role="tab" type="button" @click="tab = 'admin'" :aria-selected="(tab === 'admin').toString()" :tabindex="tab === 'admin' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'admin' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Admin console">
                                     <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
                                     <span>Admin</span>
                                 </button>
@@ -522,11 +524,11 @@
 
             {{-- Device bottom controls (decorative) --}}
             <div class="mt-2.5 flex items-center justify-center gap-3 px-4" aria-hidden="true">
-                <div class="h-2 w-14 rounded-full bg-zinc-600/60 shadow-inner"></div>
-                <div class="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-500/30 bg-zinc-600/60 shadow-inner">
+                <div class="h-2 w-14 rounded-full bg-black/30 shadow-inner"></div>
+                <div class="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-500/30 bg-black/30 shadow-inner">
                     <div class="h-1.5 w-1.5 rounded-full bg-zinc-700/60"></div>
                 </div>
-                <div class="h-2 w-14 rounded-full bg-zinc-600/60 shadow-inner"></div>
+                <div class="h-2 w-14 rounded-full bg-black/30 shadow-inner"></div>
             </div>
 
         </div>
