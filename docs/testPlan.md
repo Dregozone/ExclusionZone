@@ -43,6 +43,7 @@ Progress rule:
 |---|---|---|---|
 | Users -> roles -> tasks | Authorization enforced by role task mapping | `tests/Feature/GameMvpTest.php` (role-change allow/deny; guest denial to city-action and feature hook) | Done |
 | Admin-only role changes | Only admin can change roles; audit is recorded | `tests/Feature/GameMvpTest.php` (`admin can change another user role and non admins cannot`) | Done |
+| Granting admin from the server | `php artisan grant:admin {email}` makes an account admin (so the first admin can be created), logs the audit, and fails for an unknown email | `tests/Feature/GrantAdminCommandTest.php` | Done |
 | Users -> location -> city -> actions | Action list is filtered by current city and updates after travel | `tests/Feature/GameMvpTest.php` (`city actions are filtered by the current location...`) | Done |
 | City action execution | Action grants rewards and progression | `tests/Feature/GameMvpTest.php` (`performing a city action grants experience...`) | Done |
 | Skill thresholds | Below-min-level denied; boundary level allowed | `tests/Feature/GameMvpTest.php` (`skill thresholds deny and allow access...`) | Done |
