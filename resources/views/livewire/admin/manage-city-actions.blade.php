@@ -89,15 +89,15 @@
 
                     <flux:field>
                         <flux:label>{{ __('Hunger per cycle') }}</flux:label>
-                        <flux:input type="number" wire:model="hunger_cost" min="0" max="100" />
-                        <flux:description>{{ __('Hunger (0-100) the survivor gains after each finished cycle.') }}</flux:description>
+                        <flux:input type="number" wire:model="hunger_cost" min="0" max="100" step="0.1" />
+                        <flux:description>{{ __('Hunger (0-100, in steps of 0.1) the survivor gains after each finished cycle.') }}</flux:description>
                         <flux:error name="hunger_cost" />
                     </flux:field>
 
                     <flux:field>
                         <flux:label>{{ __('Fatigue per cycle') }}</flux:label>
-                        <flux:input type="number" wire:model="fatigue_cost" min="0" max="100" />
-                        <flux:description>{{ __('Fatigue (0-100) the survivor gains after each finished cycle.') }}</flux:description>
+                        <flux:input type="number" wire:model="fatigue_cost" min="0" max="100" step="0.1" />
+                        <flux:description>{{ __('Fatigue (0-100, in steps of 0.1) the survivor gains after each finished cycle.') }}</flux:description>
                         <flux:error name="fatigue_cost" />
                     </flux:field>
                 </div>

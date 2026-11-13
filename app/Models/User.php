@@ -52,8 +52,8 @@ class User extends Authenticatable
             'premium_active' => 'bool',
             'last_active_at' => 'datetime',
             'health' => 'integer',
-            'hunger' => 'integer',
-            'fatigue' => 'integer',
+            'hunger' => 'float',
+            'fatigue' => 'float',
             'rested_at' => 'datetime',
             'recovering_until' => 'datetime',
         ];

@@ -21,7 +21,7 @@
         @endif
 
         {{-- Survivor HUD: always-visible condition strip --}}
-        <div class="ez-panel sticky top-2 z-20 px-4 py-3" data-work-live="hud" data-test="survivor-hud">
+        <div class="ez-panel sticky top-2 z-10 px-4 py-3" data-work-live="hud" data-test="survivor-hud">
             <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
                 <div class="flex min-w-0 items-center gap-2.5">
                     <span class="relative flex size-2.5 shrink-0 text-emerald-400" aria-hidden="true">
@@ -35,7 +35,7 @@
                     </p>
                 </div>
 
-                <div class="grid basis-full grid-cols-3 gap-3 sm:basis-auto sm:flex-1 sm:gap-4 sm:min-w-[22rem]">
+                <div class="grid basis-full grid-cols-3 gap-2 sm:basis-auto sm:flex-1 sm:gap-4 sm:min-w-[22rem]">
                     <x-zone.meter compact :label="__('Health')" :value="$condition['health']['value']" :maximum="$condition['health']['maximum']" :tone="$healthTone($condition['health'])" :reading="$condition['health']['value']" />
                     <x-zone.meter compact :label="__('Hunger')" :value="$condition['hunger']['value']" :maximum="$condition['hunger']['maximum']" :tone="$needTone($condition['hunger'])" :reading="$condition['hunger']['value']" />
                     <x-zone.meter compact :label="__('Fatigue')" :value="$condition['fatigue']['value']" :maximum="$condition['fatigue']['maximum']" :tone="$needTone($condition['fatigue'])" :reading="$condition['fatigue']['value']" />
@@ -244,7 +244,7 @@
                             <div class="relative size-44">
                                 <svg viewBox="0 0 100 100" class="size-full -rotate-90" aria-hidden="true">
                                     <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" class="text-zinc-700" stroke-width="5" />
-                                    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" class="text-amber-400" stroke-width="5" stroke-linecap="round" stroke-dasharray="276.46" x-bind:stroke-dashoffset="ringOffset()" style="transition: stroke-dashoffset 1s linear" />
+                                    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" class="text-amber-400" stroke-width="5" stroke-linecap="round" stroke-dasharray="276.46" x-bind:stroke-dashoffset="ringOffset()" />
                                 </svg>
                                 <div class="absolute inset-0 grid place-content-center text-center">
                                     <p class="ez-numeral text-5xl text-ez-ink" x-text="formattedRemaining()" role="timer" aria-live="off"></p>

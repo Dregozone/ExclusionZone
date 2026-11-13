@@ -8,7 +8,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Survivors grow hungry and tired as they work and travel. Both needs run
-    | from 0 to 100, and reaching a threshold below slows every work timer by
+    | from 0 to 100 in steps of 0.1, and reaching a threshold below slows every work timer by
     | its percentage (hunger and fatigue add up). Work never stops because of
     | them; it only takes longer until the survivor eats or rests.
     |
@@ -21,13 +21,13 @@ return [
     'maximum' => 100,
 
     'travel' => [
-        'hunger_per_leg' => (int) env('SURVIVAL_TRAVEL_HUNGER_PER_LEG', 4),
-        'fatigue_per_leg' => (int) env('SURVIVAL_TRAVEL_FATIGUE_PER_LEG', 5),
+        'hunger_per_leg' => (float) env('SURVIVAL_TRAVEL_HUNGER_PER_LEG', 0.8),
+        'fatigue_per_leg' => (float) env('SURVIVAL_TRAVEL_FATIGUE_PER_LEG', 0.9),
     ],
 
     'brain_scorcher' => [
-        'hunger' => (int) env('SURVIVAL_BRAIN_SCORCHER_HUNGER', 1),
-        'fatigue' => (int) env('SURVIVAL_BRAIN_SCORCHER_FATIGUE', 4),
+        'hunger' => (float) env('SURVIVAL_BRAIN_SCORCHER_HUNGER', 0.5),
+        'fatigue' => (float) env('SURVIVAL_BRAIN_SCORCHER_FATIGUE', 0.8),
     ],
 
     /*
@@ -36,7 +36,7 @@ return [
     | heal only with food, medical items and clinics.
     */
     'rest' => [
-        'fatigue_recovered_per_minute' => (int) env('SURVIVAL_FATIGUE_RECOVERED_PER_MINUTE', 1),
+        'fatigue_recovered_per_minute' => (float) env('SURVIVAL_FATIGUE_RECOVERED_PER_MINUTE', 1),
         'health_recovered_per_minute' => (int) env('SURVIVAL_HEALTH_RECOVERED_PER_MINUTE', 1),
     ],
 

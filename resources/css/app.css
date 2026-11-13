@@ -501,6 +501,35 @@ select:focus[data-flux-control] {
     }
 }
 
+/*
+ * Touch screens: frosted glass, a fixed backdrop and blended grain all repaint on every scroll
+ * frame, and the ticking work timer made phones stutter and run hot. Use solid surfaces instead.
+ */
+@media (pointer: coarse) {
+    .ez-world {
+        background-attachment: scroll;
+    }
+
+    .ez-grain::after {
+        display: none;
+    }
+
+    .ez-panel,
+    [data-flux-sidebar],
+    [data-flux-header] {
+        backdrop-filter: none;
+    }
+
+    .ez-panel {
+        background-color: rgb(12 19 21 / 0.94);
+    }
+
+    [data-flux-sidebar],
+    [data-flux-header] {
+        background-color: rgb(12 19 21 / 0.96) !important;
+    }
+}
+
 /* Brand wordmark set in the atlas italic */
 [data-flux-sidebar-brand],
 [data-flux-brand] {
