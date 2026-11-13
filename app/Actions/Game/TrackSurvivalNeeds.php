@@ -22,7 +22,7 @@ class TrackSurvivalNeeds
      *
      * @return bool Whether the survivor died from it.
      */
-    public function exert(User $user, int $hunger, int $fatigue): bool
+    public function exert(User $user, float $hunger, float $fatigue): bool
     {
         $this->change($user, $hunger, $fatigue, 0, restartsRest: true);
 
@@ -43,7 +43,7 @@ class TrackSurvivalNeeds
     /**
      * Take hunger and fatigue away and give health back, such as when the survivor eats.
      */
-    public function relieve(User $user, int $hunger, int $fatigue, int $health = 0): void
+    public function relieve(User $user, float $hunger, float $fatigue, int $health = 0): void
     {
         $this->change($user, -$hunger, -$fatigue, $health, restartsRest: false);
     }
@@ -87,7 +87,7 @@ class TrackSurvivalNeeds
         $restedAt = $user->rested_at;
         $healsWhileResting = $this->healsWhileResting($user);
 
-        if ($restedAt === null || ($user->fatigue === 0 && ! $healsWhileResting)) {
+        if ($restedAt === null || ($user->fatigue <= 0 && ! $healsWhileResting)) {
             $user->forceFill(['rested_at' => now()])->save();
 
             return;
@@ -99,12 +99,12 @@ class TrackSurvivalNeeds
             return;
         }
 
-        $recovered = $minutesRested * (int) config('survival.rest.fatigue_recovered_per_minute');
+        $recovered = $minutesRested * (float) config('survival.rest.fatigue_recovered_per_minute');
 
         $healed = $healsWhileResting ? $minutesRested * (int) config('survival.rest.health_recovered_per_minute') : 0;
 
         $user->forceFill([
-            'fatigue' => max(0, $user->fatigue - $recovered),
+            'fatigue' => $this->clampNeed($user->fatigue - $recovered),
             'health' => $this->clamp($user->health + $healed),
             'rested_at' => $restedAt->addMinutes($minutesRested),
         ])->save();
@@ -134,15 +134,17 @@ class TrackSurvivalNeeds
      */
     public function timerIncreasePercent(User $user): int
     {
-        return collect(self::NEEDS)->sum(fn (string $need): int => $this->thresholdReached($need, (int) $user->{$need})['timer_increase_percent'] ?? 0);
+        return collect(self::NEEDS)->sum(fn (string $need): int => $this->thresholdReached($need, (float) $user->{$need})['timer_increase_percent'] ?? 0);
     }
 
     /**
-     * @return array{value: int, maximum: int, label: string, timer_increase_percent: int}
+     * Health is a whole number; hunger and fatigue move in tenths.
+     *
+     * @return array{value: int|float, maximum: int, label: string, timer_increase_percent: int}
      */
     public function condition(User $user, string $need): array
     {
-        $value = (int) $user->{$need};
+        $value = $need === 'health' ? (int) $user->health : $this->roundNeed((float) $user->{$need});
         $threshold = $this->thresholdReached($need, $value);
 
         return [
@@ -158,7 +160,7 @@ class TrackSurvivalNeeds
      *
      * @return array{at: int, label: string, timer_increase_percent: int}|null
      */
-    private function thresholdReached(string $need, int $value): ?array
+    private function thresholdReached(string $need, int|float $value): ?array
     {
         $thresholds = collect(config("survival.thresholds.{$need}", []))->sortBy('at');
 
@@ -169,15 +171,15 @@ class TrackSurvivalNeeds
         return $thresholds->filter(fn (array $threshold): bool => $value >= $threshold['at'])->last();
     }
 
-    private function change(User $user, int $hungerChange, int $fatigueChange, int $healthChange, bool $restartsRest): void
+    private function change(User $user, float $hungerChange, float $fatigueChange, int $healthChange, bool $restartsRest): void
     {
         DB::transaction(function () use ($user, $hungerChange, $fatigueChange, $healthChange, $restartsRest): void {
             $current = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail(['id', 'health', 'hunger', 'fatigue']);
 
             $user->forceFill([
                 'health' => $this->clamp($current->health + $healthChange),
-                'hunger' => $this->clamp($current->hunger + $hungerChange),
-                'fatigue' => $this->clamp($current->fatigue + $fatigueChange),
+                'hunger' => $this->clampNeed($current->hunger + $hungerChange),
+                'fatigue' => $this->clampNeed($current->fatigue + $fatigueChange),
                 'rested_at' => $restartsRest ? now() : ($user->rested_at ?? now()),
             ])->save();
         });
@@ -186,6 +188,19 @@ class TrackSurvivalNeeds
     private function clamp(int $value): int
     {
         return max(0, min($this->maximum(), $value));
+    }
+
+    /**
+     * Keep hunger or fatigue within range, to the nearest tenth.
+     */
+    private function clampNeed(float $value): float
+    {
+        return $this->roundNeed(max(0.0, min((float) $this->maximum(), $value)));
+    }
+
+    private function roundNeed(float $value): float
+    {
+        return round($value, 1);
     }
 
     private function maximum(): int

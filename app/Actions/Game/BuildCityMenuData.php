@@ -194,7 +194,7 @@ class BuildCityMenuData
     /**
      * The survivor's health, hunger and fatigue, how much they slow work timers, and the food and medical items they carry.
      *
-     * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: int, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: int, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>, medical_items: list<array{item_id: int, name: string, owned: int, health_restored: int}>}
+     * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: float, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: float, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>, medical_items: list<array{item_id: int, name: string, owned: int, health_restored: int}>}
      */
     private function conditionFor(User $user): array
     {

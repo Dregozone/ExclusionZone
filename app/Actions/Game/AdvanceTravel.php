@@ -80,8 +80,8 @@ class AdvanceTravel
 
         $collapsed = $this->trackSurvivalNeeds->exert(
             $user,
-            (int) config('survival.travel.hunger_per_leg'),
-            (int) config('survival.travel.fatigue_per_leg'),
+            (float) config('survival.travel.hunger_per_leg'),
+            (float) config('survival.travel.fatigue_per_leg'),
         );
 
         $hazards = $collapsed ? null : $this->exposeToHazards->afterTravelLeg($user, $arrival, $work->weather);

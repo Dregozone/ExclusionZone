@@ -52,8 +52,8 @@ class CompleteUserWork
 
             $this->trackSurvivalNeeds->exert(
                 $user,
-                (int) config('survival.brain_scorcher.hunger'),
-                (int) config('survival.brain_scorcher.fatigue'),
+                (float) config('survival.brain_scorcher.hunger'),
+                (float) config('survival.brain_scorcher.fatigue'),
             );
 
             return $result;

@@ -42,9 +42,9 @@ class ManageCityActions extends Component
 
     public int $base_duration_seconds = 30;
 
-    public int $hunger_cost = 2;
+    public float $hunger_cost = 0.6;
 
-    public int $fatigue_cost = 2;
+    public float $fatigue_cost = 0.6;
 
     public int $reward_xp = 20;
 
@@ -144,8 +144,8 @@ class ManageCityActions extends Component
             'hazard_chance_pct' => ['required', 'integer', 'min:0', 'max:100'],
             'hazard_damage' => ['required', 'integer', 'min:0', 'max:100'],
             'base_duration_seconds' => ['required', 'integer', 'min:10', 'max:65535'],
-            'hunger_cost' => ['required', 'integer', 'min:0', 'max:100'],
-            'fatigue_cost' => ['required', 'integer', 'min:0', 'max:100'],
+            'hunger_cost' => ['required', 'numeric', 'decimal:0,1', 'min:0', 'max:100'],
+            'fatigue_cost' => ['required', 'numeric', 'decimal:0,1', 'min:0', 'max:100'],
             'reward_xp' => ['required', 'integer', 'min:1'],
             'reward_item_key' => ['required_if:reward_health,0', 'nullable', 'string', 'max:100'],
             'reward_quantity' => ['required', 'integer', 'min:1'],
@@ -240,8 +240,8 @@ class ManageCityActions extends Component
         $this->hazard_chance_pct = 0;
         $this->hazard_damage = 0;
         $this->base_duration_seconds = 30;
-        $this->hunger_cost = 2;
-        $this->fatigue_cost = 2;
+        $this->hunger_cost = 0.6;
+        $this->fatigue_cost = 0.6;
         $this->reward_xp = 20;
         $this->reward_item_key = '';
         $this->reward_quantity = 1;

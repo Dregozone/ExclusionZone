@@ -33,8 +33,8 @@ class CityAction extends Model
             'hazard_chance_pct' => 'integer',
             'hazard_damage' => 'integer',
             'base_duration_seconds' => 'integer',
-            'hunger_cost' => 'integer',
-            'fatigue_cost' => 'integer',
+            'hunger_cost' => 'float',
+            'fatigue_cost' => 'float',
             'reward_profile' => 'array',
             'required_items' => 'array',
         ];
