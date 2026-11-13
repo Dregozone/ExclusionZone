@@ -28,6 +28,10 @@
                         <flux:sidebar.item icon="chart-bar" :href="route('high-scores')" :current="request()->routeIs('high-scores')" wire:navigate>
                             {{ __('High Scores') }}
                         </flux:sidebar.item>
+
+                        <flux:sidebar.item icon="book-open" :href="route('manual.index')" :current="request()->routeIs('manual.*')" wire:navigate>
+                            {{ __('Manual') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
 
                     @if (auth()->user()?->isAdmin())

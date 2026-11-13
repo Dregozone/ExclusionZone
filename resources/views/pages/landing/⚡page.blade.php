@@ -36,6 +36,7 @@ new #[Layout('layouts.empty')] class extends Component
         <nav class="flex items-center gap-1 text-sm sm:gap-2" aria-label="Site">
             <a href="{{ route('world-map') }}" class="hidden rounded-sm px-3 py-2 text-ez-muted transition hover:text-ez-ink sm:inline-flex" wire:navigate>World Map</a>
             <a href="{{ route('high-scores') }}" class="hidden rounded-sm px-3 py-2 text-ez-muted transition hover:text-ez-ink sm:inline-flex" wire:navigate>High Scores</a>
+            <a href="{{ route('manual.index') }}" class="rounded-sm px-3 py-2 text-ez-muted transition hover:text-ez-ink" wire:navigate>Manual</a>
             @auth
                 <a href="{{ route('dashboard') }}" class="ez-button !min-h-10 !px-4 !py-2 text-sm">Enter your city menu</a>
             @else
@@ -63,6 +64,7 @@ new #[Layout('layouts.empty')] class extends Component
                         <a href="{{ route('login') }}" class="ez-button ez-button-ghost">I already have a survivor</a>
                     @endauth
                     <a href="{{ route('world-map') }}" class="ez-button ez-button-ghost !border-zinc-600 !text-ez-ink" wire:navigate>See the map</a>
+                    <a href="{{ route('manual.guide', 'getting-started') }}" class="ez-button ez-button-ghost !border-zinc-600 !text-ez-ink" wire:navigate>How to play</a>
                 </div>
             </div>
 
