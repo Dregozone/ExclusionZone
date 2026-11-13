@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminRoleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GameActionController;
+use App\Http\Controllers\ManualController;
 use App\Http\Controllers\ModerationController;
 use App\Http\Controllers\QuestController;
 use App\Livewire\Admin\ChangeUserRole;
@@ -24,6 +25,20 @@ Route::livewire('/', 'pages::landing.page')->name('home');
 Route::livewire('/landing', 'pages::landing.page')->name('landing');
 Route::livewire('/world-map', WorldMap::class)->name('world-map');
 Route::livewire('/high-scores', 'pages::high-scores')->name('high-scores');
+
+Route::prefix('manual')->name('manual.')->controller(ManualController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('search.json', 'search')->name('search');
+    Route::get('skills', 'skills')->name('skills');
+    Route::get('skills/{skill:key}', 'skill')->name('skill');
+    Route::get('locations', 'locations')->name('locations');
+    Route::get('locations/{city}', 'location')->name('location');
+    Route::get('items', 'items')->name('items');
+    Route::get('items/{item:key}', 'item')->name('item');
+    Route::get('quests', 'quests')->name('quests');
+    Route::get('faq', 'faq')->name('faq');
+    Route::get('{topic}', 'guide')->whereIn('topic', array_keys(config('manual.guides')))->name('guide');
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');

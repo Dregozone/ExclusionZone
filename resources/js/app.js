@@ -3,6 +3,7 @@
  * is not configured and Echo fails to start.
  */
 import './geo-map/geo-map.js';
+import './manual-search.js';
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening
