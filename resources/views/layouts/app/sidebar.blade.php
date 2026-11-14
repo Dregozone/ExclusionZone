@@ -17,10 +17,12 @@
                             {{ __('City Menu') }}
                         </flux:sidebar.item>
                         @endauth
+                        @guest
                         <flux:sidebar.item icon="sparkles" :href="route('landing')" :current="request()->routeIs('landing') || request()->routeIs('home')" wire:navigate>
                             {{ __('Landing') }}
                         </flux:sidebar.item>
-                        
+                        @endguest
+
                         <flux:sidebar.item icon="map" :href="route('world-map')" :current="request()->routeIs('world-map')" wire:navigate>
                             {{ __('World Map') }}
                         </flux:sidebar.item>
