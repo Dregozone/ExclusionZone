@@ -109,6 +109,16 @@ class User extends Authenticatable
         return $this->hasMany(RadioMessage::class);
     }
 
+    public function ideas(): HasMany
+    {
+        return $this->hasMany(Idea::class);
+    }
+
+    public function feedbackReports(): HasMany
+    {
+        return $this->hasMany(FeedbackReport::class);
+    }
+
     public function activeMutes(): HasMany
     {
         return $this->hasMany(UserMute::class, 'target_user_id')
