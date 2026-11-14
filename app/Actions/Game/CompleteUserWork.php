@@ -14,6 +14,7 @@ class CompleteUserWork
         public AdvanceTravel $advanceTravel,
         public FeedBrainScorcher $feedBrainScorcher,
         public TrackSurvivalNeeds $trackSurvivalNeeds,
+        public StudyAtLibrary $studyAtLibrary,
     ) {}
 
     /**
@@ -46,14 +47,16 @@ class CompleteUserWork
                 throw new AuthorizationException('That work is still in progress. Wait for the timer to finish or cancel it.');
             }
 
-            $result = $this->completeBrainScorcher($user, $work);
+            $result = $work->isLesson()
+                ? $this->completeLesson($user, $work)
+                : $this->completeBrainScorcher($user, $work);
 
             $work->delete();
 
             $this->trackSurvivalNeeds->exert(
                 $user,
-                (float) config('survival.brain_scorcher.hunger'),
-                (float) config('survival.brain_scorcher.fatigue'),
+                (float) config("survival.{$result['type']}.hunger"),
+                (float) config("survival.{$result['type']}.fatigue"),
             );
 
             return $result;
@@ -80,6 +83,43 @@ class CompleteUserWork
         return [
             'type' => 'city_action',
             'status' => $settled['last_status'],
+        ];
+    }
+
+    /**
+     * Take the payment and teach the lesson. A survivor who no longer carries the payment learns nothing.
+     *
+     * @return array{type:string,status:string}
+     *
+     * @throws AuthorizationException
+     */
+    private function completeLesson(User $user, UserWork $work): array
+    {
+        $item = $work->offeredItem;
+        $skill = $work->skill;
+        $quantity = (int) $work->offered_quantity;
+
+        if ($item === null || $skill === null) {
+            throw new AuthorizationException('That lesson is no longer available.');
+        }
+
+        $payment = $this->studyAtLibrary->describePayment($item, $quantity);
+
+        if ($this->studyAtLibrary->ownedQuantity($user, $item) < $quantity) {
+            return [
+                'type' => 'lesson',
+                'status' => "The librarian closed the book: you no longer have {$payment}. Nothing was paid or learned.",
+            ];
+        }
+
+        $result = ($this->studyAtLibrary)($user, $skill, $item, $quantity);
+        $levels = $result['levels_gained'] === 0
+            ? ''
+            : " and reached {$skill->display_name} level {$result['level']}";
+
+        return [
+            'type' => 'lesson',
+            'status' => "Lesson finished. You paid {$payment}, gained {$result['xp']} {$skill->display_name} XP{$levels}.",
         ];
     }
 

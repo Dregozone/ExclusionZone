@@ -303,6 +303,7 @@
                                 {{ match ($active_work['type']) {
                                     'travel' => "This route takes {$active_work['weather']->timerIncreasePercent()}% longer in the {$active_work['weather']->value}.",
                                     'brain_scorcher' => "The Brain Scorcher runs {$active_work['weather']->timerIncreasePercent()}% slower in the {$active_work['weather']->value}.",
+                                    'lesson' => "This lesson takes {$active_work['weather']->timerIncreasePercent()}% longer in the {$active_work['weather']->value}.",
                                     default => $active_work['weather']->effectsSummary(),
                                 } }}
                             </div>
@@ -355,7 +356,7 @@
                         @endif
 
                         <div class="flex flex-wrap items-center gap-3">
-                            @if ($active_work['type'] === 'brain_scorcher')
+                            @if (in_array($active_work['type'], ['brain_scorcher', 'lesson'], true))
                                 <form method="POST" action="{{ route('work.complete') }}">
                                     @csrf
                                     <flux:button type="submit" variant="primary" x-bind:disabled="remainingSeconds > 0">
@@ -722,6 +723,90 @@
                                     <p @class(['ez-numeral mt-1 text-4xl', 'text-ez-ink' => $outcome !== 'jackpot', 'text-amber-300' => $outcome === 'jackpot']) x-text="(odds?.{{ $outcome }} ?? 0) + '%'"></p>
                                 </div>
                             @endforeach
+                        </div>
+                    </form>
+                @endif
+            </div>
+        @endif
+
+        @if ($library)
+            {{-- The Gdansk library: lessons in any skill, paid for in goods --}}
+            <div
+                x-data="{
+                    payments: @js($library['payments']),
+                    itemId: @js($library['payments'][0]['item_id'] ?? null),
+                    quantity: 1,
+                    get payment() {
+                        return this.payments.find((payment) => payment.item_id === Number(this.itemId)) ?? null;
+                    },
+                    get xp() {
+                        return this.payment ? this.payment.xp_per_item * Math.max(1, Number(this.quantity) || 1) : 0;
+                    },
+                    get minutes() {
+                        return Math.ceil((this.xp * {{ $library['seconds_per_xp'] }}) / 60);
+                    }
+                }"
+                class="ez-panel relative overflow-hidden !border-emerald-400/40 bg-[radial-gradient(ellipse_at_0%_0%,rgb(16_185_129/0.18),transparent_60%)] p-5 sm:p-6"
+                data-test="library"
+            >
+                <div class="relative flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="ez-label !text-emerald-300">Lessons · any skill</p>
+                        <h2 class="ez-display mt-2 text-4xl text-ez-ink sm:text-5xl">The Shipyard Library</h2>
+                        <p class="mt-3 max-w-2xl text-sm text-ez-muted">
+                            An old naval college reading room, kept dry by a retired harbour engineer. Pay her in goods and she will teach you any skill from level 1. It costs more than learning on the job, and lessons take time, but it gets a skill started when no work here will take you yet.
+                        </p>
+                    </div>
+                    <span class="rounded-sm border border-emerald-400/50 px-2.5 py-1 font-mono text-xs text-emerald-200">{{ $library['seconds_per_xp'] }}s per XP</span>
+                </div>
+
+                @if (count($library['payments']) === 0)
+                    <p class="relative mt-5 rounded-sm border border-dashed border-zinc-600 p-4 text-sm text-ez-muted">
+                        You have nothing the librarian will take. Bring goods to pay for a lesson.
+                    </p>
+                @else
+                    <form method="POST" action="{{ route('library.store') }}" class="relative mt-5 grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+                        @csrf
+
+                        <div class="space-y-4">
+                            <flux:field>
+                                <flux:label>Skill</flux:label>
+                                <flux:select name="skill_id" data-test="library-skill">
+                                    @foreach ($library['skills'] as $librarySkill)
+                                        <flux:select.option value="{{ $librarySkill['skill_id'] }}">{{ $librarySkill['name'] }} · level {{ $librarySkill['level'] }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>Payment</flux:label>
+                                <flux:select name="item_id" x-model="itemId" data-test="library-item">
+                                    @foreach ($library['payments'] as $payment)
+                                        <flux:select.option value="{{ $payment['item_id'] }}">{{ $payment['name'] }} ({{ $payment['rarity'] }}, {{ $payment['xp_per_item'] }} XP each) · {{ $payment['owned'] }} carried</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>Quantity</flux:label>
+                                <flux:input type="number" name="quantity" min="1" x-model="quantity" x-bind:max="payment?.max_quantity" data-test="library-quantity" />
+                                <flux:description>Rarer goods teach more. One lesson teaches at most {{ $library['max_xp'] }} XP. You pay when the lesson ends.</flux:description>
+                            </flux:field>
+
+                            <flux:button type="submit" variant="primary" :disabled="! $library['available']" data-test="library-submit">
+                                {{ $library['available'] ? 'Take the lesson' : 'Unavailable' }}
+                            </flux:button>
+                        </div>
+
+                        <div class="grid grid-cols-2 content-start gap-px overflow-hidden rounded-sm border border-zinc-700 bg-zinc-700 text-sm">
+                            <div class="bg-ez-ground/90 p-3">
+                                <p class="ez-label">Experience</p>
+                                <p class="ez-numeral mt-1 text-4xl text-emerald-300" x-text="xp + ' XP'"></p>
+                            </div>
+                            <div class="bg-ez-ground/90 p-3">
+                                <p class="ez-label">Lesson length</p>
+                                <p class="ez-numeral mt-1 text-4xl text-ez-ink" x-text="'~' + minutes + ' min'"></p>
+                            </div>
                         </div>
                     </form>
                 @endif

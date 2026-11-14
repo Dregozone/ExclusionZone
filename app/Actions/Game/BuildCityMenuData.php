@@ -9,6 +9,7 @@ use App\Models\Item;
 use App\Models\PremiumCosmetic;
 use App\Models\Quest;
 use App\Models\QuestStep;
+use App\Models\Skill;
 use App\Models\User;
 use App\Models\UserQuest;
 use App\Models\UserWork;
@@ -101,6 +102,7 @@ class BuildCityMenuData
             'inventory' => $user->inventoryItems->sortBy(fn ($item) => $item->item?->name)->values(),
             'condition' => $this->conditionFor($user),
             'brain_scorcher' => $this->brainScorcherDataFor($user, $city, $canPerformCityActions),
+            'library' => $this->libraryDataFor($user, $city, $canPerformCityActions),
             'quest_step_actions' => $this->questStepActionsFor($user, $city),
             'jobs' => $this->jobsDataFor($user),
             'cosmetics' => PremiumCosmetic::query()
@@ -197,6 +199,48 @@ class BuildCityMenuData
     }
 
     /**
+     * The skills the library teaches and the goods the player can pay with, with the XP each one buys.
+     *
+     * @return array{available: bool, seconds_per_xp: int, max_xp: int, skills: list<array{skill_id: int, name: string, level: int}>, payments: list<array{item_id: int, name: string, rarity: string, owned: int, xp_per_item: int, max_quantity: int}>}|null
+     */
+    private function libraryDataFor(User $user, ?City $city, bool $canPerformCityActions): ?array
+    {
+        $studyAtLibrary = new StudyAtLibrary;
+
+        if (! $studyAtLibrary->isAvailableIn($city?->city)) {
+            return null;
+        }
+
+        return [
+            'available' => $canPerformCityActions,
+            'seconds_per_xp' => StudyAtLibrary::SECONDS_PER_XP,
+            'max_xp' => StudyAtLibrary::MAX_XP_PER_LESSON,
+            'skills' => Skill::query()
+                ->orderBy('display_name')
+                ->get()
+                ->map(fn (Skill $skill): array => [
+                    'skill_id' => $skill->id,
+                    'name' => $skill->display_name,
+                    'level' => $user->skillFor($skill->key)?->level ?? 1,
+                ])
+                ->all(),
+            'payments' => $user->inventoryItems
+                ->filter(fn ($inventoryItem): bool => $inventoryItem->item !== null && ! $inventoryItem->item->is_quest_item && $inventoryItem->quantity > 0)
+                ->sortBy(fn ($inventoryItem) => $inventoryItem->item->name)
+                ->map(fn ($inventoryItem): array => [
+                    'item_id' => $inventoryItem->item->id,
+                    'name' => $inventoryItem->item->name,
+                    'rarity' => $inventoryItem->item->rarity->label(),
+                    'owned' => $inventoryItem->quantity,
+                    'xp_per_item' => $studyAtLibrary->experienceFor($inventoryItem->item, 1),
+                    'max_quantity' => min($inventoryItem->quantity, $studyAtLibrary->maxQuantityPerLesson($inventoryItem->item)),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
      * The survivor's health, hunger and fatigue, how much they slow work timers, and the food and medical items they carry.
      *
      * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: float, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: float, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>, medical_items: list<array{item_id: int, name: string, owned: int, health_restored: int}>}
@@ -264,6 +308,7 @@ class BuildCityMenuData
         $title = match (true) {
             $activeWork->isCityAction() => 'Working on '.($activeWork->cityAction?->label ?? 'city action'),
             $activeWork->isBrainScorcher() => 'Feeding the Brain Scorcher',
+            $activeWork->isLesson() => 'Studying '.($activeWork->skill?->display_name ?? 'a skill').' at the library',
             $activeWork->is_retreat => 'Running from '.($activeWork->originCity?->city ?? 'trouble').' back to '.($activeWork->destinationCity?->city ?? 'safety'),
             default => 'Traveling from '.($activeWork->originCity?->city ?? 'your current city').' to '.($activeWork->destinationCity?->city ?? 'your destination'),
         };
@@ -276,6 +321,7 @@ class BuildCityMenuData
             'description' => match (true) {
                 $activeWork->isCityAction() => $activeWork->cityAction?->description ?? 'This work repeats until you stop it.',
                 $activeWork->is_retreat => 'You turned tail on the trouble. There is no turning back until you reach safety.',
+                $activeWork->isLesson() => 'The librarian is teaching you. You pay '.$activeWork->offered_quantity.'x '.($activeWork->offeredItem?->name ?? 'goods').' when the lesson ends, so keep it in your pack. Cancel to keep your items and learn nothing.',
                 $activeWork->isBrainScorcher() => 'The machine is chewing on your '.$activeWork->offered_quantity.'x '.($activeWork->offeredItem?->name ?? 'offering').'. Keep it in your pack until the timer ends, or cancel to take it back.',
                 $activeWork->queuedCityIds() !== [] => 'Movement is locked in until you arrive or cancel the route. Each later leg sets off on its own as soon as you reach a stop.',
                 default => 'Movement is locked in until you arrive or cancel the route.',

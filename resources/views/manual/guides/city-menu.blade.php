@@ -171,7 +171,7 @@
 
     <x-manual.section id="timer" title="While you work" intro="When a job or journey is running, an Active timer panel shows a scene for the work, the time left on this cycle and what the last cycle paid.">
         <div class="grid gap-4 md:grid-cols-3">
-            <x-manual.callout title="One thing at a time">You can run one job, one journey or one Brain Scorcher burn at a time. Stop or finish it before starting something else.</x-manual.callout>
+            <x-manual.callout title="One thing at a time">You can run one job, one journey, one library lesson or one Brain Scorcher burn at a time. Stop or finish it before starting something else.</x-manual.callout>
             <x-manual.callout title="Eat on the go">Eating and using medical items work while a timer runs, so you never need to stop to look after yourself.</x-manual.callout>
             <x-manual.callout type="warn" title="Away from the keyboard">Work loops keep paying out for up to 8 hours while you are away. Come back before then to start a fresh loop.</x-manual.callout>
         </div>

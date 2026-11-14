@@ -134,6 +134,11 @@ class UserWork extends Model
         return $this->work_type === 'brain_scorcher';
     }
 
+    public function isLesson(): bool
+    {
+        return $this->work_type === 'lesson';
+    }
+
     /**
      * The public path of the scene shown while this work runs. Skills added through the admin screens use the default scene.
      */

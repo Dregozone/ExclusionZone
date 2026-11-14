@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/travel', [GameActionController::class, 'travel'])->name('travel.store');
     Route::post('dashboard/actions', [GameActionController::class, 'performAction'])->name('city-action.store');
     Route::post('dashboard/brain-scorcher', [GameActionController::class, 'feedBrainScorcher'])->name('brain-scorcher.store');
+    Route::post('dashboard/library', [GameActionController::class, 'studyAtLibrary'])->name('library.store');
     Route::post('dashboard/eat', [GameActionController::class, 'eat'])->name('food.eat');
     Route::post('dashboard/trouble/attack', [GameActionController::class, 'attackTrouble'])->name('trouble.attack');
     Route::post('dashboard/trouble/buy-in', [GameActionController::class, 'buyWayPastTrouble'])->name('trouble.buy-in');

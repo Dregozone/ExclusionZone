@@ -32,6 +32,7 @@
             @endforeach
         </ol>
         <x-manual.callout class="mt-4">Production actions (cooking, crafting, medicine…) turn input items into better ones. If an action shows items under “Needs”, gather those first. Each item page shows where to get it.</x-manual.callout>
+        <x-manual.callout class="mt-4">No work you can do yet for a skill? The library in {{ \App\Actions\Game\StudyAtLibrary::CITY_NAME }} teaches any skill for goods. Each item is worth {{ \App\Actions\Game\StudyAtLibrary::XP_PER_BARTER_VALUE }} XP per rarity step (Common {{ \App\Actions\Game\StudyAtLibrary::XP_PER_BARTER_VALUE }}, Uncommon {{ \App\Actions\Game\StudyAtLibrary::XP_PER_BARTER_VALUE * 2 }}, and so on), and a lesson takes {{ \App\Actions\Game\StudyAtLibrary::SECONDS_PER_XP }} seconds per XP. It costs more than learning on the job, but it gets a skill started.</x-manual.callout>
     </x-manual.section>
 
     <x-manual.section id="xp" title="XP and levels" intro="Climbing from level L to L+1 costs L × 100 XP. There is no level cap.">
