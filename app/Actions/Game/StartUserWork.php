@@ -5,6 +5,7 @@ namespace App\Actions\Game;
 use App\Models\City;
 use App\Models\CityAction;
 use App\Models\Item;
+use App\Models\Skill;
 use App\Models\User;
 use App\Models\UserWork;
 use App\Weather;
@@ -21,6 +22,7 @@ class StartUserWork
         public CalculateWorkDuration $calculateWorkDuration,
         public TrackSurvivalNeeds $trackSurvivalNeeds,
         public FightEnemy $fightEnemy,
+        public StudyAtLibrary $studyAtLibrary,
     ) {}
 
     /**
@@ -108,6 +110,33 @@ class StartUserWork
             'offered_quantity' => $quantity,
             'skill_key' => null,
             'duration_seconds' => $this->calculateWorkDuration->forBrainScorcher($user),
+            'weather' => $this->calculateWorkDuration->currentWeather($user),
+        ]);
+    }
+
+    /**
+     * Take a lesson at the library. The payment stays in the pack until the lesson ends.
+     *
+     * @throws AuthorizationException
+     */
+    public function forLesson(User $user, Skill $skill, Item $item, int $quantity): UserWork
+    {
+        $user->loadMissing('location.city');
+
+        $this->ensureNoActiveWork($user);
+        $this->ensureNotHeldByTrouble($user);
+        $this->trackSurvivalNeeds->rest($user);
+        $this->studyAtLibrary->authorize($user, $skill, $item, $quantity);
+
+        return $this->createWork($user, [
+            'work_type' => 'lesson',
+            'city_action_id' => null,
+            'origin_city_id' => $user->location?->city_id,
+            'destination_city_id' => null,
+            'offered_item_id' => $item->id,
+            'offered_quantity' => $quantity,
+            'skill_key' => $skill->key,
+            'duration_seconds' => $this->calculateWorkDuration->forLesson($user, $this->studyAtLibrary->experienceFor($item, $quantity)),
             'weather' => $this->calculateWorkDuration->currentWeather($user),
         ]);
     }

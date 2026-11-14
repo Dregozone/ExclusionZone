@@ -14,12 +14,14 @@ use App\Http\Requests\EatFoodRequest;
 use App\Http\Requests\EquipCosmeticRequest;
 use App\Http\Requests\FeedBrainScorcherRequest;
 use App\Http\Requests\PerformCityActionRequest;
+use App\Http\Requests\StudyAtLibraryRequest;
 use App\Http\Requests\TravelRequest;
 use App\Http\Requests\UseMedicalItemRequest;
 use App\Models\City;
 use App\Models\CityAction;
 use App\Models\Item;
 use App\Models\PremiumCosmetic;
+use App\Models\Skill;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,6 +75,24 @@ class GameActionController extends Controller
         }
 
         return to_route('dashboard')->with('status', 'The Brain Scorcher accepted your offering. See what it gives back in '.max(10, $work->duration_seconds).' seconds, or cancel to take your items back.');
+    }
+
+    public function studyAtLibrary(StudyAtLibraryRequest $request, StartUserWork $startUserWork): RedirectResponse
+    {
+        try {
+            $this->authorizeTask($request, 'city_action_perform');
+            $skill = Skill::query()->findOrFail($request->integer('skill_id'));
+            $work = $startUserWork->forLesson(
+                $request->user(),
+                $skill,
+                Item::query()->findOrFail($request->integer('item_id')),
+                $request->integer('quantity'),
+            );
+        } catch (AuthorizationException $exception) {
+            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+        }
+
+        return to_route('dashboard')->with('status', "Your {$skill->display_name} lesson has started. It ends in ".max(10, $work->duration_seconds).' seconds, and you pay when it does. Cancel to keep your items.');
     }
 
     public function eat(EatFoodRequest $request, EatFood $eatFood): RedirectResponse
@@ -173,6 +193,7 @@ class GameActionController extends Controller
             $work->isCityAction() && $work->cycles_completed > 0 => "Work stopped after {$work->cycles_completed} ".str('cycle')->plural($work->cycles_completed)." (+{$work->xp_earned} XP). The unfinished cycle earned nothing.",
             $work->isCityAction() => 'Work canceled. No rewards were granted.',
             $work->isBrainScorcher() => 'Offering withdrawn. Your items are still in your pack.',
+            $work->isLesson() => 'Lesson abandoned. Nothing was paid or learned.',
             default => 'Travel canceled. You stayed in '.($work->originCity?->city ?? 'your current city').'.',
         };
 

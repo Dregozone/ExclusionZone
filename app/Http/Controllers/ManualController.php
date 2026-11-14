@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Game\BuildManualCatalogue;
 use App\Actions\Game\FeedBrainScorcher;
+use App\Actions\Game\StudyAtLibrary;
 use App\ItemRarity;
 use App\Models\Item;
 use App\Models\Quest;
@@ -122,6 +123,7 @@ class ManualController extends Controller
                 ->unique(fn ($step): string => $step->name.$step->person_of_interest)
                 ->values(),
             'hasBrainScorcher' => $location->city === 'Pripyat',
+            'hasLibrary' => (new StudyAtLibrary)->isAvailableIn($location->city),
             'isStartingCity' => $location->city === 'Kyiv',
         ]);
     }

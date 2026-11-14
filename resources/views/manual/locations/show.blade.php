@@ -23,6 +23,7 @@
             @if ($city->has_trade_post)<span class="rounded-sm border border-sky-400/50 px-2 py-0.5 font-mono text-[11px] text-sky-300 uppercase">Trade post</span>@endif
             @if ($city->radiation_damage > 0)<span class="rounded-sm border border-orange-500/60 px-2 py-0.5 font-mono text-[11px] text-orange-300 uppercase">Irradiated · −{{ $city->radiation_damage }} HP per cycle</span>@endif
             @if ($hasBrainScorcher)<span class="rounded-sm border border-fuchsia-400/50 px-2 py-0.5 font-mono text-[11px] text-fuchsia-300 uppercase">Brain Scorcher</span>@endif
+            @if ($hasLibrary)<span class="rounded-sm border border-emerald-400/50 px-2 py-0.5 font-mono text-[11px] text-emerald-300 uppercase">Library</span>@endif
         </div>
     </x-slot:meta>
 
@@ -48,6 +49,17 @@
                 <p class="ez-label !text-orange-300">Only here</p>
                 <p class="mt-1 text-xl font-semibold text-ez-ink group-hover:text-ez-signal">The Brain Scorcher</p>
                 <p class="mt-1 text-sm text-ez-muted">Burn items for a chance at something rarer. Read the odds →</p>
+            </div>
+        </a>
+    @endif
+
+    @if ($hasLibrary)
+        <a href="{{ route('manual.guide', 'skills-and-work') }}" class="ez-panel group relative flex items-center gap-5 overflow-hidden p-5" wire:navigate>
+            <img src="{{ asset('images/work/default.jpg') }}" alt="" class="size-20 shrink-0 rounded-sm object-cover sm:size-24" loading="lazy" />
+            <div>
+                <p class="ez-label !text-emerald-300">Only here</p>
+                <p class="mt-1 text-xl font-semibold text-ez-ink group-hover:text-ez-signal">The Shipyard Library</p>
+                <p class="mt-1 text-sm text-ez-muted">Pay goods for lessons in any skill, starting from level 1. How lessons work →</p>
             </div>
         </a>
     @endif

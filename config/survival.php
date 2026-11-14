@@ -30,6 +30,11 @@ return [
         'fatigue' => (float) env('SURVIVAL_BRAIN_SCORCHER_FATIGUE', 0.8),
     ],
 
+    'lesson' => [
+        'hunger' => (float) env('SURVIVAL_LESSON_HUNGER', 0.5),
+        'fatigue' => (float) env('SURVIVAL_LESSON_FATIGUE', 0.5),
+    ],
+
     /*
     | Fatigue falls on its own while the survivor has no active work. Health
     | slowly comes back too, unless the survivor is starving. Set it to 0 to

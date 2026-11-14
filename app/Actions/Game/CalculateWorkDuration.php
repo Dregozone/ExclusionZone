@@ -54,6 +54,17 @@ class CalculateWorkDuration
         return $this->applyTimerIncreases($user, FeedBrainScorcher::BASE_DURATION_SECONDS);
     }
 
+    /**
+     * A lesson takes longer the more experience it teaches.
+     */
+    public function forLesson(User $user, int $xp): int
+    {
+        return $this->applyTimerIncreases(
+            $user,
+            max(self::MINIMUM_DURATION_SECONDS, $xp * StudyAtLibrary::SECONDS_PER_XP),
+        );
+    }
+
     public function currentWeather(User $user): Weather
     {
         return $user->location?->city?->weather ?? Weather::Clear;
