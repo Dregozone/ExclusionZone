@@ -81,7 +81,7 @@
                 @foreach ($enemies as $enemy)
                     <div class="ez-card ez-pin ez-pin-heat p-4 pt-5">
                         <p class="flex justify-between gap-3"><span class="font-semibold text-ez-ink">{{ $enemy->name }}</span><span class="font-mono text-sm text-ez-muted">{{ $enemy->health }} HP</span></p>
-                        <p class="mt-1 text-xs text-ez-muted">{{ $enemy->skill?->display_name }} · hits {{ $enemy->min_damage }}–{{ $enemy->max_damage }} · {{ $enemy->xp_reward }} XP</p>
+                        <p class="mt-1 text-xs text-ez-muted">{{ $enemy->skill?->display_name }} · hits {{ $enemy->min_damage }}–{{ $enemy->max_damage }} · {{ $enemy->accuracy }}% accuracy · {{ $enemy->defence }}% defence · {{ $enemy->xp_reward }} XP</p>
                     </div>
                 @endforeach
             </div>

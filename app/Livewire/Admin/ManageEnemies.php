@@ -39,6 +39,10 @@ class ManageEnemies extends Component
 
     public int $max_damage = 5;
 
+    public int $accuracy = 60;
+
+    public int $defence = 0;
+
     public int $xp_reward = 10;
 
     /**
@@ -62,7 +66,7 @@ class ManageEnemies extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'city_id', 'key', 'name', 'skill_key', 'health', 'min_damage', 'max_damage', 'xp_reward', 'deleted_at']);
+        return $query->get(['id', 'city_id', 'key', 'name', 'skill_key', 'health', 'min_damage', 'max_damage', 'accuracy', 'defence', 'xp_reward', 'deleted_at']);
     }
 
     #[Computed]
@@ -102,6 +106,8 @@ class ManageEnemies extends Component
         $this->health = $enemy->health;
         $this->min_damage = $enemy->min_damage;
         $this->max_damage = $enemy->max_damage;
+        $this->accuracy = $enemy->accuracy;
+        $this->defence = $enemy->defence;
         $this->xp_reward = $enemy->xp_reward;
         $this->loot = $enemy->lootTable();
         $this->showForm = true;
@@ -118,6 +124,8 @@ class ManageEnemies extends Component
             'health' => ['required', 'integer', 'min:1', 'max:1000'],
             'min_damage' => ['required', 'integer', 'min:0', 'max:100'],
             'max_damage' => ['required', 'integer', 'gte:min_damage', 'max:100'],
+            'accuracy' => ['required', 'integer', 'min:0', 'max:100'],
+            'defence' => ['required', 'integer', 'min:0', 'max:100'],
             'xp_reward' => ['required', 'integer', 'min:0', 'max:10000'],
             'loot' => ['array'],
             'loot.*.item_key' => ['required', 'string', 'distinct', 'exists:items,key'],
@@ -188,6 +196,8 @@ class ManageEnemies extends Component
         $this->health = 20;
         $this->min_damage = 2;
         $this->max_damage = 5;
+        $this->accuracy = 60;
+        $this->defence = 0;
         $this->xp_reward = 10;
         $this->loot = [];
         $this->resetValidation();

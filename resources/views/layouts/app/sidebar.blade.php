@@ -32,12 +32,24 @@
                         <flux:sidebar.item icon="book-open" :href="route('manual.index')" :current="request()->routeIs('manual.*')" wire:navigate>
                             {{ __('Manual') }}
                         </flux:sidebar.item>
+
+                        @auth
+                        <flux:sidebar.item icon="chat-bubble-left-right" :href="route('feedback')" :current="request()->routeIs('feedback')" wire:navigate>
+                            {{ __('Feedback') }}
+                        </flux:sidebar.item>
+                        @endauth
                     </flux:sidebar.group>
 
                     @if (auth()->user()?->isAdmin())
                     <flux:sidebar.group :heading="__('Admin')" class="grid">
                         <flux:sidebar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                             {{ __('Move Player') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="gift" :href="route('admin.give-item')" :current="request()->routeIs('admin.give-item')" wire:navigate>
+                            {{ __('Give Item') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrow-trending-up" :href="route('admin.give-skill-experience')" :current="request()->routeIs('admin.give-skill-experience')" wire:navigate>
+                            {{ __('Give Skill XP') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="shield-check" :href="route('admin.change-user-role')" :current="request()->routeIs('admin.change-user-role')" wire:navigate>
                             {{ __('Change User Role') }}
@@ -65,6 +77,9 @@
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="exclamation-triangle" :href="route('admin.trouble-types')" :current="request()->routeIs('admin.trouble-types')" wire:navigate>
                             {{ __('Trouble') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="inbox" :href="route('admin.feedback')" :current="request()->routeIs('admin.feedback')" wire:navigate>
+                            {{ __('Feedback Reports') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                     @endif

@@ -50,7 +50,7 @@
                     </flux:field>
                 </div>
 
-                <div class="grid gap-5 sm:grid-cols-4">
+                <div class="grid gap-5 sm:grid-cols-3">
                     <flux:field>
                         <flux:label>{{ __('Health') }}</flux:label>
                         <flux:input type="number" wire:model="health" min="1" max="1000" />
@@ -58,20 +58,37 @@
                     </flux:field>
 
                     <flux:field>
-                        <flux:label>{{ __('Min damage') }}</flux:label>
+                        <flux:label>{{ __('Min hit') }}</flux:label>
                         <flux:input type="number" wire:model="min_damage" min="0" max="100" />
+                        <flux:description>{{ __('The smallest blow it lands.') }}</flux:description>
                         <flux:error name="min_damage" />
                     </flux:field>
 
                     <flux:field>
-                        <flux:label>{{ __('Max damage') }}</flux:label>
+                        <flux:label>{{ __('Max hit') }}</flux:label>
                         <flux:input type="number" wire:model="max_damage" min="0" max="100" />
+                        <flux:description>{{ __('The biggest blow it lands, before the survivor\'s skill turns part of it aside.') }}</flux:description>
                         <flux:error name="max_damage" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Accuracy %') }}</flux:label>
+                        <flux:input type="number" wire:model="accuracy" min="0" max="100" />
+                        <flux:description>{{ __('Its chance to land a blow, lowered by the survivor\'s combat level and armour.') }}</flux:description>
+                        <flux:error name="accuracy" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Defence %') }}</flux:label>
+                        <flux:input type="number" wire:model="defence" min="0" max="100" />
+                        <flux:description>{{ __('Taken off the survivor\'s chance to land a blow.') }}</flux:description>
+                        <flux:error name="defence" />
                     </flux:field>
 
                     <flux:field>
                         <flux:label>{{ __('XP reward') }}</flux:label>
                         <flux:input type="number" wire:model="xp_reward" min="0" />
+                        <flux:description>{{ __('With its loot, the whole reward for beating it.') }}</flux:description>
                         <flux:error name="xp_reward" />
                     </flux:field>
                 </div>
@@ -146,7 +163,8 @@
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-md:hidden">{{ __('City') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Skill') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">{{ __('Health') }}</th>
-                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-md:hidden">{{ __('Damage') }}</th>
+                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-md:hidden">{{ __('Hits') }}</th>
+                    <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-lg:hidden">{{ __('Accuracy / Defence') }}</th>
                     <th class="px-4 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300 max-xl:hidden">{{ __('XP') }}</th>
                     <th class="px-4 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">{{ __('Actions') }}</th>
                 </tr>
@@ -164,6 +182,7 @@
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden">{{ $enemy->skill_key }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $enemy->health }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-md:hidden">{{ $enemy->min_damage }}–{{ $enemy->max_damage }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-lg:hidden">{{ $enemy->accuracy }}% / {{ $enemy->defence }}%</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 max-xl:hidden">{{ $enemy->xp_reward }}</td>
                         <td class="px-4 py-3 text-right">
                             @if ($enemy->deleted_at)
@@ -176,7 +195,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No enemies found.') }}</td>
+                        <td colspan="8" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">{{ __('No enemies found.') }}</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Something hostile waiting in a city. City actions there that use the same combat skill fight it.
+ * Its accuracy is its chance to land a blow, its max damage is its biggest hit, and its defence lowers
+ * the survivor's chance to land one.
  */
 class Enemy extends Model
 {
@@ -32,6 +34,8 @@ class Enemy extends Model
         'health',
         'min_damage',
         'max_damage',
+        'accuracy',
+        'defence',
         'xp_reward',
         'loot',
     ];
@@ -42,6 +46,8 @@ class Enemy extends Model
             'health' => 'integer',
             'min_damage' => 'integer',
             'max_damage' => 'integer',
+            'accuracy' => 'integer',
+            'defence' => 'integer',
             'xp_reward' => 'integer',
             'loot' => 'array',
         ];

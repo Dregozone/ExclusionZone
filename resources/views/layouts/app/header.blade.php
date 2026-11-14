@@ -74,6 +74,12 @@
                         <flux:sidebar.item icon="map-pin" :href="route('admin.move-player')" :current="request()->routeIs('admin.move-player')" wire:navigate>
                             {{ __('Move Player') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="gift" :href="route('admin.give-item')" :current="request()->routeIs('admin.give-item')" wire:navigate>
+                            {{ __('Give Item') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrow-trending-up" :href="route('admin.give-skill-experience')" :current="request()->routeIs('admin.give-skill-experience')" wire:navigate>
+                            {{ __('Give Skill XP') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="shield-check" :href="route('admin.change-user-role')" :current="request()->routeIs('admin.change-user-role')" wire:navigate>
                             {{ __('Change User Role') }}
                         </flux:sidebar.item>
