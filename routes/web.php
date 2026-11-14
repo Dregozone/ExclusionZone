@@ -10,6 +10,7 @@ use App\Livewire\Admin\ChangeUserRole;
 use App\Livewire\Admin\ManageCityActions;
 use App\Livewire\Admin\ManageCountries;
 use App\Livewire\Admin\ManageEnemies;
+use App\Livewire\Admin\ManageFeedback;
 use App\Livewire\Admin\ManageItems;
 use App\Livewire\Admin\ManageLocations;
 use App\Livewire\Admin\ManageQuests;
@@ -17,6 +18,7 @@ use App\Livewire\Admin\ManageSkills;
 use App\Livewire\Admin\ManageTravelRoutes;
 use App\Livewire\Admin\ManageTroubleTypes;
 use App\Livewire\Admin\MovePlayer;
+use App\Livewire\Feedback;
 use App\Livewire\RadioHistory;
 use App\Livewire\WorldMap;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/quests/{quest}/accept', [QuestController::class, 'accept'])->name('quest.accept');
     Route::post('dashboard/quest-steps/{questStep}/interact', [QuestController::class, 'interact'])->name('quest-step.interact');
     Route::livewire('radio/history', RadioHistory::class)->name('radio.history');
+    Route::livewire('feedback', Feedback::class)->name('feedback');
 
     Route::middleware('admin')->group(function () {
         Route::livewire('admin/change-user-role', ChangeUserRole::class)->name('admin.change-user-role');
@@ -72,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
         Route::livewire('admin/quests', ManageQuests::class)->name('admin.quests');
         Route::livewire('admin/travel-routes', ManageTravelRoutes::class)->name('admin.travel-routes');
         Route::livewire('admin/trouble-types', ManageTroubleTypes::class)->name('admin.trouble-types');
+        Route::livewire('admin/feedback', ManageFeedback::class)->name('admin.feedback');
         Route::post('dashboard/admin/roles', [AdminRoleController::class, 'update'])->name('admin.roles.update');
     });
 });
