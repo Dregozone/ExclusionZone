@@ -32,6 +32,12 @@
                         <flux:sidebar.item icon="book-open" :href="route('manual.index')" :current="request()->routeIs('manual.*')" wire:navigate>
                             {{ __('Manual') }}
                         </flux:sidebar.item>
+
+                        @auth
+                        <flux:sidebar.item icon="chat-bubble-left-right" :href="route('feedback')" :current="request()->routeIs('feedback')" wire:navigate>
+                            {{ __('Feedback') }}
+                        </flux:sidebar.item>
+                        @endauth
                     </flux:sidebar.group>
 
                     @if (auth()->user()?->isAdmin())
@@ -71,6 +77,9 @@
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="exclamation-triangle" :href="route('admin.trouble-types')" :current="request()->routeIs('admin.trouble-types')" wire:navigate>
                             {{ __('Trouble') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="inbox" :href="route('admin.feedback')" :current="request()->routeIs('admin.feedback')" wire:navigate>
+                            {{ __('Feedback Reports') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                     @endif

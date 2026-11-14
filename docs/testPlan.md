@@ -36,6 +36,8 @@ Progress rule:
 | moderator | Moderate/remove inappropriate chat content | Permission and role-task seed coverage in `tests/Feature/GameMvpTest.php` | Planned (message-level moderation workflow) |
 | admin | Change another user role | `tests/Feature/GameMvpTest.php` (`admin can change another user role and non admins cannot`) | Done |
 | admin | Access admin controls | `tests/Feature/GameMvpTest.php` (`authenticated users can reach the change user role page...`) | Done |
+| user | Suggest and upvote ideas; privately report bugs and send feedback | `tests/Feature/FeedbackTest.php` | Done |
+| admin | Review, filter, resolve and reopen bug reports and feedback | `tests/Feature/FeedbackTest.php` | Done |
 
 ## 4. Requirement Traceability Matrix
 
@@ -59,6 +61,7 @@ Progress rule:
 | Health and death | Survivors start at 100 health; each work cycle, travel leg or Scorcher burn finished while starving or spent costs configured health; low-health thresholds slow timers; food restores its health value; at 0 health the `SurvivorDied` event fires and the survivor is rescued (work stops, health revives, they wake at the nearest trade post on their continent, scavengers take a configured share of each non-quest stack, work and travel are blocked until a recovery period ends, a death report shows on the dashboard until dismissed) | `tests/Feature/HealthTest.php` | Done |
 | Environmental harm | Work cycles and travel legs finished in a storm can cost health; irradiated cities (admin-editable radiation damage) cost health for every cycle worked and leg arrived there; city actions have an admin-editable accident chance and damage; injuries are reported with the cycle or arrival and can kill | `tests/Feature/EnvironmentalHarmTest.php` | Done |
 | Trouble on arrival | Arriving in a city rolls its trouble chance (full on a first visit, a configured share on return visits; starting city counts as visited); trouble holds the survivor and blocks actions, travel and quest steps, and stops a multi-stop route until dealt with; attacking resolves a fight from combat skill and health (win: XP, loot, part damage; loss: full damage via `HarmCause::Trouble`); buying in takes chosen non-quest goods worth the demand (item value = rarity); running away travels back on a timer that cannot be canceled; winning or paying resumes the route; trouble types are edited on the admin page | `tests/Feature/TroubleTest.php` | Done |
+| Feedback gathering | Signed-in survivors post ideas (author counts as the first vote) and toggle one upvote per idea, no downvotes or comments; ideas are listed most-voted first and only admins can remove one; bug reports (title + steps to reproduce) and feedback are private to the reporter and admins; ideas and reports share a per-hour submission limit; the admin Feedback Reports screen shows open reports with the reporter, filters by type and can resolve or reopen | `tests/Feature/FeedbackTest.php` | Done |
 | Seed/reference integrity | Roles/skills/countries/cities seeded; percentages bounded | `tests/Feature/GameMvpTest.php` (`reference data from the specification is seeded and bounded`) | Done |
 | Auth starter-kit flows | Registration/login/reset/verification/2FA/profile/security | `tests/Feature/Auth/*`, `tests/Feature/Settings/*` | Done |
 
