@@ -7,6 +7,8 @@ use App\Http\Controllers\ManualController;
 use App\Http\Controllers\ModerationController;
 use App\Http\Controllers\QuestController;
 use App\Livewire\Admin\ChangeUserRole;
+use App\Livewire\Admin\GiveItem;
+use App\Livewire\Admin\GiveSkillExperience;
 use App\Livewire\Admin\ManageCityActions;
 use App\Livewire\Admin\ManageCountries;
 use App\Livewire\Admin\ManageEnemies;
@@ -63,6 +65,8 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('admin')->group(function () {
         Route::livewire('admin/change-user-role', ChangeUserRole::class)->name('admin.change-user-role');
         Route::livewire('admin/move-player', MovePlayer::class)->name('admin.move-player');
+        Route::livewire('admin/give-item', GiveItem::class)->name('admin.give-item');
+        Route::livewire('admin/give-skill-experience', GiveSkillExperience::class)->name('admin.give-skill-experience');
         Route::livewire('admin/locations', ManageLocations::class)->name('admin.locations');
         Route::livewire('admin/countries', ManageCountries::class)->name('admin.countries');
         Route::livewire('admin/city-actions', ManageCityActions::class)->name('admin.city-actions');
