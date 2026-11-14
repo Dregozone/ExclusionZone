@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Admin;
 
+use App\EquipSlot;
 use App\ItemRarity;
 use App\Models\Item;
+use App\Models\Skill;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\Rule;
@@ -43,6 +45,22 @@ class ManageItems extends Component
 
     public bool $is_medical = false;
 
+    public int $base_price = 0;
+
+    public ?string $equip_slot = null;
+
+    public ?string $bonus_skill_key = null;
+
+    public int $work_speed_bonus_percent = 0;
+
+    public int $hunger_reduction_percent = 0;
+
+    public int $fatigue_reduction_percent = 0;
+
+    public int $healing_bonus_percent = 0;
+
+    public int $radiation_protection_percent = 0;
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -57,7 +75,18 @@ class ManageItems extends Component
             $query->withTrashed();
         }
 
-        return $query->get(['id', 'key', 'name', 'description', 'rarity', 'is_quest_item', 'hunger_restored', 'fatigue_restored', 'health_restored', 'attack_bonus', 'defence_bonus', 'is_medical', 'deleted_at']);
+        return $query->get(['id', 'key', 'name', 'description', 'rarity', 'is_quest_item', 'hunger_restored', 'fatigue_restored', 'health_restored', 'attack_bonus', 'defence_bonus', 'is_medical', 'base_price', 'equip_slot', 'deleted_at']);
+    }
+
+    /**
+     * Skills a worn item can speed up, keyed by skill key.
+     *
+     * @return array<string, string>
+     */
+    #[Computed]
+    public function skills(): array
+    {
+        return Skill::query()->orderBy('display_name')->pluck('display_name', 'key')->all();
     }
 
     public function create(): void
@@ -82,6 +111,14 @@ class ManageItems extends Component
         $this->attack_bonus = $item->attack_bonus;
         $this->defence_bonus = $item->defence_bonus;
         $this->is_medical = $item->is_medical;
+        $this->base_price = $item->base_price;
+        $this->equip_slot = $item->equip_slot;
+        $this->bonus_skill_key = $item->bonus_skill_key;
+        $this->work_speed_bonus_percent = $item->work_speed_bonus_percent;
+        $this->hunger_reduction_percent = $item->hunger_reduction_percent;
+        $this->fatigue_reduction_percent = $item->fatigue_reduction_percent;
+        $this->healing_bonus_percent = $item->healing_bonus_percent;
+        $this->radiation_protection_percent = $item->radiation_protection_percent;
         $this->showForm = true;
     }
 
@@ -99,7 +136,18 @@ class ManageItems extends Component
             'attack_bonus' => ['required', 'integer', 'min:0', 'max:100'],
             'defence_bonus' => ['required', 'integer', 'min:0', 'max:100'],
             'is_medical' => ['boolean'],
+            'base_price' => ['required', 'integer', 'min:0', 'max:100000'],
+            'equip_slot' => ['nullable', Rule::in(array_keys(EquipSlot::ITEM_SLOTS))],
+            'bonus_skill_key' => ['nullable', Rule::exists('skills', 'key')],
+            'work_speed_bonus_percent' => ['required', 'integer', 'min:0', 'max:100'],
+            'hunger_reduction_percent' => ['required', 'integer', 'min:0', 'max:100'],
+            'fatigue_reduction_percent' => ['required', 'integer', 'min:0', 'max:100'],
+            'healing_bonus_percent' => ['required', 'integer', 'min:0', 'max:100'],
+            'radiation_protection_percent' => ['required', 'integer', 'min:0', 'max:100'],
         ]);
+
+        $validated['equip_slot'] = $validated['equip_slot'] ?: null;
+        $validated['bonus_skill_key'] = $validated['bonus_skill_key'] ?: null;
 
         if ($this->editingId !== null) {
             Item::query()->findOrFail($this->editingId)->update($validated);
@@ -148,5 +196,13 @@ class ManageItems extends Component
         $this->attack_bonus = 0;
         $this->defence_bonus = 0;
         $this->is_medical = false;
+        $this->base_price = 0;
+        $this->equip_slot = null;
+        $this->bonus_skill_key = null;
+        $this->work_speed_bonus_percent = 0;
+        $this->hunger_reduction_percent = 0;
+        $this->fatigue_reduction_percent = 0;
+        $this->healing_bonus_percent = 0;
+        $this->radiation_protection_percent = 0;
     }
 }

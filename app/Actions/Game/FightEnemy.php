@@ -16,8 +16,8 @@ use Illuminate\Support\Lottery;
 /**
  * Fights run on the work loop, one round per cycle. Each side's blow lands on a roll against its hit
  * chance: the survivor's rises with combat skill and falls with the enemy's defence, and the enemy's
- * is its accuracy, lowered by the survivor's skill and best carried armour. A landed blow hits for a
- * roll up to the striker's maximum, the survivor's raised by skill and their best carried weapon.
+ * is its accuracy, lowered by the survivor's skill and best worn armour. A landed blow hits for a
+ * roll up to the striker's maximum, the survivor's raised by skill and the best weapon they hold.
  * Nothing a survivor can buy changes the odds.
  */
 class FightEnemy
@@ -75,7 +75,7 @@ class FightEnemy
         }
 
         $skillProgress = $this->performCityAction->authorize($user, $work->cityAction);
-        $weapon = $this->bestWeaponCarriedBy($user);
+        $weapon = $user->heldWeapon();
         $damageDealt = $this->lands($this->survivorHitChancePercent($skillProgress->level, $enemy))
             ? $this->survivorDamage($user, $skillProgress->level, $weapon)
             : 0;
@@ -105,7 +105,7 @@ class FightEnemy
         }
 
         $work->enemy_health = $enemyHealth;
-        $damageTaken = $this->lands($this->enemyHitChancePercent($enemy, $skillProgress->level, $this->bestArmourCarriedBy($user)))
+        $damageTaken = $this->lands($this->enemyHitChancePercent($enemy, $skillProgress->level, $user->wornArmour()))
             ? $this->enemyDamage($enemy, $skillProgress->level)
             : 0;
         $retort = $damageTaken === 0 ? 'it missed you' : "it hit you for {$damageTaken}";
@@ -143,9 +143,9 @@ class FightEnemy
     public function odds(User $user, Enemy $enemy): array
     {
         $skillLevel = $user->skillFor($enemy->skill_key)?->level ?? 1;
-        $weapon = $this->bestWeaponCarriedBy($user);
+        $weapon = $user->heldWeapon();
         $survivorHitChance = $this->survivorHitChancePercent($skillLevel, $enemy);
-        $enemyHitChance = $this->enemyHitChancePercent($enemy, $skillLevel, $this->bestArmourCarriedBy($user));
+        $enemyHitChance = $this->enemyHitChancePercent($enemy, $skillLevel, $user->wornArmour());
         $enemyMaxHit = max($enemy->min_damage, $enemy->max_damage);
 
         $averageBaseRoll = ((int) config('combat.survivor.base_damage_min') + (int) config('combat.survivor.base_damage_max')) / 2;
@@ -164,30 +164,6 @@ class FightEnemy
             'expected_health_lost' => $expectedHealthLost,
             'odds' => FightOdds::forHealthCostPercent($expectedHealthLost / $healthToSpare * 100),
         ];
-    }
-
-    /**
-     * The carried item with the highest attack bonus, if any.
-     */
-    public function bestWeaponCarriedBy(User $user): ?Item
-    {
-        return Item::query()
-            ->where('attack_bonus', '>', 0)
-            ->whereIn('id', $user->inventoryItems()->where('quantity', '>', 0)->select('item_id'))
-            ->orderByDesc('attack_bonus')
-            ->first();
-    }
-
-    /**
-     * The carried item with the highest defence bonus, if any.
-     */
-    public function bestArmourCarriedBy(User $user): ?Item
-    {
-        return Item::query()
-            ->where('defence_bonus', '>', 0)
-            ->whereIn('id', $user->inventoryItems()->where('quantity', '>', 0)->select('item_id'))
-            ->orderByDesc('defence_bonus')
-            ->first();
     }
 
     /**

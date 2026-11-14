@@ -8,7 +8,7 @@
     lede="You are not alone out here. Swap goods face to face at a trade post, and keep in touch with everyone over the radio."
     :image="$guide['image']"
     :breadcrumbs="['Guides' => route('manual.guide', 'getting-started'), $guide['title'] => null]"
-    :toc="['posts' => 'Trade posts', 'trade' => 'Making a trade', 'radio' => 'The radio', 'rules' => 'Fair play']"
+    :toc="['posts' => 'Trade posts', 'trade' => 'Making a trade', 'bazaar' => 'The bazaar and scrip', 'radio' => 'The radio', 'rules' => 'Fair play']"
 >
     <x-manual.section id="posts" title="Trade posts" intro="Trading only works when both survivors stand in the same city, and that city has a trade post.">
         <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -42,6 +42,24 @@
         <p class="mt-4 text-sm text-ez-muted">One open trade at a time. Quest items can’t be traded.</p>
     </x-manual.section>
 
+    <x-manual.section id="bazaar" title="The bazaar and scrip" intro="Every trade post also has a bazaar, open even when no other survivor is around.">
+        <div class="grid gap-4 md:grid-cols-3">
+            <div class="ez-card p-5">
+                <p class="font-semibold text-ez-ink">Sell for scrip</p>
+                <p class="mt-1 text-sm leading-6 text-ez-muted">The bazaar buys anything with a price, except quest items, for about half its worth. Each Barter level adds 2% (up to +50%), and selling a stack at once adds a little more (up to +10%).</p>
+            </div>
+            <div class="ez-card p-5">
+                <p class="font-semibold text-ez-ink">Buy supplies</p>
+                <p class="mt-1 text-sm leading-6 text-ez-muted">Rations, water, bandages, tools, boots, gas masks and hazmat suits. Prices are 150% of an item’s worth, less 1% per Barter level (up to 25% off).</p>
+            </div>
+            <div class="ez-card p-5">
+                <p class="font-semibold text-ez-ink">Other survivors pay better</p>
+                <p class="mt-1 text-sm leading-6 text-ez-muted">The bazaar never pays more than it charges, so trading with another survivor usually gets you a better deal. Every sale and purchase trains Barter.</p>
+            </div>
+        </div>
+        <p class="mt-4 text-sm text-ez-muted">Open <strong class="text-ez-ink">Bazaar</strong> in your PDA at a trade post. Your scrip shows next to the coin stack on the bar at the top of the city menu.</p>
+    </x-manual.section>
+
     <x-manual.section id="radio" title="The radio">
         <div class="ez-panel ez-scanlines grid gap-4 p-5 md:grid-cols-[1fr_1fr]">
             <div class="space-y-2 text-sm">
@@ -50,7 +68,7 @@
                 <p class="ez-phosphor ez-cursor">&gt; [Pripyat] ghost: don't feed the scorcher epics. trust me.</p>
             </div>
             <div class="text-sm leading-6 text-ez-ink">
-                <p>The <strong>Radio</strong> tab in your PDA is one channel shared by every survivor in the Zone. Messages arrive live.</p>
+                <p>The <strong>Radio</strong> tab in your PDA is one channel shared by every survivor in the Zone. Messages arrive live, and a red bell on your PDA tells you when there is something new, on the radio or on one of your trades.</p>
                 <p class="mt-2 text-ez-muted">Use it to find trade partners, ask for help or warn others. Older messages are in <a href="{{ route('radio.history') }}" class="text-ez-signal hover:underline">radio history</a> (sign in needed).</p>
             </div>
         </div>
@@ -59,7 +77,7 @@
     <x-manual.section id="rules" title="Fair play">
         <div class="grid gap-3 md:grid-cols-3">
             <x-manual.callout title="Be decent">Moderators can mute survivors on the radio for a while. Spam and abuse get you muted.</x-manual.callout>
-            <x-manual.callout title="Cosmetics only">Premium backers get outfits, themes and flair. Nobody can buy strength, skills or items.</x-manual.callout>
+            <x-manual.callout title="Cosmetics only">Premium backers get outfits, themes and flair. Nobody can buy strength, skills or items with real money.</x-manual.callout>
             <x-manual.callout type="warn" title="Check before you commit">Read the trade table before committing. Once both sides commit, the swap is final.</x-manual.callout>
         </div>
     </x-manual.section>

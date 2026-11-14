@@ -122,13 +122,13 @@
                                 @break
 
                             @case('pda')
-                                <p>Your <strong class="text-ez-ink">PDA</strong> (the <span class="font-mono text-ez-signal">[ OPEN PDA ]</span> button) holds everything that isn't about the city you are standing in:</p>
+                                <p>Your <strong class="text-ez-ink">PDA</strong> (the <span class="font-mono text-ez-signal">[ OPEN PDA ]</span> button) holds everything that isn't about the city you are standing in. A <span class="text-red-400">red bell</span> on the button means a new radio message or a trade change is waiting. To travel, open the <strong class="text-ez-ink">World map</strong> from the menu.</p>
                                 <ul class="grid gap-2 sm:grid-cols-2">
                                     @foreach ([
-                                        ['map', 'Map', 'Where you are and where routes go.'],
-                                        ['arrow-trending-up', 'Travel routes', 'Set off for a neighbouring city.'],
                                         ['academic-cap', 'Skill tracker', 'Every skill level and XP bar.'],
-                                        ['archive-box', 'Inventory', 'Your pack: eat, use and inspect items.'],
+                                        ['archive-box', 'Pack', 'Everything you carry, as pictures. Tap one to read about it.'],
+                                        ['user', 'Gear', 'Wear boots, tools and masks to work faster and safer.'],
+                                        ['building-storefront', 'Bazaar', 'Buy and sell for scrip at a trade post.'],
                                         ['signal', 'Radio', 'Talk to every survivor in the Zone.'],
                                         ['arrows-right-left', 'Trade board', 'Swap goods at a trade post.'],
                                         ['clipboard-document-list', 'Contracts', 'Start story quests and jobs.'],
@@ -143,7 +143,7 @@
                                 @break
 
                             @case('travel')
-                                <p>Cities are linked by routes. From {{ $cityName }} you can reach:</p>
+                                <p>Cities are linked by routes. Open the <strong class="text-ez-ink">World map</strong> from the menu, pick a city and press Travel. From {{ $cityName }} you can reach:</p>
                                 <ul class="flex flex-wrap gap-2">
                                     @foreach ($startingCity?->neighbors ?? [] as $neighbor)
                                         <li>

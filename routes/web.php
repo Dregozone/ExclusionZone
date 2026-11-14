@@ -55,6 +55,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/trouble/buy-in', [GameActionController::class, 'buyWayPastTrouble'])->name('trouble.buy-in');
     Route::post('dashboard/trouble/run', [GameActionController::class, 'runFromTrouble'])->name('trouble.run');
     Route::post('dashboard/medical', [GameActionController::class, 'useMedicalItem'])->name('medical.use');
+    Route::post('dashboard/gear/equip', [GameActionController::class, 'equip'])->name('gear.equip');
+    Route::post('dashboard/gear/unequip', [GameActionController::class, 'unequip'])->name('gear.unequip');
+    Route::post('dashboard/bazaar/sell', [GameActionController::class, 'sellToBazaar'])->name('bazaar.sell');
+    Route::post('dashboard/bazaar/buy', [GameActionController::class, 'buyFromBazaar'])->name('bazaar.buy');
     Route::post('dashboard/death-report/dismiss', [GameActionController::class, 'dismissDeathReport'])->name('death-report.dismiss');
     Route::post('dashboard/work/complete', [GameActionController::class, 'completeWork'])->name('work.complete');
     Route::post('dashboard/work/cancel', [GameActionController::class, 'cancelWork'])->name('work.cancel');

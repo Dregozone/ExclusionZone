@@ -36,20 +36,83 @@
                 </div>
 
                 <div class="grid basis-full grid-cols-3 gap-2 sm:basis-auto sm:flex-1 sm:gap-4 sm:min-w-[22rem]">
-                    <x-zone.meter compact :label="__('Health')" :value="$condition['health']['value']" :maximum="$condition['health']['maximum']" :tone="$healthTone($condition['health'])" :reading="$condition['health']['value']" />
-                    <x-zone.meter compact :label="__('Hunger')" :value="$condition['hunger']['value']" :maximum="$condition['hunger']['maximum']" :tone="$needTone($condition['hunger'])" :reading="$condition['hunger']['value']" />
-                    <x-zone.meter compact :label="__('Fatigue')" :value="$condition['fatigue']['value']" :maximum="$condition['fatigue']['maximum']" :tone="$needTone($condition['fatigue'])" :reading="$condition['fatigue']['value']" />
+                    @foreach (['health' => __('Health'), 'hunger' => __('Hunger'), 'fatigue' => __('Fatigue')] as $need => $needLabel)
+                        @php($state = $condition[$need])
+                        <x-zone.meter
+                            compact
+                            :label="$needLabel"
+                            :value="$state['value']"
+                            :maximum="$state['maximum']"
+                            :tone="$need === 'health' ? $healthTone($state) : $needTone($state)"
+                            :reading="$state['value']"
+                            :status="$state['label']"
+                            data-test="condition-{{ $need }}"
+                        />
+                    @endforeach
                 </div>
 
-                <span @class([
-                    'rounded-sm border px-2 py-1 font-mono text-[11px] whitespace-nowrap',
-                    'border-zinc-700 text-ez-muted' => $condition['timer_increase_percent'] === 0,
-                    'border-amber-400/60 text-amber-400' => $condition['timer_increase_percent'] > 0,
-                ])>
-                    {{ $condition['timer_increase_percent'] === 0 ? 'No drag on timers' : "▲ Timers +{$condition['timer_increase_percent']}%" }}
-                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <x-zone.scrip :amount="$bazaar['scrip']" class="rounded-sm border border-amber-400/40 px-2 py-1 text-[11px] text-amber-200" data-test="hud-scrip" />
+                    <span @class([
+                        'rounded-sm border px-2 py-1 font-mono text-[11px] whitespace-nowrap',
+                        'border-zinc-700 text-ez-muted' => $condition['timer_increase_percent'] === 0,
+                        'border-amber-400/60 text-amber-400' => $condition['timer_increase_percent'] > 0,
+                    ]) data-test="condition-timer-penalty">
+                        {{ $condition['timer_increase_percent'] === 0 ? 'No drag on timers' : "▲ Timers +{$condition['timer_increase_percent']}%" }}
+                    </span>
+                    @if ($active_work && ! $active_work['is_retreat'])
+                        <form method="POST" action="{{ route('work.cancel') }}">
+                            @csrf
+                            <button type="submit" class="inline-flex min-h-8 items-center gap-1.5 rounded-sm border border-red-400/70 bg-red-500/15 px-2.5 py-1 font-mono text-[11px] font-semibold tracking-wide text-red-200 uppercase transition hover:bg-red-500/30" data-test="hud-stop-work">
+                                <span class="size-2 rounded-[1px] bg-current" aria-hidden="true"></span>
+                                {{ $active_work['type'] === 'city_action' ? 'Stop work' : 'Cancel' }}
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
+            <span class="hidden" data-pda-alerts='@json($alerts)'></span>
         </div>
+
+        @if ($recovery)
+            {{-- Recovery after death: work and travel stay locked until the countdown ends --}}
+            <div
+                x-data="{
+                    deadline: Date.parse(@js($recovery['until_iso'])),
+                    remaining: {{ $recovery['remaining_seconds'] }},
+                    timerId: null,
+                    init() {
+                        this.tick();
+                        this.timerId = window.setInterval(() => this.tick(), 1000);
+                    },
+                    destroy() {
+                        window.clearInterval(this.timerId);
+                    },
+                    tick() {
+                        this.remaining = Math.max(0, Math.ceil((this.deadline - Date.now()) / 1000));
+
+                        if (this.remaining === 0) {
+                            window.clearInterval(this.timerId);
+                            window.location.reload();
+                        }
+                    },
+                    formatted() {
+                        const minutes = Math.floor(this.remaining / 60);
+
+                        return `${minutes}:${String(this.remaining % 60).padStart(2, '0')}`;
+                    },
+                }"
+                class="ez-panel flex flex-wrap items-center gap-4 !border-red-400/50 px-4 py-3"
+                role="status"
+                data-test="recovery-countdown"
+            >
+                <span class="ez-numeral text-4xl text-red-300 tabular-nums" x-text="formatted()">{{ gmdate('i:s', $recovery['remaining_seconds']) }}</span>
+                <div class="min-w-0 flex-1">
+                    <p class="ez-label !text-red-300">Recovering after your collapse</p>
+                    <p class="mt-1 text-sm text-ez-muted">You can't work or travel until the countdown ends ({{ $recovery['until_human'] }}). You can still eat, patch yourself up, trade and sort your gear.</p>
+                </div>
+            </div>
+        @endif
 
         @if ($death_report)
             {{-- Journal page: what happened, in your own notebook --}}
@@ -169,54 +232,59 @@
                     isLoop: @js($active_work['type'] === 'city_action'),
                     isTravel: @js($active_work['type'] === 'travel'),
                     nextRefreshAt: 0,
+                    isOnScreen: true,
+                    observer: null,
                     init() {
                         this.tick();
                         this.timerId = window.setInterval(() => this.tick(), 1000);
+
+                        {{-- Only repaint the countdown while it can be seen; settling cycles still happens off screen. --}}
+                        if ('IntersectionObserver' in window) {
+                            this.observer = new IntersectionObserver(([entry]) => {
+                                this.isOnScreen = entry.isIntersecting;
+                            });
+                            this.observer.observe(this.$el);
+                        }
+                    },
+                    destroy() {
+                        window.clearInterval(this.timerId);
+                        this.observer?.disconnect();
                     },
                     tick() {
-                        this.remainingSeconds = Math.max(0, Math.ceil((this.deadline - Date.now()) / 1000));
+                        const remaining = Math.max(0, Math.ceil((this.deadline - Date.now()) / 1000));
 
-                        if (this.isLoop && this.remainingSeconds === 0 && Date.now() >= this.nextRefreshAt) {
+                        if ((this.isOnScreen && ! document.hidden) || remaining === 0) {
+                            this.remainingSeconds = remaining;
+                        }
+
+                        if (this.isLoop && remaining === 0 && Date.now() >= this.nextRefreshAt) {
                             this.nextRefreshAt = Date.now() + 5000;
                             this.refreshLoop();
                         }
 
-                        if (this.isTravel && this.remainingSeconds === 0 && Date.now() >= this.nextRefreshAt) {
+                        if (this.isTravel && remaining === 0 && Date.now() >= this.nextRefreshAt) {
                             this.nextRefreshAt = Date.now() + 5000;
                             window.location.reload();
                         }
                     },
                     async refreshLoop() {
-                        try {
-                            const response = await fetch(window.location.href, { headers: { Accept: 'text/html' } });
+                        {{-- Offline for a moment: tick() tries again shortly, and the server keeps settling meanwhile. --}}
+                        const page = await window.ezRefreshLive?.();
 
-                            if (! response.ok) {
-                                return;
-                            }
-
-                            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
-                            const loop = page.querySelector('[data-work-loop]');
-
-                            if (loop === null) {
-                                window.location.reload();
-
-                                return;
-                            }
-
-                            this.deadline = Date.parse(loop.dataset.availableAt);
-
-                            page.querySelectorAll('[data-work-live]').forEach((fresh) => {
-                                const current = document.querySelector(`[data-work-live='${fresh.dataset.workLive}']`);
-
-                                if (current !== null) {
-                                    current.innerHTML = fresh.innerHTML;
-                                }
-                            });
-
-                            this.tick();
-                        } catch {
-                            // Offline for a moment: tick() tries again shortly, and the server keeps settling meanwhile.
+                        if (! page) {
+                            return;
                         }
+
+                        const loop = page.querySelector('[data-work-loop]');
+
+                        if (loop === null) {
+                            window.location.reload();
+
+                            return;
+                        }
+
+                        this.deadline = Date.parse(loop.dataset.availableAt);
+                        this.tick();
                     },
                     formattedRemaining() {
                         const minutes = Math.floor(this.remainingSeconds / 60);
@@ -236,7 +304,7 @@
                         <img
                             src="{{ $active_work['image_url'] }}"
                             alt=""
-                            class="absolute inset-0 h-full w-full object-cover opacity-70 saturate-[.7]"
+                            class="absolute inset-0 h-full w-full object-cover opacity-60"
                             data-test="active-work-image"
                         >
                         <div class="absolute inset-0 bg-linear-to-t from-ez-ground via-ez-ground/40 to-transparent xl:bg-linear-to-r" aria-hidden="true"></div>
@@ -264,10 +332,26 @@
                     </div>
 
                     <div class="space-y-4 p-5 sm:p-6">
-                        <div>
-                            <p class="ez-label !text-amber-400">Active timer</p>
-                            <h2 class="ez-display mt-2 text-4xl text-ez-ink">{{ $active_work['title'] }}</h2>
-                            <p class="mt-2 max-w-2xl text-sm text-ez-muted">{{ $active_work['description'] }}</p>
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="min-w-0 flex-1 basis-64">
+                                <p class="ez-label !text-amber-400">Active timer</p>
+                                <h2 class="ez-display mt-2 text-4xl text-ez-ink">{{ $active_work['title'] }}</h2>
+                                <p class="mt-2 max-w-2xl text-sm text-ez-muted">{{ $active_work['description'] }}</p>
+                            </div>
+
+                            @unless ($active_work['is_retreat'])
+                                <form method="POST" action="{{ route('work.cancel') }}" class="w-full shrink-0 sm:w-auto">
+                                    @csrf
+                                    <button type="submit" class="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-sm border border-red-300/80 bg-red-600 px-5 py-3 font-mono text-sm font-semibold tracking-wider text-white uppercase shadow-[0_0_18px_rgba(239,68,68,0.35)] transition hover:bg-red-500 focus-visible:ring-2 focus-visible:ring-red-300 sm:w-auto" data-test="cancel-work">
+                                        <span class="size-3 rounded-[2px] bg-current" aria-hidden="true"></span>
+                                        {{ match ($active_work['type']) {
+                                            'city_action' => 'Stop working',
+                                            'travel' => 'Cancel route',
+                                            default => 'Take offering back',
+                                        } }}
+                                    </button>
+                                </form>
+                            @endunless
                         </div>
 
                         @if ($active_work['type'] === 'city_action')
@@ -365,15 +449,6 @@
                                 </form>
                             @endif
 
-                            @unless ($active_work['is_retreat'])
-                                <form method="POST" action="{{ route('work.cancel') }}">
-                                    @csrf
-                                    <flux:button type="submit" variant="ghost" data-test="cancel-work">
-                                        {{ $active_work['type'] === 'city_action' ? 'Stop working' : 'Cancel' }}
-                                    </flux:button>
-                                </form>
-                            @endunless
-
                             <p class="text-xs text-ez-muted">
                                 {{ match (true) {
                                     $active_work['is_retreat'] => 'Running from trouble cannot be canceled.',
@@ -439,76 +514,27 @@
                 </div>
             </section>
 
-            {{-- Survivor condition: Geiger panel --}}
-            <section class="ez-panel min-w-0 p-5 sm:p-6" data-work-live="condition" data-test="survivor-condition">
+            {{-- Supplies: eat and patch up without leaving your place on the page --}}
+            <section class="ez-panel min-w-0 p-5 sm:p-6" data-work-live="supplies" data-test="survivor-supplies">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <p class="ez-label">Field readout</p>
-                        <h2 class="ez-display mt-1 text-3xl text-ez-ink">Survivor condition</h2>
+                        <p class="ez-label">Field kit</p>
+                        <h2 class="ez-display mt-1 text-3xl text-ez-ink">Rations &amp; medical</h2>
                     </div>
-                    <div class="flex items-center gap-3">
-                        @php($drag = min(100, $condition['timer_increase_percent']))
-                        <svg viewBox="0 0 120 70" class="h-12 w-20" aria-hidden="true">
-                            <path d="M10 64a50 50 0 0 1 100 0" fill="none" stroke="currentColor" class="text-zinc-700" stroke-width="7" />
-                            <path d="M85 20.7a50 50 0 0 1 25 43.3" fill="none" stroke="currentColor" class="text-red-500/80" stroke-width="7" />
-                            <g transform="rotate({{ -90 + round($drag * 1.8) }} 60 64)">
-                                <g class="ez-needle">
-                                    <line x1="60" y1="64" x2="60" y2="20" stroke="currentColor" class="text-amber-400" stroke-width="2.5" stroke-linecap="round" />
-                                </g>
-                            </g>
-                            <circle cx="60" cy="64" r="5" fill="currentColor" class="text-ez-ink" />
-                        </svg>
-                        <span @class([
-                            'rounded-sm border px-2 py-1 font-mono text-[11px]',
-                            'border-emerald-400/50 text-emerald-300' => $condition['timer_increase_percent'] === 0,
-                            'border-amber-400/60 text-amber-300' => $condition['timer_increase_percent'] > 0,
-                        ]) data-test="condition-timer-penalty">
-                            {{ $condition['timer_increase_percent'] === 0 ? 'No timer penalty' : "Timers +{$condition['timer_increase_percent']}%" }}
-                        </span>
-                    </div>
+                    <p class="max-w-56 text-right text-xs text-ez-muted">Your health, hunger and fatigue are always on the bar at the top.</p>
                 </div>
 
-                <div class="mt-5 grid gap-4">
-                    @php($health = $condition['health'])
-                    <x-zone.meter
-                        :label="__('Health')"
-                        :value="$health['value']"
-                        :maximum="$health['maximum']"
-                        :tone="$healthTone($health)"
-                        :reading="$health['label'].' · '.$health['value'].' / '.$health['maximum']"
-                        :caption="$health['timer_increase_percent'] === 0 ? 'No effect on timers.' : 'Timers +'.$health['timer_increase_percent'].'%.'"
-                        data-test="condition-health"
-                    />
-
-                    @foreach (['hunger' => 'Hunger', 'fatigue' => 'Fatigue'] as $need => $needLabel)
-                        @php($state = $condition[$need])
-                        <x-zone.meter
-                            :label="$needLabel"
-                            :value="$state['value']"
-                            :maximum="$state['maximum']"
-                            :tone="$needTone($state)"
-                            :reading="$state['label'].' · '.$state['value'].' / '.$state['maximum']"
-                            :caption="$state['timer_increase_percent'] === 0 ? 'No effect on timers.' : 'Timers +'.$state['timer_increase_percent'].'%.'"
-                            data-test="condition-{{ $need }}"
-                        />
-                    @endforeach
-                </div>
-
-                <details class="group mt-4 text-sm text-ez-muted">
-                    <summary class="ez-label cursor-pointer list-none hover:!text-ez-ink"><span class="group-open:hidden">+ How condition works</span><span class="hidden group-open:inline">− How condition works</span></summary>
-                    <p class="mt-2 leading-6">Work and travel make you hungry and tired. You can keep going, but every timer runs slower, and pushing on while starving or spent wears down your health. Eat to ease hunger, and patch up wounds with medical supplies or at a field clinic. Fatigue fades and wounds slowly mend while you rest between jobs, unless you are starving. If your health reaches zero, you die.</p>
-                </details>
-
-                <div class="mt-5 border-t border-zinc-700 pt-4">
+                <div class="mt-5">
                     <p class="ez-label">Rations</p>
                     @if ($condition['foods'] !== [])
                         <div class="mt-2 grid gap-2 sm:grid-cols-2">
                             @foreach ($condition['foods'] as $food)
-                                <form method="POST" action="{{ route('food.eat') }}" class="ez-card flex items-center justify-between gap-3 p-3">
+                                <form method="POST" action="{{ route('food.eat') }}" class="ez-card flex items-center gap-3 p-2.5" data-quick-action>
                                     @csrf
                                     <input type="hidden" name="item_id" value="{{ $food['item_id'] }}">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-medium text-ez-ink">{{ $food['name'] }} <span class="font-mono text-ez-muted">×{{ $food['owned'] }}</span></p>
+                                    <img src="{{ $food['image_url'] }}" alt="" loading="lazy" decoding="async" width="48" height="48" class="size-12 shrink-0 rounded-sm border border-zinc-700 object-cover">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium text-ez-ink">{{ $food['name'] }} <span class="font-mono text-ez-muted">×<span data-quick-count>{{ $food['owned'] }}</span></span></p>
                                         <p class="text-xs text-ez-muted">
                                             {{ collect(['Health +'.$food['health_restored'] => $food['health_restored'], 'Hunger -'.$food['hunger_restored'] => $food['hunger_restored'], 'Fatigue -'.$food['fatigue_restored'] => $food['fatigue_restored']])->filter()->keys()->implode(' · ') }}
                                         </p>
@@ -519,7 +545,7 @@
                         </div>
                     @else
                         <p class="mt-2 rounded-sm border border-dashed border-zinc-600 p-3 text-sm text-ez-muted">
-                            No food in your pack. Cook borscht in Kyiv, or bring back rations and fish from your runs.
+                            No food in your pack. Cook borscht in Kyiv, buy rations at a trade post bazaar, or bring back fish from your runs.
                         </p>
                     @endif
 
@@ -527,11 +553,12 @@
                         <p class="ez-label mt-4">Medical</p>
                         <div class="mt-2 grid gap-2 sm:grid-cols-2" data-test="medical-items">
                             @foreach ($condition['medical_items'] as $medicalItem)
-                                <form method="POST" action="{{ route('medical.use') }}" class="ez-card flex items-center justify-between gap-3 !border-red-400/40 p-3">
+                                <form method="POST" action="{{ route('medical.use') }}" class="ez-card flex items-center gap-3 !border-red-400/40 p-2.5" data-quick-action>
                                     @csrf
                                     <input type="hidden" name="item_id" value="{{ $medicalItem['item_id'] }}">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-medium text-ez-ink">{{ $medicalItem['name'] }} <span class="font-mono text-ez-muted">×{{ $medicalItem['owned'] }}</span></p>
+                                    <img src="{{ $medicalItem['image_url'] }}" alt="" loading="lazy" decoding="async" width="48" height="48" class="size-12 shrink-0 rounded-sm border border-red-400/40 object-cover">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium text-ez-ink">{{ $medicalItem['name'] }} <span class="font-mono text-ez-muted">×<span data-quick-count>{{ $medicalItem['owned'] }}</span></span></p>
                                         <p class="text-xs text-red-300">Health +{{ $medicalItem['health_restored'] }}</p>
                                     </div>
                                     <flux:button type="submit" size="sm" data-test="use-medical-{{ $medicalItem['item_id'] }}">Use</flux:button>
@@ -540,10 +567,15 @@
                         </div>
                     @elseif ($condition['health']['value'] < $condition['health']['maximum'])
                         <p class="mt-2 rounded-sm border border-dashed border-zinc-600 p-3 text-sm text-ez-muted">
-                            No medical supplies. Raid pharmacies in Kyiv, roll bandages in Warsaw, or pay a field clinic in Kyiv or Warsaw to patch you up.
+                            No medical supplies. Raid pharmacies in Kyiv, roll bandages in Warsaw, buy them at a bazaar, or pay a field clinic in Kyiv or Warsaw to patch you up.
                         </p>
                     @endif
                 </div>
+
+                <details class="group mt-4 text-sm text-ez-muted">
+                    <summary class="ez-label cursor-pointer list-none hover:!text-ez-ink"><span class="group-open:hidden">+ How condition works</span><span class="hidden group-open:inline">− How condition works</span></summary>
+                    <p class="mt-2 leading-6">Work and travel make you hungry and tired. You can keep going, but every timer runs slower, and pushing on while starving or spent wears down your health. Eat to ease hunger, and patch up wounds with medical supplies or at a field clinic. Fatigue fades and wounds slowly mend while you rest between jobs, unless you are starving. If your health reaches zero, you die. Worn gear can ease hunger and fatigue and boost healing: see Gear on your PDA.</p>
+                </details>
             </section>
         </div>
 
@@ -578,7 +610,7 @@
         @endif
 
         {{-- City actions: pins on the local map --}}
-        <section>
+        <section class="ez-deferred">
             <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <p class="ez-label">Every action grants XP and loot tied to the current city.</p>
@@ -635,12 +667,24 @@
                             @endif
                         </div>
 
+                        @if ($entry['gear_speed_percent'] > 0)
+                            <p class="text-xs text-emerald-300" data-test="action-gear-{{ $entry['action']->action_key }}">Your gear makes this {{ $entry['gear_speed_percent'] }}% faster.</p>
+                        @endif
+
                         <form method="POST" action="{{ route('city-action.store') }}" class="mt-auto pt-1">
                             @csrf
                             <input type="hidden" name="city_action_id" value="{{ $entry['action']->id }}">
-                            <flux:button type="submit" :variant="$isHostile ? 'danger' : 'primary'" class="w-full" :disabled="! $entry['available']" data-test="action-{{ $entry['action']->action_key }}">
-                                {{ $entry['available'] ? 'Begin work' : (! $can_perform_city_actions ? 'Unavailable' : ($entry['user_level'] < $entry['required_level'] ? 'Locked' : 'Missing items')) }}
-                            </flux:button>
+                            @if ($entry['available'])
+                                <flux:button type="submit" :variant="$isHostile ? 'danger' : 'primary'" class="w-full" data-test="action-{{ $entry['action']->action_key }}">Begin work</flux:button>
+                            @else
+                                <div title="{{ $entry['unavailable_reason'] }}">
+                                    <flux:button type="submit" class="w-full" disabled aria-describedby="action-reason-{{ $entry['action']->id }}" data-test="action-{{ $entry['action']->action_key }}">{{ $entry['unavailable_label'] }}</flux:button>
+                                </div>
+                                <p id="action-reason-{{ $entry['action']->id }}" class="mt-2 flex items-start gap-1.5 text-xs text-ez-muted" data-test="action-reason-{{ $entry['action']->action_key }}">
+                                    <flux:icon.information-circle variant="micro" class="mt-px shrink-0 text-amber-300" />
+                                    <span>{{ $entry['unavailable_reason'] }}</span>
+                                </p>
+                            @endif
                         </form>
                     </div>
                 @endforeach
@@ -668,7 +712,7 @@
                         return this.offering.odds_by_quantity[quantity];
                     }
                 }"
-                class="ez-panel relative overflow-hidden !border-fuchsia-400/40 bg-[radial-gradient(ellipse_at_90%_110%,rgb(224_69_43/0.28),transparent_55%),radial-gradient(ellipse_at_0%_0%,rgb(107_26_143/0.45),transparent_60%)] p-5 sm:p-6"
+                class="ez-panel ez-deferred relative overflow-hidden !border-fuchsia-400/40 bg-[radial-gradient(ellipse_at_90%_110%,rgb(224_69_43/0.28),transparent_55%),radial-gradient(ellipse_at_0%_0%,rgb(107_26_143/0.45),transparent_60%)] p-5 sm:p-6"
                 data-test="brain-scorcher"
             >
                 <div class="ez-sweep pointer-events-none absolute inset-0" aria-hidden="true"></div>
@@ -710,6 +754,12 @@
                             <flux:button type="submit" variant="primary" :disabled="! $brain_scorcher['available']" data-test="brain-scorcher-submit">
                                 {{ $brain_scorcher['available'] ? 'Feed the Brain Scorcher' : 'Unavailable' }}
                             </flux:button>
+                            @if (! $brain_scorcher['available'] && $city_action_restriction)
+                                <p class="flex items-start gap-1.5 text-xs text-ez-muted" data-test="brain-scorcher-reason">
+                                    <flux:icon.information-circle variant="micro" class="mt-px shrink-0 text-amber-300" />
+                                    <span>{{ $city_action_restriction }}</span>
+                                </p>
+                            @endif
                         </div>
 
                         <div class="grid grid-cols-2 content-start gap-px overflow-hidden rounded-sm border border-zinc-700 bg-zinc-700 text-sm sm:grid-cols-5" x-show="odds">
@@ -814,16 +864,15 @@
         @endif
 
         <x-pda
-            :neighbors="$neighbors"
             :skills="$skills"
             :inventory="$inventory"
+            :gear="$gear"
+            :bazaar="$bazaar"
+            :alerts="$alerts"
             :cosmetics="$cosmetics"
             :player="$player"
             :city="$city"
             :country="$country"
-            :mapData="$map_data"
-            :canPerformCityActions="$can_perform_city_actions"
-            :cityActionRestriction="$city_action_restriction"
             :jobs="$jobs"
         />
     </div>

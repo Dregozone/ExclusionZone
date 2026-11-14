@@ -1,13 +1,13 @@
 @php
     $parts = [
-        1 => ['Status bar', 'Your health, hunger and fatigue at a glance. An amber “Timers +10%” tag means your condition is slowing your work.'],
+        1 => ['Status bar', 'Your health, hunger, fatigue and scrip at a glance. An amber “Timers +10%” tag means your condition is slowing your work. While you work, a red Stop button sits here too, so you can stop from anywhere on the page.'],
         2 => ['Where you are', 'The city, its country and its terrain. Everything below belongs to this city.'],
         3 => ['Conditions', 'Today’s weather, average temperature, rain chance and trouble chance. A red trouble tile means arrivals here often meet trouble.'],
         4 => ['Intercept', 'Scout reports picked up on the radio: flavour, rumours and warnings about the area.'],
-        5 => ['Field readout', 'Your condition in detail, with the food (Rations) and medical items in your pack. Press Eat or Use right here, even mid-job.'],
+        5 => ['Rations & medical', 'The food and medical items in your pack. Press Eat or Use right here, even mid-job; the page stays where you scrolled to.'],
         6 => ['Quest objectives', 'Appears only when a quest you have started has a step in this city: speak to a contact or hand over items.'],
         7 => ['Action cards', 'One card per job in this city. Each shows its risk, the skill it trains, the level it needs, what it gives, what each cycle costs and what items it uses up.'],
-        8 => ['Open PDA', 'Map, travel, skills, inventory, radio, trade board, contracts and cosmetics.'],
+        8 => ['Open PDA', 'Skills, pack, gear, bazaar, radio, trade board, contracts and cosmetics. A red bell means a new radio message or trade change. Travel from the World map in the menu.'],
     ];
 @endphp
 
@@ -33,6 +33,7 @@
                             <span class="ez-meter !h-1.5 {{ $tone }}"><span class="ez-meter-fill block" style="width: {{ $width }}%"></span></span>
                         </span>
                     @endforeach
+                    <span class="rounded-sm border border-amber-400/40 px-1.5 py-0.5 font-mono text-[9px] text-amber-200">◎ 25</span>
                     <span class="rounded-sm border border-amber-400/60 px-1.5 py-0.5 font-mono text-[9px] text-amber-300">Timers +10%</span>
                     <span class="absolute -top-2.5 -left-2.5 flex size-6 items-center justify-center rounded-full bg-ez-signal font-mono text-[11px] font-semibold text-ez-signal-ink">1</span>
                 </div>
@@ -60,10 +61,7 @@
                         </div>
                     </div>
                     <div :class="focus === 5 ? 'border-ez-signal bg-ez-signal/10' : 'border-zinc-700'" class="{{ $zone(5) }} space-y-2">
-                        <p class="ez-display text-lg text-ez-ink">Survivor condition</p>
-                        @foreach (['Health' => 73, 'Hunger' => 46, 'Fatigue' => 60] as $meter => $width)
-                            <span class="block ez-meter !h-1.5 {{ $meter === 'Fatigue' ? 'text-amber-400' : 'text-ez-signal' }}"><span class="ez-meter-fill block" style="width: {{ $width }}%"></span></span>
-                        @endforeach
+                        <p class="ez-display text-lg text-ez-ink">Rations &amp; medical</p>
                         <p class="pt-1 font-mono text-[9px] text-ez-muted uppercase">Rations</p>
                         <div class="flex items-center justify-between rounded-sm border border-zinc-700 p-1.5"><span class="text-ez-ink">Borscht ×2</span><span class="rounded-sm bg-zinc-700 px-1.5 text-ez-ink">Eat</span></div>
                         <p class="font-mono text-[9px] text-ez-muted uppercase">Medical</p>
@@ -80,7 +78,7 @@
 
                 <div class="flex items-end justify-between gap-3">
                     <p class="ez-display text-2xl text-ez-ink">City actions</p>
-                    <span :class="focus === 8 ? 'border-ez-signal bg-ez-signal/10' : 'border-ez-signal/50'" class="relative rounded-sm border px-2 py-1 font-mono text-ez-signal">[ OPEN PDA ]
+                    <span :class="focus === 8 ? 'border-ez-signal bg-ez-signal/10' : 'border-ez-signal/50'" class="relative rounded-sm border px-2 py-1 font-mono text-ez-signal">[ OPEN PDA ] <span class="ml-1 rounded-full bg-red-600 px-1.5 text-[9px] text-white">2</span>
                         <span class="absolute -top-2.5 -left-2.5 flex size-6 items-center justify-center rounded-full bg-ez-signal font-mono text-[11px] font-semibold text-ez-signal-ink">8</span>
                     </span>
                 </div>
@@ -153,13 +151,14 @@
         </div>
     </x-manual.section>
 
-    <x-manual.section id="buttons" title="Button states">
-        <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <x-manual.section id="buttons" title="Button states" intro="When an action can’t be started, the reason is written right under its button: the level you need, the items you’re short of, or how long you’re still recovering.">
+        <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             @foreach ([
                 ['Begin work', 'bg-ez-signal text-ez-signal-ink', 'You can start this now.'],
                 ['Begin work', 'bg-orange-600 text-white', 'You can start, but it is a fight.'],
                 ['Missing items', 'bg-zinc-700/70 text-ez-ink', 'You are short of an item it uses.'],
                 ['Locked', 'bg-zinc-700/70 text-ez-muted', 'Your skill level is too low.'],
+                ['Recovering', 'bg-zinc-700/70 text-ez-muted', 'You died recently. A countdown at the top shows when you can work again.'],
             ] as [$label, $tone, $copy])
                 <li class="ez-card p-4">
                     <p class="rounded-sm py-2 text-center text-sm font-medium {{ $tone }}">{{ $label }}</p>

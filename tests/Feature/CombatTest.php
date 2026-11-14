@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Game\EquipItem;
 use App\Actions\Game\FightEnemy;
 use App\Events\SurvivorDied;
 use App\FightOdds;
@@ -72,9 +73,14 @@ function fightRound(User $user): void
     test()->artisan('work:advance-loops')->assertSuccessful();
 }
 
-function giveFighter(User $user, string $itemKey): void
+/**
+ * Put the item on: weapons go in a free arm and armour on the body, as from the PDA gear tab.
+ */
+function wearFighter(User $user, string $itemKey): void
 {
-    $user->inventoryItems()->create(['item_id' => Item::query()->where('key', $itemKey)->value('id'), 'quantity' => 1]);
+    $item = Item::query()->where('key', $itemKey)->firstOrFail();
+    $user->inventoryItems()->create(['item_id' => $item->id, 'quantity' => 1]);
+    app(EquipItem::class)->equip($user, $item);
 }
 
 function fighterCarries(User $user, string $itemKey): int
@@ -173,12 +179,22 @@ test('blows that miss deal no damage', function () {
 test('armour takes its defence bonus off the enemy chance to land a blow', function () {
     looter(['accuracy' => 15]);
     $user = fighter();
-    giveFighter($user, 'riot_vest');
+    wearFighter($user, 'riot_vest');
     startFight($user);
 
     fightRound($user);
 
     expect($user->fresh()->health)->toBe(100);
+});
+
+test('armour left in the pack does not count in a fight', function () {
+    $looter = looter(['accuracy' => 60]);
+    $user = fighter();
+    $before = app(FightEnemy::class)->odds($user, $looter)['enemy_hit_chance_percent'];
+
+    $user->inventoryItems()->create(['item_id' => Item::query()->where('key', 'riot_vest')->value('id'), 'quantity' => 1]);
+
+    expect(app(FightEnemy::class)->odds($user->fresh(), $looter)['enemy_hit_chance_percent'])->toBe($before);
 });
 
 test('each loot table entry drops on its own roll', function (bool $rollsWin, int $expectedPipes) {
@@ -220,11 +236,11 @@ test('blocking stops at the configured maximum', function () {
     expect($user->fresh()->health)->toBe(96);
 });
 
-test('survivors fight with the best weapon they carry', function () {
+test('survivors fight with the best weapon they hold', function () {
     looter(['health' => 50]);
     $user = fighter();
-    giveFighter($user, 'rusty_pipe');
-    giveFighter($user, 'hunting_rifle');
+    wearFighter($user, 'rusty_pipe');
+    wearFighter($user, 'hunting_rifle');
     startFight($user);
 
     fightRound($user);
@@ -232,6 +248,19 @@ test('survivors fight with the best weapon they carry', function () {
     expect($user->fresh('activeWork')->activeWork)
         ->enemy_health->toBe(38)
         ->last_cycle_summary->toContain('you hit for 12 with your Hunting Rifle');
+});
+
+test('weapons left in the pack do not count in a fight', function () {
+    looter(['health' => 50]);
+    $user = fighter();
+    $user->inventoryItems()->create(['item_id' => Item::query()->where('key', 'hunting_rifle')->value('id'), 'quantity' => 1]);
+    startFight($user);
+
+    fightRound($user);
+
+    expect($user->fresh('activeWork')->activeWork)
+        ->enemy_health->toBe(45)
+        ->last_cycle_summary->not->toContain('Hunting Rifle');
 });
 
 test('hurt survivors hit softer', function () {
@@ -269,7 +298,7 @@ test('hit chances rise with combat skill and armour, fall with enemy defence and
     ]);
 
     if ($armourKey !== null) {
-        giveFighter($user, $armourKey);
+        wearFighter($user, $armourKey);
     }
 
     expect(app(FightEnemy::class)->odds($user, $looter))
@@ -298,7 +327,7 @@ test('a better weapon makes the same enemy an easier fight', function () {
     $user = fighter();
 
     $before = app(FightEnemy::class)->odds($user, $looter);
-    giveFighter($user, 'hunting_rifle');
+    wearFighter($user, 'hunting_rifle');
     $after = app(FightEnemy::class)->odds($user, $looter);
 
     expect($before)->expected_rounds->toBe(16)->odds->toBe(FightOdds::Risky)

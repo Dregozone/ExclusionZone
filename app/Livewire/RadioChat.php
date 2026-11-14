@@ -3,11 +3,13 @@
 namespace App\Livewire;
 
 use App\Actions\Game\SendRadioMessage;
+use App\Actions\Game\TrackPdaAlerts;
 use App\Models\RadioMessage;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class RadioChat extends Component
@@ -71,6 +73,18 @@ class RadioChat extends Component
 
         $this->reset('message');
         $this->refreshMessages();
+        app(TrackPdaAlerts::class)->markSeen($this->player(), 'radio');
+    }
+
+    /**
+     * The radio tab is open on the PDA, so every message so far has been seen.
+     */
+    #[On('pda-tab-seen')]
+    public function markSeen(string $tab): void
+    {
+        if ($tab === 'radio' && $this->canUseRadio) {
+            app(TrackPdaAlerts::class)->markSeen($this->player(), 'radio');
+        }
     }
 
     public function refreshMessages(): void

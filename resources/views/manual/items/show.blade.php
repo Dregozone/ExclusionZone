@@ -8,7 +8,8 @@
         'scorched' => 'border-orange-500/60 text-orange-300',
         default => 'border-zinc-600 text-ez-ink',
     };
-    $hasSource = $produced_by->isNotEmpty() || $dropped_by->isNotEmpty() || $trouble_loot->isNotEmpty() || $quest_rewards->isNotEmpty() || $item->rarity->isScorcherExclusive();
+    $isSoldAtBazaars = in_array($item->key, config('shop.stock', []), true) && $item->base_price > 0;
+    $hasSource = $produced_by->isNotEmpty() || $dropped_by->isNotEmpty() || $trouble_loot->isNotEmpty() || $quest_rewards->isNotEmpty() || $item->rarity->isScorcherExclusive() || $isSoldAtBazaars;
     $stats = array_filter([
         'Hunger' => $item->hunger_restored ? '−'.$item->hunger_restored : null,
         'Fatigue' => $item->fatigue_restored ? '−'.$item->fatigue_restored : null,
@@ -16,6 +17,7 @@
         'Attack' => $item->attack_bonus ? '+'.$item->attack_bonus : null,
         'Defence' => $item->defence_bonus ? '−'.$item->defence_bonus.'%' : null,
         'Barter value' => (string) $item->barterValue(),
+        'Worth (scrip)' => $item->isSellable() ? (string) $item->base_price : null,
     ]);
 @endphp
 
@@ -27,14 +29,23 @@
     :toc="['get' => 'How to get it', 'use' => 'What it is for']"
 >
     <x-slot:meta>
+        <x-zone.item-image :item="$item" class="mb-4 size-28" />
         <div class="flex flex-wrap items-center gap-2">
             <span class="rounded-sm border px-2 py-0.5 font-mono text-[11px] tracking-wider uppercase {{ $rarityTone }}">{{ $item->rarity->label() }}</span>
             @if ($item->is_quest_item)<span class="rounded-sm border border-ez-paper/50 px-2 py-0.5 font-mono text-[11px] text-ez-paper uppercase">Quest item · can't be traded or lost</span>@endif
             @if ($item->isFood())<span class="rounded-sm border border-zinc-600 px-2 py-0.5 font-mono text-[11px] text-ez-ink uppercase">Food · Eat</span>@endif
             @if ($item->isMedical())<span class="rounded-sm border border-emerald-500/50 px-2 py-0.5 font-mono text-[11px] text-emerald-300 uppercase">Medical · Use</span>@endif
-            @if ($item->isWeapon())<span class="rounded-sm border border-fuchsia-400/50 px-2 py-0.5 font-mono text-[11px] text-fuchsia-300 uppercase">Weapon · automatic</span>@endif
-            @if ($item->isArmour())<span class="rounded-sm border border-sky-400/50 px-2 py-0.5 font-mono text-[11px] text-sky-300 uppercase">Armour · automatic</span>@endif
+            @if ($item->isWeapon())<span class="rounded-sm border border-fuchsia-400/50 px-2 py-0.5 font-mono text-[11px] text-fuchsia-300 uppercase">Weapon · hold it in an arm</span>@endif
+            @if ($item->isWearable())<span class="rounded-sm border border-ez-signal/50 px-2 py-0.5 font-mono text-[11px] text-ez-signal uppercase" data-test="item-wearable">Wearable · {{ \App\EquipSlot::ITEM_SLOTS[$item->equip_slot] }}</span>@endif
+            @if ($item->isArmour())<span class="rounded-sm border border-sky-400/50 px-2 py-0.5 font-mono text-[11px] text-sky-300 uppercase">Armour · wear it</span>@endif
         </div>
+        @if ($item->equipEffects() !== [])
+            <ul class="mt-4 flex flex-wrap gap-2 text-sm">
+                @foreach ($item->equipEffects() as $effect)
+                    <li class="rounded-sm border border-zinc-700 px-2 py-1 text-ez-ink">{{ $effect }}</li>
+                @endforeach
+            </ul>
+        @endif
         <dl class="mt-5 flex flex-wrap gap-x-8 gap-y-3">
             @foreach ($stats as $label => $value)
                 <div><dt class="ez-label">{{ $label }}</dt><dd class="ez-numeral mt-1 text-4xl text-ez-ink">{{ $value }}</dd></div>
@@ -46,6 +57,10 @@
         @unless ($hasSource)
             <p class="ez-card p-5 text-sm text-ez-muted">No action, enemy or quest gives this right now. Look for it from other survivors at a trade post.</p>
         @endunless
+
+        @if ($isSoldAtBazaars)
+            <p class="ez-card mb-6 p-5 text-sm text-ez-muted" data-test="item-bazaar">Sold at the bazaar in every trade post for scrip. Barter skill brings the price down.</p>
+        @endif
 
         @if ($produced_by->isNotEmpty())
             <p class="ez-label mb-3">Made or gathered by</p>

@@ -19,7 +19,7 @@
             <div class="ez-card p-5">
                 <flux:icon.map class="text-ez-signal" />
                 <p class="mt-3 font-semibold text-ez-ink">Pick a route</p>
-                <p class="mt-1 text-sm leading-6 text-ez-muted">Open <strong class="text-ez-ink">Travel routes</strong> or the <strong class="text-ez-ink">Map</strong> in your PDA. You can only travel along a route from your current city, but you can plan several stops in one go.</p>
+                <p class="mt-1 text-sm leading-6 text-ez-muted">Open the <strong class="text-ez-ink">World map</strong> from the menu and pick a city. You can only travel along a route from your current city, but you can plan several stops in one go.</p>
             </div>
             <div class="ez-card p-5">
                 <flux:icon.clock class="text-ez-signal" />

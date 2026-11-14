@@ -31,7 +31,7 @@
         <x-manual.callout type="warn" class="mt-4">Bring food and medical items. You can eat and patch up between rounds without stopping the fight.</x-manual.callout>
     </x-manual.section>
 
-    <x-manual.section id="odds" title="Reading the odds" intro="Every fight card on the dashboard sizes up each enemy against you as you are right now: your combat level, health, and the best weapon and armour in your pack.">
+    <x-manual.section id="odds" title="Reading the odds" intro="Every fight card on the dashboard sizes up each enemy against you as you are right now: your combat level, health, and the weapon and armour you wear.">
         <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             @foreach (App\FightOdds::cases() as $odds)
                 <li class="ez-card p-4">
@@ -40,7 +40,7 @@
                 </li>
             @endforeach
         </ul>
-        <p class="mt-4 max-w-3xl text-sm leading-6 text-ez-muted">The odds compare the health an average fight should cost you with the health you can lose before you flee at {{ $fleeAt }}. Level up, carry a better weapon or armour, or heal before you start, and the same enemy gets easier.</p>
+        <p class="mt-4 max-w-3xl text-sm leading-6 text-ez-muted">The odds compare the health an average fight should cost you with the health you can lose before you flee at {{ $fleeAt }}. Level up, wear a better weapon or armour, or heal before you start, and the same enemy gets easier.</p>
     </x-manual.section>
 
     <x-manual.section id="hitting" title="Landing a blow">
@@ -64,7 +64,7 @@
             <p class="font-mono text-sm leading-7 text-ez-ink sm:text-base">
                 hit = <span class="text-ez-signal">roll {{ $survivor['base_damage_min'] }}–{{ $survivor['base_damage_max'] }}</span>
                 + <span class="text-amber-300">{{ $survivor['damage_per_skill_level'] }} × combat level</span>
-                + <span class="text-fuchsia-300">best weapon bonus</span>
+                + <span class="text-fuchsia-300">held weapon bonus</span>
             </p>
             <ul class="mt-4 grid gap-3 text-sm text-ez-muted sm:grid-cols-2">
                 <li class="flex gap-2"><flux:icon.heart variant="mini" class="shrink-0 text-red-400" /> Hurt survivors hit softer: at 0 health a blow lands at half strength, rising to full strength at full health.</li>
@@ -73,7 +73,7 @@
         </div>
     </x-manual.section>
 
-    <x-manual.section id="weapons" title="Weapons and armour" intro="You don’t equip anything. The best weapon and the best armour in your pack are used automatically, for both melee and ranged fights.">
+    <x-manual.section id="weapons" title="Weapons and armour" intro="Wear them from the Gear tab of your PDA: hold a weapon in an arm and put armour on. The best weapon you hold and the best armour you wear are used for both melee and ranged fights; anything left in your pack doesn’t count.">
         <ul class="grid gap-3 sm:grid-cols-3">
             @foreach ($weapons as $weapon)
                 <li class="ez-card p-4">

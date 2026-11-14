@@ -125,7 +125,7 @@
         <div class="grid gap-4 md:grid-cols-2">
             <div class="ez-card ez-heat p-5">
                 <p class="flex items-center gap-2 font-semibold text-ez-ink"><flux:icon.exclamation-triangle variant="mini" class="text-orange-400" /> Irradiated cities</p>
-                <p class="mt-2 text-sm leading-6 text-ez-muted">Every cycle worked here, and every arrival, costs health.</p>
+                <p class="mt-2 text-sm leading-6 text-ez-muted">Every cycle worked here, and every arrival, costs health. A gas mask or hazmat suit, sold at trade post bazaars, turns aside part of it.</p>
                 <ul class="mt-3 space-y-1.5">
                     @forelse ($irradiated as $city)
                         <li class="flex justify-between text-sm">

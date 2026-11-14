@@ -28,10 +28,10 @@ class RadioMessageSent implements ShouldBroadcastNow
     /**
      * Listeners re-read the channel themselves, so only the message id goes over the wire.
      *
-     * @return array{id:int}
+     * @return array{id:int,user_id:int}
      */
     public function broadcastWith(): array
     {
-        return ['id' => $this->radioMessage->id];
+        return ['id' => $this->radioMessage->id, 'user_id' => $this->radioMessage->user_id];
     }
 }

@@ -21,7 +21,10 @@
             ['Is bad weather always bad?', 'It slows work and may cost you the loot, but gives bonus XP: +'.\App\Weather::Rain->experienceBonusPercent().'% in rain, +'.\App\Weather::Storm->experienceBonusPercent().'% in a storm.'],
         ],
         'Travel & combat' => [
-            ['How do I travel?', 'Open Travel routes or the Map in your PDA and choose a connected city. You can plan several stops at once.'],
+            ['How do I travel?', 'Open the World map from the menu, pick a connected city and press Travel. You can plan several stops at once.'],
+            ['What is scrip for?', 'Scrip is the Zone’s money. Sell goods for it at the bazaar in any trade post, and spend it there on rations, bandages, tools and protective gear. Your scrip shows on the bar at the top of the city menu.'],
+            ['How do I wear gear?', 'Open Gear in your PDA, or tap an item in your Pack and press Wear it. Tools make their skill’s work faster, held weapons hit harder, and masks and suits turn aside radiation.'],
+            ['What does the red bell on my PDA mean?', 'Something new is waiting: a radio message from another survivor or a change to one of your trades. Open the Radio or Trade tab to clear it.'],
             ['What is trouble?', 'A group blocking the way into a city when you arrive. Fight them, pay them in items, or run back. Return visits are much less likely to meet trouble. <a href="'.route('manual.guide', 'travel').'#trouble">More</a>'],
             ['How do I equip a weapon?', 'You don’t. The best weapon in your pack is used automatically in every fight.'],
             ['Can I run from a fight?', 'You break off automatically if a round leaves you at '.config('combat.flee_at_health').' health or less. You can also press Stop working between rounds.'],

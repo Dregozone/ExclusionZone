@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -56,6 +57,9 @@ class User extends Authenticatable
             'fatigue' => 'float',
             'rested_at' => 'datetime',
             'recovering_until' => 'datetime',
+            'scrip' => 'integer',
+            'radio_seen_message_id' => 'integer',
+            'trades_seen_at' => 'datetime',
         ];
     }
 
@@ -77,6 +81,11 @@ class User extends Authenticatable
     public function inventoryItems(): HasMany
     {
         return $this->hasMany(InventoryItem::class);
+    }
+
+    public function equipment(): HasMany
+    {
+        return $this->hasMany(UserEquipment::class);
     }
 
     public function cosmeticLoadout(): HasOne
@@ -207,6 +216,55 @@ class User extends Authenticatable
             'equip_cosmetic' => 'You need premium access to equip cosmetics.',
             default => 'You cannot perform that action right now.',
         };
+    }
+
+    /**
+     * The total of one bonus across everything the survivor wears, up to its cap in config/equipment.php.
+     * Work speed only counts items that speed up the given skill.
+     *
+     * @param  'work_speed'|'hunger_reduction'|'fatigue_reduction'|'healing_bonus'|'radiation_protection'  $bonus
+     */
+    public function equipmentBonusPercent(string $bonus, ?string $skillKey = null): int
+    {
+        $column = $bonus === 'work_speed' ? 'work_speed_bonus_percent' : "{$bonus}_percent";
+
+        $total = $this->wornItems()
+            ->filter(fn (Item $item): bool => $bonus !== 'work_speed' || ($skillKey !== null && $item->bonus_skill_key === $skillKey))
+            ->sum(fn (Item $item): int => (int) $item->{$column});
+
+        return min((int) config("equipment.caps.{$bonus}", 0), $total);
+    }
+
+    /**
+     * The stronger of the weapons held in the survivor's arms, if any.
+     */
+    public function heldWeapon(): ?Item
+    {
+        return $this->wornItems()
+            ->filter(fn (Item $item): bool => $item->equip_slot === 'arm' && $item->isWeapon())
+            ->sortByDesc('attack_bonus')
+            ->first();
+    }
+
+    /**
+     * The worn item with the highest defence bonus, if any.
+     */
+    public function wornArmour(): ?Item
+    {
+        return $this->wornItems()
+            ->filter(fn (Item $item): bool => $item->isArmour())
+            ->sortByDesc('defence_bonus')
+            ->first();
+    }
+
+    /**
+     * @return Collection<int, Item>
+     */
+    private function wornItems(): Collection
+    {
+        $this->loadMissing('equipment.item');
+
+        return $this->equipment->pluck('item')->filter()->values();
     }
 
     public function skillFor(string $skillKey): ?UserSkill
