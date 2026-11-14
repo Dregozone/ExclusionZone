@@ -20,4 +20,14 @@ class Skill extends Model
     {
         return $this->hasMany(CityAction::class, 'skill_key', 'key');
     }
+
+    /**
+     * The public path of this skill's picture, falling back to the default work scene.
+     */
+    public function imagePath(): string
+    {
+        return file_exists(public_path("images/work/{$this->key}.jpg"))
+            ? "images/work/{$this->key}.jpg"
+            : 'images/work/default.jpg';
+    }
 }
