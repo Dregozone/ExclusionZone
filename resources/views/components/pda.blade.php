@@ -194,22 +194,43 @@
                         </div>
 
                         {{-- SKILLS tab --}}
-                        <div x-show="tab === 'skills'" class="space-y-2 p-4" data-work-live="skills">
-                            <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Skill Tracker</p>
-                            @foreach ($skills as $skill)
-                                <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <div class="min-w-0">
-                                            <p class="truncate text-sm font-medium text-zinc-200">{{ $skill->skill?->display_name }}</p>
-                                            <p class="mt-0.5 truncate text-xs text-zinc-600">{{ $skill->skill?->description }}</p>
+                        <div x-show="tab === 'skills'" class="p-4" data-work-live="skills">
+                            <div class="mb-3 flex items-baseline justify-between gap-3">
+                                <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Skill Tracker</p>
+                                <p class="font-mono text-[10px] uppercase tracking-wider text-zinc-500" data-test="skills-total-level">
+                                    Total LV <span class="text-sm font-semibold text-emerald-400">{{ number_format($skills->sum('level')) }}</span>
+                                </p>
+                            </div>
+                            <ul class="space-y-1.5">
+                                @foreach ($skills as $skill)
+                                    <li class="flex items-center gap-3 rounded-md border border-zinc-800/80 bg-zinc-900/40 p-2 transition-colors hover:border-emerald-500/40 hover:bg-zinc-900/70" data-test="skill-row-{{ $skill->skill?->key }}">
+                                        <div class="relative h-12 w-12 shrink-0 overflow-hidden rounded-md ring-1 ring-white/10">
+                                            <img src="{{ asset($skill->skill?->imagePath() ?? 'images/work/default.jpg') }}" alt="" class="h-full w-full object-cover" loading="lazy" />
+                                            <span class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" aria-hidden="true"></span>
                                         </div>
-                                        <div class="shrink-0 text-right">
-                                            <p class="font-mono text-sm font-semibold text-emerald-400">LV{{ $skill->level }}</p>
-                                            <p class="font-mono text-[10px] text-zinc-600">{{ $skill->xp }} XP</p>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-baseline justify-between gap-2">
+                                                <p class="min-w-0 truncate text-sm font-medium text-zinc-100" title="{{ $skill->skill?->description }}">{{ $skill->skill?->display_name }}</p>
+                                                <p class="shrink-0 font-mono text-[10px] uppercase tracking-wider text-zinc-500">LV <span class="text-base leading-none font-semibold text-emerald-400">{{ $skill->level }}</span></p>
+                                            </div>
+                                            <div
+                                                class="ez-meter mt-1.5 !h-1.5 text-emerald-400"
+                                                role="progressbar"
+                                                aria-label="{{ $skill->skill?->display_name }} progress to level {{ $skill->level + 1 }}"
+                                                aria-valuemin="0"
+                                                aria-valuemax="{{ $skill->xpForNextLevel() }}"
+                                                aria-valuenow="{{ $skill->xp }}"
+                                            >
+                                                <div class="ez-meter-fill" style="width: {{ $skill->progressPercent() }}%"></div>
+                                            </div>
+                                            <div class="mt-1 flex items-baseline justify-between gap-2 font-mono text-[10px] tabular-nums text-zinc-500">
+                                                <span data-test="skill-xp"><span class="text-zinc-300">{{ number_format($skill->xp) }}</span> / {{ number_format($skill->xpForNextLevel()) }} XP</span>
+                                                <span class="truncate">{{ number_format($skill->xpToNextLevel()) }} to LV{{ $skill->level + 1 }}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                                    </li>
+                                @endforeach
+                            </ul>
                         </div>
 
                         {{-- PACK (inventory) tab --}}
