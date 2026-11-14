@@ -293,6 +293,7 @@
                                     <div class="ez-meter-fill text-red-400" style="width: {{ (int) round($enemy['health'] / max(1, $enemy['maximum']) * 100) }}%"></div>
                                 </div>
                                 <p class="mt-2">{{ $enemy['description'] }} One round is fought each cycle. You break off and flee if your health drops to {{ config('combat.flee_at_health') }}.</p>
+                                <x-fight-odds :enemy="$enemy" :show-name="false" class="mt-3" data-test="work-enemy-odds" />
                             </div>
                         @endif
 
@@ -590,7 +591,7 @@
 
             <div class="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
                 @foreach ($actions as $entry)
-                    @php($isHostile = $entry['enemy_names'] !== [])
+                    @php($isHostile = $entry['enemies'] !== [])
                     <div @class(['ez-card ez-pin flex min-w-0 flex-col gap-3 p-4 pt-5', 'ez-pin-heat ez-heat' => $isHostile, 'opacity-80' => ! $entry['available']])>
                         <div class="flex items-start justify-between gap-3">
                             <h3 class="text-lg leading-tight font-semibold text-ez-ink">{{ $entry['action']->label }}</h3>
@@ -610,10 +611,15 @@
                                 Each cycle: hunger +{{ $entry['action']->hunger_cost }} · fatigue +{{ $entry['action']->fatigue_cost }}
                             </p>
                             @if ($isHostile)
-                                <p class="flex items-start gap-1 text-red-300" data-test="action-enemies-{{ $entry['action']->action_key }}">
-                                    <flux:icon.exclamation-triangle variant="micro" class="mt-px shrink-0" />
-                                    <span>Fight: {{ implode(', ', $entry['enemy_names']) }} · each cycle is one round, and you can get hurt</span>
-                                </p>
+                                <div class="grid gap-1.5" data-test="action-enemies-{{ $entry['action']->action_key }}">
+                                    <p class="flex items-start gap-1 text-red-300">
+                                        <flux:icon.exclamation-triangle variant="micro" class="mt-px shrink-0" />
+                                        <span>Fight: {{ collect($entry['enemies'])->pluck('name')->implode(', ') }} · each cycle is one round, and you can get hurt</span>
+                                    </p>
+                                    @foreach ($entry['enemies'] as $enemy)
+                                        <x-fight-odds :enemy="$enemy" data-test="fight-odds-{{ $entry['action']->action_key }}-{{ $loop->index }}" />
+                                    @endforeach
+                                </div>
                             @endif
                             @if (count($entry['required_items']) > 0)
                                 <p class="text-ez-muted" data-test="required-items-{{ $entry['action']->action_key }}">

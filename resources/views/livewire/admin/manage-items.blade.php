@@ -79,12 +79,21 @@
                     </flux:field>
                 </div>
 
-                <flux:field>
-                    <flux:label>{{ __('Attack bonus') }}</flux:label>
-                    <flux:input type="number" wire:model="attack_bonus" min="0" max="100" />
-                    <flux:description>{{ __('Added to every blow in a fight. Survivors fight with the carried item with the highest bonus; 0 means it is not a weapon.') }}</flux:description>
-                    <flux:error name="attack_bonus" />
-                </flux:field>
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <flux:field>
+                        <flux:label>{{ __('Attack bonus') }}</flux:label>
+                        <flux:input type="number" wire:model="attack_bonus" min="0" max="100" />
+                        <flux:description>{{ __('Added to every blow in a fight. Survivors fight with the carried item with the highest bonus; 0 means it is not a weapon.') }}</flux:description>
+                        <flux:error name="attack_bonus" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Defence bonus') }}</flux:label>
+                        <flux:input type="number" wire:model="defence_bonus" min="0" max="100" />
+                        <flux:description>{{ __('Taken off every enemy\'s chance to land a blow, in percent. Survivors wear the carried item with the highest bonus; 0 means it is not armour.') }}</flux:description>
+                        <flux:error name="defence_bonus" />
+                    </flux:field>
+                </div>
 
                 <flux:field>
                     <flux:label>{{ __('Description') }}</flux:label>
@@ -136,6 +145,9 @@
                             @endif
                             @if ($item->isWeapon())
                                 <span class="ml-2 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">{{ __('Weapon +:bonus', ['bonus' => $item->attack_bonus]) }}</span>
+                            @endif
+                            @if ($item->isArmour())
+                                <span class="ml-2 inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">{{ __('Armour +:bonus', ['bonus' => $item->defence_bonus]) }}</span>
                             @endif
                             @if ($item->isMedical())
                                 <span class="ml-2 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">{{ __('Medical') }}</span>

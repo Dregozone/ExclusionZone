@@ -18,6 +18,7 @@ class Item extends Model
         'fatigue_restored' => 0,
         'health_restored' => 0,
         'attack_bonus' => 0,
+        'defence_bonus' => 0,
         'is_medical' => false,
     ];
 
@@ -31,6 +32,7 @@ class Item extends Model
         'fatigue_restored',
         'health_restored',
         'attack_bonus',
+        'defence_bonus',
         'is_medical',
     ];
 
@@ -43,6 +45,7 @@ class Item extends Model
             'fatigue_restored' => 'integer',
             'health_restored' => 'integer',
             'attack_bonus' => 'integer',
+            'defence_bonus' => 'integer',
             'is_medical' => 'boolean',
         ];
     }
@@ -77,5 +80,13 @@ class Item extends Model
     public function isWeapon(): bool
     {
         return $this->attack_bonus > 0;
+    }
+
+    /**
+     * Armour lowers every enemy's chance to land a blow by its defence bonus.
+     */
+    public function isArmour(): bool
+    {
+        return $this->defence_bonus > 0;
     }
 }

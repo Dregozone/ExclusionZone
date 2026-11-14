@@ -58,9 +58,14 @@ class BuildCityMenuData
                 ->whereBelongsTo($city)
                 ->orderBy('label')
                 ->get();
-        $enemyNamesBySkill = $city === null
+        $fightEnemy = app(FightEnemy::class);
+        $enemiesBySkill = $city === null
             ? collect()
-            : Enemy::query()->whereBelongsTo($city)->orderBy('name')->get(['name', 'skill_key'])->groupBy('skill_key')->map->pluck('name');
+            : Enemy::query()->whereBelongsTo($city)->orderBy('name')->get()->groupBy('skill_key')->map(
+                fn (Collection $enemies): array => $enemies
+                    ->map(fn (Enemy $enemy): array => ['name' => $enemy->name, ...$fightEnemy->odds($user, $enemy)])
+                    ->all(),
+            );
 
         return [
             'player' => $user,
@@ -74,7 +79,7 @@ class BuildCityMenuData
             'last_work_report' => $user->last_work_report,
             'death_report' => $user->death_report,
             'trouble' => $this->troubleDataFor($user),
-            'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions, $enemyNamesBySkill): array {
+            'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions, $enemiesBySkill): array {
                 $requiredItems = (new PerformCityAction)->requiredItemsFor($user, $action);
                 $hasRequiredItems = collect($requiredItems)->every(
                     fn (array $requiredItem): bool => $requiredItem['owned'] >= $requiredItem['quantity'],
@@ -86,7 +91,7 @@ class BuildCityMenuData
                     'user_level' => $user->skillFor($action->skill_key)?->level ?? 1,
                     'required_items' => $requiredItems,
                     'has_required_items' => $hasRequiredItems,
-                    'enemy_names' => $enemyNamesBySkill->get($action->skill_key, collect())->all(),
+                    'enemies' => $enemiesBySkill->get($action->skill_key, []),
                     'available' => $canPerformCityActions
                         && $hasRequiredItems
                         && ($user->skillFor($action->skill_key)?->level ?? 1) >= $action->min_level,
@@ -302,6 +307,7 @@ class BuildCityMenuData
                 'description' => $activeWork->enemy->description,
                 'health' => $activeWork->enemy_health ?? $activeWork->enemy->health,
                 'maximum' => $activeWork->enemy->health,
+                ...app(FightEnemy::class)->odds($user, $activeWork->enemy),
             ],
         ];
     }

@@ -14,6 +14,7 @@
         'Fatigue' => $item->fatigue_restored ? '−'.$item->fatigue_restored : null,
         'Health' => $item->health_restored ? '+'.$item->health_restored : null,
         'Attack' => $item->attack_bonus ? '+'.$item->attack_bonus : null,
+        'Defence' => $item->defence_bonus ? '−'.$item->defence_bonus.'%' : null,
         'Barter value' => (string) $item->barterValue(),
     ]);
 @endphp
@@ -32,6 +33,7 @@
             @if ($item->isFood())<span class="rounded-sm border border-zinc-600 px-2 py-0.5 font-mono text-[11px] text-ez-ink uppercase">Food · Eat</span>@endif
             @if ($item->isMedical())<span class="rounded-sm border border-emerald-500/50 px-2 py-0.5 font-mono text-[11px] text-emerald-300 uppercase">Medical · Use</span>@endif
             @if ($item->isWeapon())<span class="rounded-sm border border-fuchsia-400/50 px-2 py-0.5 font-mono text-[11px] text-fuchsia-300 uppercase">Weapon · automatic</span>@endif
+            @if ($item->isArmour())<span class="rounded-sm border border-sky-400/50 px-2 py-0.5 font-mono text-[11px] text-sky-300 uppercase">Armour · automatic</span>@endif
         </div>
         <dl class="mt-5 flex flex-wrap gap-x-8 gap-y-3">
             @foreach ($stats as $label => $value)
@@ -109,6 +111,9 @@
                 @endif
                 @if ($item->isWeapon())
                     <li><x-manual.callout title="Carry it">The best weapon in your pack adds its attack bonus to every blow in a fight. No need to equip it. <a href="{{ route('manual.guide', 'combat') }}" class="underline" wire:navigate>Fights guide</a></x-manual.callout></li>
+                @endif
+                @if ($item->isArmour())
+                    <li><x-manual.callout title="Carry it">The best armour in your pack takes {{ $item->defence_bonus }}% off every enemy’s chance to land a blow. No need to equip it. <a href="{{ route('manual.guide', 'combat') }}#hitting" class="underline" wire:navigate>Fights guide</a></x-manual.callout></li>
                 @endif
                 @unless ($item->is_quest_item)
                     <li><x-manual.callout type="lore" title="Barter">Worth {{ $item->barterValue() }} toward buying your way past trouble, and tradeable with other survivors at a trade post.</x-manual.callout></li>
