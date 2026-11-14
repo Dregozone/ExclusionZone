@@ -119,7 +119,7 @@ class AdvanceWorkLoop
     }
 
     /**
-     * A fight pays out only for the round that brings its enemy down; earlier rounds just trade blows.
+     * A fight pays out only for the round that brings its enemy down, with the enemy's XP and loot; earlier rounds just trade blows.
      *
      * @return array{status:string,rewarded:bool,xp:int,died?:bool}
      *
@@ -154,6 +154,14 @@ class AdvanceWorkLoop
             ];
         }
 
+        // The enemy's XP and loot are the whole reward for a fight, so the action's own reward isn't paid on top.
+        if ($round !== null) {
+            $questProgress = ($this->recordQuestActionProgress)($user, $action);
+            $summary = $questProgress === [] ? $round['summary'] : "{$round['summary']} Job progress: ".implode(', ', $questProgress).'.';
+
+            return ['status' => $summary, 'rewarded' => true, 'xp' => $round['xp']];
+        }
+
         $weather = $work->weather;
         $reward = ($this->performCityAction)($user, $action, $weather);
 
@@ -185,10 +193,6 @@ class AdvanceWorkLoop
 
         if ($questProgress !== []) {
             $summary .= ' Job progress: '.implode(', ', $questProgress).'.';
-        }
-
-        if ($round !== null) {
-            return ['status' => "{$round['summary']} {$summary}", 'rewarded' => true, 'xp' => $reward['xp'] + $round['xp']];
         }
 
         return ['status' => $summary, 'rewarded' => true, 'xp' => $reward['xp']];

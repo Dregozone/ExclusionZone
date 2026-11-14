@@ -25,6 +25,8 @@ class EnemyFactory extends Factory
             'health' => 20,
             'min_damage' => 3,
             'max_damage' => 3,
+            'accuracy' => 60,
+            'defence' => 0,
             'xp_reward' => 10,
             'loot' => [],
         ];

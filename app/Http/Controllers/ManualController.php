@@ -202,6 +202,7 @@ class ManualController extends Controller
                 'enemies' => $this->catalogue->enemies(),
                 'catalogueItems' => $this->catalogue->items(),
                 'weapons' => $this->catalogue->items()->filter(fn (Item $item): bool => $item->isWeapon())->sortBy('attack_bonus')->values(),
+                'armour' => $this->catalogue->items()->filter(fn (Item $item): bool => $item->isArmour())->sortBy('defence_bonus')->values(),
                 'troubleTypes' => TroubleType::query()->with(['skill', 'lootItem'])->orderBy('fighter_level')->get(),
             ],
             'trading-and-radio' => [

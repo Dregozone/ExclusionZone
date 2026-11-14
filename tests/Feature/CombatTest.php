@@ -1,6 +1,8 @@
 <?php
 
+use App\Actions\Game\FightEnemy;
 use App\Events\SurvivorDied;
+use App\FightOdds;
 use App\HarmCause;
 use App\Livewire\Admin\ManageEnemies;
 use App\Livewire\Admin\ManageItems;
@@ -14,8 +16,8 @@ use Illuminate\Support\Lottery;
 use Livewire\Livewire;
 
 /**
- * A survivor in Kyiv in clear weather, with fights whose damage rolls are fixed: the survivor hits for
- * 4 plus their skill level, nothing is blocked, and the Kyiv looter has 10 health and hits for 4.
+ * A survivor in Kyiv in clear weather, with fights whose rolls are fixed: every blow lands, the survivor
+ * hits for 4 plus their skill level, nothing is blocked, and the Kyiv looter has 10 health and hits for 4.
  */
 function fighter(array $attributes = [], int $meleeLevel = 1): User
 {
@@ -24,6 +26,11 @@ function fighter(array $attributes = [], int $meleeLevel = 1): User
         'combat.survivor.base_damage_max' => 4,
         'combat.survivor.damage_per_skill_level' => 1,
         'combat.survivor.blocked_percent_per_skill_level' => 0,
+        'combat.survivor.base_hit_chance_percent' => 100,
+        'combat.survivor.hit_chance_percent_per_skill_level' => 0,
+        'combat.survivor.evasion_percent_per_skill_level' => 0,
+        'combat.hit_chance.minimum_percent' => 0,
+        'combat.hit_chance.maximum_percent' => 100,
         'combat.flee_at_health' => 20,
     ]);
 
@@ -37,7 +44,7 @@ function fighter(array $attributes = [], int $meleeLevel = 1): User
 function looter(array $attributes = []): Enemy
 {
     $looter = Enemy::query()->where('key', 'looter')->firstOrFail();
-    $looter->update([...['health' => 10, 'min_damage' => 4, 'max_damage' => 4, 'xp_reward' => 12, 'loot' => []], ...$attributes]);
+    $looter->update([...['health' => 10, 'min_damage' => 4, 'max_damage' => 4, 'accuracy' => 100, 'defence' => 0, 'xp_reward' => 12, 'loot' => []], ...$attributes]);
 
     return $looter->fresh();
 }
@@ -63,6 +70,11 @@ function fightRound(User $user): void
     $work = $user->fresh('activeWork')->activeWork;
     test()->travelTo($work->available_at->addSecond());
     test()->artisan('work:advance-loops')->assertSuccessful();
+}
+
+function giveFighter(User $user, string $itemKey): void
+{
+    $user->inventoryItems()->create(['item_id' => Item::query()->where('key', $itemKey)->value('id'), 'quantity' => 1]);
 }
 
 function fighterCarries(User $user, string $itemKey): int
@@ -127,7 +139,7 @@ test('each cycle is one round of blows with no reward until the enemy falls', fu
         ->and(fighterCarries($user, 'scrap_metal'))->toBe(0);
 });
 
-test('beating the enemy pays its XP and the action reward, then lines up the next enemy', function () {
+test('beating the enemy pays only its own XP and loot, not the action reward as well, then lines up the next enemy', function () {
     looter();
     $user = fighter();
     startFight($user);
@@ -135,14 +147,38 @@ test('beating the enemy pays its XP and the action reward, then lines up the nex
     fightRound($user);
     fightRound($user);
 
-    $work = $user->fresh('activeWork')->activeWork;
-
-    expect($work)
+    expect($user->fresh('activeWork')->activeWork)
         ->enemy_health->toBe(10)
-        ->xp_earned->toBe(17)
-        ->last_cycle_summary->toStartWith('You brought down the Looter: you hit for 5 (+12 XP). Action completed: +5 XP, +1 Scrap Metal.')
-        ->and($user->fresh()->skillFor('combat_melee')->xp)->toBe(17)
+        ->xp_earned->toBe(12)
+        ->last_cycle_summary->toBe('You brought down the Looter: you hit for 5 (+12 XP).')
+        ->and($user->fresh()->skillFor('combat_melee')->xp)->toBe(12)
+        ->and(fighterCarries($user, 'scrap_metal'))->toBe(0)
         ->and($user->fresh()->health)->toBe(96);
+});
+
+test('blows that miss deal no damage', function () {
+    looter(['accuracy' => 0]);
+    $user = fighter();
+    config(['combat.survivor.base_hit_chance_percent' => 0]);
+    startFight($user);
+
+    fightRound($user);
+
+    expect($user->fresh('activeWork')->activeWork)
+        ->enemy_health->toBe(10)
+        ->last_cycle_summary->toBe('Fighting the Looter: you missed, it missed you. It has 10/10 health left.')
+        ->and($user->fresh()->health)->toBe(100);
+});
+
+test('armour takes its defence bonus off the enemy chance to land a blow', function () {
+    looter(['accuracy' => 15]);
+    $user = fighter();
+    giveFighter($user, 'riot_vest');
+    startFight($user);
+
+    fightRound($user);
+
+    expect($user->fresh()->health)->toBe(100);
 });
 
 test('each loot table entry drops on its own roll', function (bool $rollsWin, int $expectedPipes) {
@@ -187,9 +223,8 @@ test('blocking stops at the configured maximum', function () {
 test('survivors fight with the best weapon they carry', function () {
     looter(['health' => 50]);
     $user = fighter();
-    foreach (['rusty_pipe', 'hunting_rifle'] as $weaponKey) {
-        $user->inventoryItems()->create(['item_id' => Item::query()->where('key', $weaponKey)->value('id'), 'quantity' => 1]);
-    }
+    giveFighter($user, 'rusty_pipe');
+    giveFighter($user, 'hunting_rifle');
     startFight($user);
 
     fightRound($user);
@@ -220,6 +255,56 @@ test('premium survivors fight on the same odds', function () {
         ->and($user->fresh()->health)->toBe(96);
 });
 
+// ── Fight odds ───────────────────────────────────────────────────────────────
+
+test('hit chances rise with combat skill and armour, fall with enemy defence and accuracy, and stay within the limits', function (int $meleeLevel, int $defence, int $accuracy, ?string $armourKey, int $survivorChance, int $enemyChance) {
+    $looter = looter(['defence' => $defence, 'accuracy' => $accuracy]);
+    $user = fighter(meleeLevel: $meleeLevel);
+    config([
+        'combat.survivor.base_hit_chance_percent' => 75,
+        'combat.survivor.hit_chance_percent_per_skill_level' => 2,
+        'combat.survivor.evasion_percent_per_skill_level' => 1,
+        'combat.hit_chance.minimum_percent' => 5,
+        'combat.hit_chance.maximum_percent' => 95,
+    ]);
+
+    if ($armourKey !== null) {
+        giveFighter($user, $armourKey);
+    }
+
+    expect(app(FightEnemy::class)->odds($user, $looter))
+        ->survivor_hit_chance_percent->toBe($survivorChance)
+        ->enemy_hit_chance_percent->toBe($enemyChance);
+})->with([
+    'level 5 against defence 10 and accuracy 60' => [5, 10, 60, null, 75, 55],
+    'wearing a riot vest' => [5, 10, 60, 'riot_vest', 75, 40],
+    'clamped at the limits' => [1, 100, 100, null, 5, 95],
+]);
+
+test('the odds weigh the health a fight should cost against the health left before fleeing', function (int $enemyHealth, FightOdds $odds) {
+    $looter = looter(['health' => $enemyHealth]);
+    $user = fighter();
+
+    expect(app(FightEnemy::class)->odds($user, $looter)['odds'])->toBe($odds);
+})->with([
+    'two rounds, 4 of 80 health' => [10, FightOdds::Easy],
+    'nine rounds, 32 of 80 health' => [45, FightOdds::Fair],
+    'sixteen rounds, 60 of 80 health' => [80, FightOdds::Risky],
+    'twenty-two rounds, 84 of 80 health' => [110, FightOdds::Deadly],
+]);
+
+test('a better weapon makes the same enemy an easier fight', function () {
+    $looter = looter(['health' => 80]);
+    $user = fighter();
+
+    $before = app(FightEnemy::class)->odds($user, $looter);
+    giveFighter($user, 'hunting_rifle');
+    $after = app(FightEnemy::class)->odds($user, $looter);
+
+    expect($before)->expected_rounds->toBe(16)->odds->toBe(FightOdds::Risky)
+        ->and($after)->expected_rounds->toBe(7)->odds->toBe(FightOdds::Easy);
+});
+
 // ── Fleeing and dying ────────────────────────────────────────────────────────
 
 test('survivors flee when a blow leaves them at the flee threshold, ending the loop without reward', function () {
@@ -232,7 +317,7 @@ test('survivors flee when a blow leaves them at the flee threshold, ending the l
     expect($user->fresh())
         ->health->toBe(20)
         ->activeWork->toBeNull()
-        ->last_work_report->toContain('The Looter hit you for 4 and you fled with 20 health left.')
+        ->last_work_report->toContain('it hit you for 4, and you fled with 20 health left.')
         ->and($user->fresh()->skillFor('combat_melee')->xp)->toBe(0);
 });
 
@@ -270,6 +355,8 @@ test('the dashboard names the enemies a combat action fights and the enemy being
         ->assertOk()
         ->assertSee('data-test="action-enemies-clear_the_ruins"', false)
         ->assertSeeText('Fight: Looter')
+        ->assertSee('data-test="fight-odds-clear_the_ruins-0"', false)
+        ->assertSeeText('You land 100% · it lands 100%, up to 4 a hit · about 2 rounds and 4 health')
         ->assertDontSee('data-test="action-enemies-shelter_repair"', false);
 
     startFight($user);
@@ -279,7 +366,8 @@ test('the dashboard names the enemies a combat action fights and the enemy being
         ->assertOk()
         ->assertSee('data-test="work-enemy"', false)
         ->assertSeeText('Fighting: Looter')
-        ->assertSeeText('5 / 10 health');
+        ->assertSeeText('5 / 10 health')
+        ->assertSee('data-test="work-enemy-odds"', false);
 });
 
 // ── Admin ────────────────────────────────────────────────────────────────────
@@ -299,6 +387,8 @@ test('admins create an enemy with a loot table', function () {
         ->set('health', 8)
         ->set('min_damage', 1)
         ->set('max_damage', 2)
+        ->set('accuracy', 45)
+        ->set('defence', 10)
         ->set('xp_reward', 4)
         ->call('addLoot')
         ->set('loot.0.item_key', 'mutant_hide')
@@ -310,6 +400,8 @@ test('admins create an enemy with a loot table', function () {
     expect(Enemy::query()->where('key', 'sewer_rat')->firstOrFail())
         ->city_id->toBe($kyiv->id)
         ->health->toBe(8)
+        ->accuracy->toBe(45)
+        ->defence->toBe(10)
         ->lootTable()->toBe([['item_key' => 'mutant_hide', 'chance_percent' => 40, 'quantity' => 1]]);
 });
 
@@ -322,6 +414,7 @@ test('admins cannot save an enemy with impossible values', function () {
         ->set('skill_key', 'cooking')
         ->set('min_damage', 6)
         ->set('max_damage', 5)
+        ->set('accuracy', 101)
         ->set('key', 'feral_dog')
         ->call('addLoot')
         ->set('loot.0.item_key', 'not_an_item')
@@ -330,6 +423,7 @@ test('admins cannot save an enemy with impossible values', function () {
         ->assertHasErrors([
             'skill_key' => 'in',
             'max_damage' => 'gte',
+            'accuracy' => 'max',
             'key' => 'unique',
             'loot.0.item_key' => 'exists',
             'loot.0.chance_percent' => 'min',
@@ -352,4 +446,18 @@ test('admins set the attack bonus that makes an item a weapon', function () {
         ->assertHasNoErrors();
 
     expect($item->fresh())->attack_bonus->toBe(3)->isWeapon()->toBeTrue();
+});
+
+test('admins set the defence bonus that makes an item armour', function () {
+    $admin = User::factory()->admin()->create();
+    $item = Item::query()->where('key', 'scrap_metal')->firstOrFail();
+
+    Livewire::actingAs($admin)
+        ->test(ManageItems::class)
+        ->call('edit', $item->id)
+        ->set('defence_bonus', 6)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($item->fresh())->defence_bonus->toBe(6)->isArmour()->toBeTrue();
 });
