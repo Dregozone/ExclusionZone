@@ -46,7 +46,7 @@ test('players can transmit a message that is broadcast on the radio channel', fu
 
     Event::assertDispatched(RadioMessageSent::class, fn (RadioMessageSent $event): bool => $event->radioMessage->is($radioMessage)
         && $event->broadcastOn()[0]->name === 'private-radio'
-        && $event->broadcastWith() === ['id' => $radioMessage->id]);
+        && $event->broadcastWith() === ['id' => $radioMessage->id, 'user_id' => $radioMessage->user_id]);
 });
 
 test('transmissions must be present and within the length limit', function (string $message, string $rule) {

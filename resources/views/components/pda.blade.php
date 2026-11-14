@@ -1,46 +1,120 @@
 @props([
-    'neighbors',
     'skills',
     'inventory',
+    'gear',
+    'bazaar',
+    'alerts',
     'cosmetics',
     'player',
     'city',
     'country',
-    'mapData',
-    'canPerformCityActions',
-    'cityActionRestriction',
     'jobs',
 ])
+
+@php
+    $isStaff = $player->isModerator() || $player->isAdmin();
+    $tabs = collect([
+        'skills' => ['Skills', 'Skill Tracker', 'M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5'],
+        'pack' => ['Pack', 'Inventory', 'M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z'],
+        'gear' => ['Gear', 'Worn Gear', 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z'],
+        'bazaar' => ['Bazaar', 'Bazaar', 'M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z'],
+        'radio' => ['Radio', 'Radio Comms', 'M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z'],
+        'trade' => ['Trade', 'Trade Board', 'M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5'],
+        'contracts' => ['Jobs', 'Contracts', 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z'],
+        'premium' => ['Premium', 'Cosmetics', 'M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z'],
+        'admin' => ['Admin', 'Admin Console', 'M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z'],
+    ])->when(! $isStaff, fn ($tabs) => $tabs->except('admin'));
+    $alertTotal = array_sum($alerts);
+    $rarityText = [
+        'common' => 'text-ez-muted',
+        'uncommon' => 'text-emerald-300',
+        'rare' => 'text-sky-300',
+        'epic' => 'text-fuchsia-300',
+        'scorched' => 'text-orange-300',
+    ];
+    $shop = [
+        'sellRatio' => (int) config('shop.sell_ratio_percent'),
+        'barterBonus' => $bazaar['barter_sell_bonus_percent'],
+        'bulkTenths' => (int) config('shop.bulk_bonus_tenths_percent_per_item'),
+        'maxBulk' => (int) config('shop.maximum_bulk_bonus_percent'),
+    ];
+@endphp
 
 <div
     x-data="{
         open: sessionStorage.getItem('pda_open') === 'true',
-        tab: sessionStorage.getItem('pda_tab') || 'map',
-        tabNames: {
-            map: 'World Map',
-            travel: 'Travel Routes',
-            skills: 'Skill Tracker',
-            pack: 'Inventory',
-            radio: 'Radio Comms',
-            trade: 'Trade Board',
-            contracts: 'Contracts',
-            premium: 'Cosmetics',
-            admin: 'Admin Console',
+        tab: @js($tabs->keys()).includes(sessionStorage.getItem('pda_tab')) ? sessionStorage.getItem('pda_tab') : 'pack',
+        tabNames: @js($tabs->map(fn (array $tab): string => $tab[1])),
+        alerts: @js($alerts),
+        get alertTotal() {
+            return Object.values(this.alerts).reduce((total, count) => total + count, 0);
         },
         init() {
-            this.$watch('open', v => sessionStorage.setItem('pda_open', v));
-            this.$watch('tab', v => sessionStorage.setItem('pda_tab', v));
+            this.$watch('open', v => { sessionStorage.setItem('pda_open', v); this.seeCurrentTab(); });
+            this.$watch('tab', v => { sessionStorage.setItem('pda_tab', v); this.seeCurrentTab(); });
+            this.$nextTick(() => this.seeCurrentTab());
+
+            {{-- Counts come back with every live refresh of the city menu, such as after eating or a work cycle. --}}
+            window.addEventListener('ez:live-refreshed', (event) => {
+                const fresh = event.detail.page.querySelector('[data-pda-alerts]');
+
+                if (fresh === null) {
+                    return;
+                }
+
+                const counts = JSON.parse(fresh.dataset.pdaAlerts);
+
+                Object.keys(counts).forEach((alertTab) => {
+                    if (! (this.open && this.tab === alertTab)) {
+                        this.alerts[alertTab] = counts[alertTab];
+                    }
+                });
+            });
+
+            {{-- With live broadcasting, a new message or trade change raises the bell straight away. --}}
+            if (window.Echo) {
+                try {
+                    @if ($player->canPerformTask('chat_send'))
+                        window.Echo.private('radio').listen('RadioMessageSent', (event) => {
+                            if (event.user_id !== {{ $player->id }}) {
+                                this.raise('radio');
+                            }
+                        });
+                    @endif
+                    @if ($player->canPerformTask('trade_create'))
+                        window.Echo.private('App.Models.User.{{ $player->id }}').listen('TradeUpdated', () => this.raise('trade'));
+                    @endif
+                } catch {}
+            }
+        },
+        raise(alertTab) {
+            if (this.open && this.tab === alertTab) {
+                this.markSeen(alertTab);
+
+                return;
+            }
+
+            this.alerts[alertTab] = (this.alerts[alertTab] ?? 0) + 1;
+        },
+        seeCurrentTab() {
+            if (this.open && (this.alerts[this.tab] ?? 0) > 0) {
+                this.markSeen(this.tab);
+            }
+        },
+        markSeen(alertTab) {
+            this.alerts[alertTab] = 0;
+            window.Livewire?.dispatch('pda-tab-seen', { tab: alertTab });
         },
     }"
     @keydown.escape.window="open = false"
 >
-    {{-- Floating toggle button --}}
+    {{-- Floating toggle button, with a red bell when something on the PDA needs a look --}}
     <button
         @click="open = !open"
         type="button"
         :aria-expanded="open.toString()"
         aria-controls="pda-device"
-        class="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex min-h-12 items-center gap-2.5 rounded-sm border px-4 py-3 backdrop-blur font-mono text-sm tracking-widest shadow-lg transition-all select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        class="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex min-h-12 items-center gap-2.5 rounded-sm border px-4 py-3 font-mono text-sm tracking-widest shadow-lg transition-colors select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         :class="open
             ? 'bg-zinc-800 border-emerald-400 text-emerald-300 shadow-[0_0_24px_rgba(111,211,200,0.35)]'
             : 'bg-zinc-900 border-emerald-400/60 text-emerald-300 shadow-[0_0_18px_rgba(111,211,200,0.18)] hover:border-emerald-400 hover:shadow-[0_0_24px_rgba(111,211,200,0.35)]'"
@@ -50,6 +124,16 @@
         </svg>
         <span class="hidden sm:inline" x-text="open ? '[ CLOSE PDA ]' : '[ OPEN PDA ]'"></span>
         <span class="sm:hidden" x-text="open ? 'CLOSE' : 'PDA'"></span>
+        <span
+            x-show="alertTotal > 0"
+            @if ($alertTotal === 0) x-cloak @endif
+            class="absolute -top-2.5 -right-2.5 flex h-6 min-w-6 items-center justify-center gap-0.5 rounded-full bg-red-600 px-1.5 text-[11px] font-bold tracking-normal text-white shadow-[0_0_12px_rgba(239,68,68,0.6)] ring-2 ring-ez-ground"
+            data-test="pda-alert-badge"
+        >
+            <svg class="size-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 2a6 6 0 0 0-6 6c0 1.887-.454 3.665-1.257 5.234a.75.75 0 0 0 .515 1.076 32.91 32.91 0 0 0 3.256.508 3.5 3.5 0 0 0 6.972 0 32.903 32.903 0 0 0 3.256-.508.75.75 0 0 0 .515-1.076A11.448 11.448 0 0 1 16 8a6 6 0 0 0-6-6ZM8.05 14.943a33.54 33.54 0 0 0 3.9 0 2 2 0 0 1-3.9 0Z" clip-rule="evenodd" /></svg>
+            <span x-text="alertTotal > 9 ? '9+' : alertTotal">{{ $alertTotal > 9 ? '9+' : $alertTotal }}</span>
+            <span class="sr-only">new on your PDA</span>
+        </span>
     </button>
 
     {{-- Backdrop --}}
@@ -63,10 +147,9 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="open = false"
-        class="fixed inset-0 z-40 bg-ez-ground/70 backdrop-blur-sm"
+        class="fixed inset-0 z-40 bg-ez-ground/80"
         aria-hidden="true"
     ></div>
-
     {{-- PDA Device --}}
     <div
         id="pda-device"
@@ -144,55 +227,6 @@
 
                     {{-- Tab content area --}}
                     <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth" tabindex="-1">
-
-                        {{-- MAP tab (x-if so the SVG initialises with correct container width) --}}
-                        <template x-if="tab === 'map'">
-                            <div class="flex h-full min-h-[460px] flex-col p-3">
-                                <x-geo-map
-                                    :map-data="$mapData"
-                                    :compact="true"
-                                    :dark="true"
-                                />
-                            </div>
-                        </template>
-
-                        {{-- TRAVEL tab --}}
-                        <div x-show="tab === 'travel'" class="space-y-3 p-4">
-                            <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Travel Routes</p>
-                            <p class="text-xs text-zinc-500">One move is one turn. Each destination refreshes the city action list.</p>
-
-                            @if (! $canPerformCityActions && $cityActionRestriction)
-                                <p class="rounded-lg border border-amber-800/40 bg-amber-900/20 px-3 py-2 text-xs text-amber-400/80">
-                                    {{ $cityActionRestriction }}
-                                </p>
-                            @endif
-
-                            <div class="space-y-2">
-                                @forelse ($neighbors as $neighbor)
-                                    <form method="POST" action="{{ route('travel.store') }}" class="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 transition-colors hover:border-zinc-700">
-                                        @csrf
-                                        <input type="hidden" name="city_id" value="{{ $neighbor->id }}">
-                                        <div class="flex items-center justify-between gap-3">
-                                            <div>
-                                                <p class="text-sm font-medium text-zinc-200">{{ $neighbor->city }}</p>
-                                                <p class="mt-0.5 text-xs text-zinc-500">{{ $neighbor->country?->country }} · {{ $neighbor->baseline_loot_tier }} loot</p>
-                                            </div>
-                                            <div class="flex shrink-0 items-center gap-1.5">
-                                                <flux:button type="button" size="sm" variant="ghost" icon="map" x-on:click="window.__geoMapPendingFocus = {{ $neighbor->id }}; tab = 'map'" aria-label="Show {{ $neighbor->city }} on the map" />
-                                                <flux:button type="submit" size="sm" variant="primary" :disabled="! $canPerformCityActions" data-test="travel-{{ Str::slug($neighbor->city) }}">
-                                                    {{ $canPerformCityActions ? 'Travel' : 'N/A' }}
-                                                </flux:button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                @empty
-                                    <p class="rounded-lg border border-dashed border-zinc-800 px-3 py-6 text-center text-xs text-zinc-600">
-                                        No linked travel routes from this city.
-                                    </p>
-                                @endforelse
-                            </div>
-                        </div>
-
                         {{-- SKILLS tab --}}
                         <div x-show="tab === 'skills'" class="p-4" data-work-live="skills">
                             <div class="mb-3 flex items-baseline justify-between gap-3">
@@ -233,28 +267,248 @@
                             </ul>
                         </div>
 
-                        {{-- PACK (inventory) tab --}}
-                        <div x-show="tab === 'pack'" class="space-y-2 p-4" data-work-live="pack">
+
+                        {{-- PACK (inventory) tab: pictures at a glance, tap one for the details --}}
+                        <div x-show="tab === 'pack'" x-data="{ selected: null }" class="p-4">
                             <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Inventory</p>
-                            @forelse ($inventory as $inventoryItem)
-                                <div class="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-medium text-zinc-200">{{ $inventoryItem->item?->name }}</p>
-                                        <p class="mt-0.5 truncate text-xs text-zinc-600">{{ $inventoryItem->item?->description }}</p>
+                            <div data-work-live="pack">
+                                @if ($inventory->isEmpty())
+                                    <div class="flex flex-col items-center justify-center py-12 text-center">
+                                        <svg class="mb-3 h-8 w-8 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                                        </svg>
+                                        <p class="text-xs text-zinc-600">Pack is empty.</p>
+                                        <p class="mt-1 text-xs text-zinc-700">Complete a city action to collect loot.</p>
                                     </div>
-                                    <span class="ml-3 shrink-0 font-mono text-sm font-semibold text-emerald-400">×{{ $inventoryItem->quantity }}</span>
-                                </div>
-                            @empty
-                                <div class="flex flex-col items-center justify-center py-12 text-center">
-                                    <svg class="mb-3 h-8 w-8 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-                                    </svg>
-                                    <p class="text-xs text-zinc-600">Pack is empty.</p>
-                                    <p class="mt-1 text-xs text-zinc-700">Complete a city action to collect loot.</p>
-                                </div>
-                            @endforelse
+                                @else
+                                    <ul class="grid grid-cols-4 gap-2" role="list" data-test="pack-grid">
+                                        @foreach ($inventory as $inventoryItem)
+                                            <li class="group relative">
+                                                <button
+                                                    type="button"
+                                                    @click="selected = selected === {{ $inventoryItem->item->id }} ? null : {{ $inventoryItem->item->id }}"
+                                                    :aria-pressed="(selected === {{ $inventoryItem->item->id }}).toString()"
+                                                    :class="selected === {{ $inventoryItem->item->id }} ? 'ring-2 ring-emerald-400' : ''"
+                                                    class="block w-full rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                                    title="{{ $inventoryItem->item->name }}"
+                                                    data-test="pack-item-{{ $inventoryItem->item->key }}"
+                                                >
+                                                    <x-zone.item-image :item="$inventoryItem->item" :quantity="$inventoryItem->quantity" class="aspect-square w-full" />
+                                                    <span class="sr-only">{{ $inventoryItem->item->name }}, {{ $inventoryItem->quantity }} carried</span>
+                                                </button>
+                                                <span class="pointer-events-none absolute -top-7 left-1/2 z-10 hidden -translate-x-1/2 rounded-sm bg-black/90 px-1.5 py-0.5 font-mono text-[10px] whitespace-nowrap text-ez-ink pointer-fine:group-hover:block" aria-hidden="true">{{ $inventoryItem->item->name }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                    <p class="mt-3 text-center text-[11px] text-zinc-600" x-show="selected === null">Tap an item to read about it.</p>
+
+                                    @foreach ($inventory as $inventoryItem)
+                                        @php
+                                            $item = $inventoryItem->item;
+                                            $facts = array_values(array_filter([
+                                                $item->hunger_restored ? 'Hunger -'.$item->hunger_restored : null,
+                                                $item->fatigue_restored ? 'Fatigue -'.$item->fatigue_restored : null,
+                                                $item->health_restored ? 'Health +'.$item->health_restored : null,
+                                                ...$item->equipEffects(),
+                                                $item->isWeapon() && ! $item->isWearable() ? 'Attack +'.$item->attack_bonus : null,
+                                                $item->isSellable() ? 'Worth '.$item->base_price.' scrip' : null,
+                                            ]));
+                                        @endphp
+                                        <div x-show="selected === {{ $item->id }}" x-cloak class="mt-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3" data-test="pack-detail-{{ $item->key }}">
+                                            <div class="flex items-start gap-3">
+                                                <x-zone.item-image :item="$item" class="size-16" />
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-sm font-medium text-zinc-100">{{ $item->name }} <span class="font-mono text-zinc-500">×{{ $inventoryItem->quantity }}</span></p>
+                                                    <p class="font-mono text-[10px] tracking-wider uppercase {{ $rarityText[$item->rarity->value] }}">{{ $item->rarity->label() }}@if ($item->is_quest_item) · Quest item @endif</p>
+                                                    <p class="mt-1 text-xs text-zinc-400">{{ $item->description }}</p>
+                                                </div>
+                                            </div>
+                                            @if ($facts !== [])
+                                                <ul class="mt-2 flex flex-wrap gap-1 text-[11px]">
+                                                    @foreach ($facts as $fact)
+                                                        <li class="rounded-sm border border-zinc-700 px-1.5 py-0.5 text-zinc-300">{{ $fact }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                @if ($item->isFood())
+                                                    <form method="POST" action="{{ route('food.eat') }}" data-quick-action>
+                                                        @csrf
+                                                        <input type="hidden" name="item_id" value="{{ $item->id }}">
+                                                        <flux:button type="submit" size="sm">Eat one</flux:button>
+                                                    </form>
+                                                @elseif ($item->isMedical())
+                                                    <form method="POST" action="{{ route('medical.use') }}" data-quick-action>
+                                                        @csrf
+                                                        <input type="hidden" name="item_id" value="{{ $item->id }}">
+                                                        <flux:button type="submit" size="sm">Use one</flux:button>
+                                                    </form>
+                                                @endif
+                                                @if ($item->isWearable())
+                                                    <form method="POST" action="{{ route('gear.equip') }}" data-quick-action>
+                                                        @csrf
+                                                        <input type="hidden" name="item_id" value="{{ $item->id }}">
+                                                        <flux:button type="submit" size="sm" variant="primary">Wear it</flux:button>
+                                                    </form>
+                                                @endif
+                                                <flux:button type="button" size="sm" variant="ghost" @click="selected = null">Close</flux:button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
                         </div>
 
+                        {{-- GEAR tab: what the survivor wears, and what it does --}}
+                        <div x-show="tab === 'gear'" class="space-y-4 p-4" data-work-live="gear">
+                            <div>
+                                <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Worn gear</p>
+                                <p class="mt-1 text-xs text-zinc-500">Wear one item per slot. Tools speed up their skill's work, and held weapons hit harder in fights. Worn items leave your pack until you take them off.</p>
+                            </div>
+
+                            @php $slots = collect($gear['slots'])->keyBy(fn (array $entry): string => $entry['slot']->value); @endphp
+                            <div class="grid grid-cols-3 gap-2" data-test="gear-slots">
+                                @foreach ([null, 'head', null, 'right_arm', 'body', 'left_arm', null, 'feet', null] as $slotKey)
+                                    @if ($slotKey === null)
+                                        <div aria-hidden="true"></div>
+                                    @else
+                                        @php $entry = $slots[$slotKey]; @endphp
+                                        @if ($entry['item'])
+                                            <form method="POST" action="{{ route('gear.unequip') }}" data-quick-action>
+                                                @csrf
+                                                <input type="hidden" name="slot" value="{{ $slotKey }}">
+                                                <button type="submit" class="group flex w-full flex-col items-center gap-1 rounded-lg border border-emerald-700/50 bg-emerald-950/30 p-1.5 text-center transition hover:border-red-400/60" title="Take off {{ $entry['item']->name }}" data-test="gear-slot-{{ $slotKey }}">
+                                                    <x-zone.item-image :item="$entry['item']" class="aspect-square w-full" />
+                                                    <span class="w-full truncate text-[10px] text-zinc-200">{{ $entry['item']->name }}</span>
+                                                    <span class="font-mono text-[9px] tracking-wider text-zinc-500 uppercase group-hover:text-red-300">{{ $entry['slot']->label() }} · take off</span>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <div class="flex aspect-[3/4] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-700 p-1.5 text-center" data-test="gear-slot-{{ $slotKey }}">
+                                                <span class="font-mono text-[9px] tracking-wider text-zinc-600 uppercase">{{ $entry['slot']->label() }}</span>
+                                                <span class="mt-1 text-[10px] text-zinc-700">Empty</span>
+                                            </div>
+                                        @endif
+                                    @endif
+                                @endforeach
+                            </div>
+
+                            <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+                                <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">What your gear does</p>
+                                @if ($gear['effects'] === [])
+                                    <p class="mt-1 text-xs text-zinc-500">Nothing yet. Put on boots, tools or a mask to work faster and stay safer.</p>
+                                @else
+                                    <ul class="mt-1 space-y-0.5 text-xs text-emerald-300" data-test="gear-effects">
+                                        @foreach ($gear['effects'] as $effect)
+                                            <li>{{ $effect }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </div>
+
+                            <div class="space-y-2">
+                                <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">Wearable gear in your pack</p>
+                                @forelse ($gear['wearables'] as $wearable)
+                                    <div class="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-2">
+                                        <x-zone.item-image :item="$wearable['item']" :quantity="$wearable['owned']" class="size-12" />
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-sm font-medium text-zinc-200">{{ $wearable['item']->name }}</p>
+                                            <p class="text-[11px] text-zinc-500">{{ implode(' · ', $wearable['item']->equipEffects()) ?: 'No bonus' }}</p>
+                                        </div>
+                                        <div class="flex shrink-0 flex-col gap-1">
+                                            @foreach ($wearable['slots'] as $slot)
+                                                <form method="POST" action="{{ route('gear.equip') }}" data-quick-action>
+                                                    @csrf
+                                                    <input type="hidden" name="item_id" value="{{ $wearable['item']->id }}">
+                                                    <input type="hidden" name="slot" value="{{ $slot->value }}">
+                                                    <flux:button type="submit" size="xs" variant="primary" data-test="equip-{{ $wearable['item']->key }}-{{ $slot->value }}">
+                                                        {{ count($wearable['slots']) > 1 ? $slot->label() : 'Wear' }}
+                                                    </flux:button>
+                                                </form>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="rounded-lg border border-dashed border-zinc-800 px-3 py-4 text-center text-xs text-zinc-600">No wearable gear in your pack. Bazaars at trade posts sell boots, tools and masks.</p>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        {{-- BAZAAR tab: buy and sell for scrip at a trade post --}}
+                        <div x-show="tab === 'bazaar'" class="space-y-4 p-4" data-work-live="bazaar">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Bazaar</p>
+                                    <p class="mt-1 text-xs text-zinc-500">Sell goods for scrip and buy supplies at any trade post. Other survivors usually pay more than the bazaar does.</p>
+                                </div>
+                                <x-zone.scrip :amount="$bazaar['scrip']" class="shrink-0 rounded-sm border border-amber-400/40 px-2 py-1 text-sm text-amber-200" data-test="bazaar-scrip" />
+                            </div>
+
+                            @if ($bazaar['restriction'])
+                                <p class="rounded-lg border border-amber-800/40 bg-amber-900/20 px-3 py-2 text-xs text-amber-400/90" data-test="bazaar-restriction">{{ $bazaar['restriction'] }}</p>
+                            @else
+                                <p class="text-[11px] text-zinc-500" data-test="bazaar-barter">
+                                    Your Barter skill: sales pay +{{ $bazaar['barter_sell_bonus_percent'] }}%, purchases cost -{{ $bazaar['barter_buy_discount_percent'] }}%. Selling a stack at once pays a little extra.
+                                </p>
+
+                                <div class="space-y-2">
+                                    <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">Buy</p>
+                                    @foreach ($bazaar['stock'] as $offer)
+                                        <form
+                                            method="POST"
+                                            action="{{ route('bazaar.buy') }}"
+                                            x-data="{ quantity: 1, price: {{ $offer['price'] }}, scrip: {{ $bazaar['scrip'] }} }"
+                                            class="flex items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 p-2"
+                                            data-quick-action
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="item_id" value="{{ $offer['item']->id }}">
+                                            <x-zone.item-image :item="$offer['item']" class="size-11" />
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-sm font-medium text-zinc-200">{{ $offer['item']->name }}</p>
+                                                <p class="truncate text-[11px] text-zinc-500">{{ implode(' · ', $offer['item']->equipEffects()) ?: collect(['Hunger -'.$offer['item']->hunger_restored => $offer['item']->hunger_restored, 'Health +'.$offer['item']->health_restored => $offer['item']->health_restored])->filter()->keys()->implode(' · ') }}</p>
+                                                <x-zone.scrip :amount="$offer['price']" class="text-[11px] text-amber-200" />
+                                            </div>
+                                            <input type="number" name="quantity" min="1" max="99" x-model.number="quantity" class="w-12 shrink-0 rounded-sm border border-zinc-700 bg-zinc-950 px-1.5 py-1 text-right font-mono text-xs text-zinc-200" aria-label="How many {{ $offer['item']->name }} to buy">
+                                            <flux:button type="submit" size="xs" variant="primary" x-bind:disabled="quantity < 1 || quantity * price > scrip" data-test="buy-{{ $offer['item']->key }}">Buy</flux:button>
+                                        </form>
+                                    @endforeach
+                                </div>
+
+                                <div class="space-y-2">
+                                    <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">Sell</p>
+                                    @forelse ($bazaar['sellable'] as $goods)
+                                        <form
+                                            method="POST"
+                                            action="{{ route('bazaar.sell') }}"
+                                            x-data="{
+                                                quantity: 1,
+                                                get total() {
+                                                    const shop = @js($shop);
+                                                    const bulk = Math.min(shop.maxBulk, Math.max(0, this.quantity - 1) * shop.bulkTenths / 10);
+
+                                                    return Math.floor({{ $goods['item']->base_price }} * this.quantity * shop.sellRatio / 100 * (100 + shop.barterBonus + bulk) / 100);
+                                                },
+                                            }"
+                                            class="flex items-center gap-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 p-2"
+                                            data-quick-action
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="item_id" value="{{ $goods['item']->id }}">
+                                            <x-zone.item-image :item="$goods['item']" :quantity="$goods['owned']" class="size-11" />
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-sm font-medium text-zinc-200">{{ $goods['item']->name }}</p>
+                                                <p class="text-[11px] text-zinc-500">{{ $goods['unit_price'] }} each · you get <span class="font-mono text-amber-200" x-text="total">{{ $goods['unit_price'] }}</span> scrip</p>
+                                            </div>
+                                            <input type="number" name="quantity" min="1" max="{{ $goods['owned'] }}" x-model.number="quantity" class="w-12 shrink-0 rounded-sm border border-zinc-700 bg-zinc-950 px-1.5 py-1 text-right font-mono text-xs text-zinc-200" aria-label="How many {{ $goods['item']->name }} to sell">
+                                            <flux:button type="submit" size="xs" x-bind:disabled="quantity < 1 || quantity > {{ $goods['owned'] }}" data-test="sell-{{ $goods['item']->key }}">Sell</flux:button>
+                                        </form>
+                                    @empty
+                                        <p class="rounded-lg border border-dashed border-zinc-800 px-3 py-4 text-center text-xs text-zinc-600">Nothing in your pack the bazaar will buy. Quest items are never for sale.</p>
+                                    @endforelse
+                                </div>
+                            @endif
+                        </div>
                         {{-- RADIO tab --}}
                         <div x-show="tab === 'radio'" class="h-full">
                             <livewire:radio-chat />
@@ -487,54 +741,16 @@
                         @keydown.arrow-left.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const previous = tabs[(tabs.indexOf(document.activeElement) - 1 + tabs.length) % tabs.length]; previous.click(); previous.focus()"
                     >
                         <div class="flex min-w-max w-full">
-
-                            <button role="tab" type="button" @click="tab = 'map'" :aria-selected="(tab === 'map').toString()" :tabindex="tab === 'map' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'map' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Map">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" /></svg>
-                                <span>Map</span>
-                            </button>
-
-                            <button role="tab" type="button" @click="tab = 'travel'" :aria-selected="(tab === 'travel').toString()" :tabindex="tab === 'travel' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'travel' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Travel routes">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9l3 3m0 0-3 3m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                                <span>Travel</span>
-                            </button>
-
-                            <button role="tab" type="button" @click="tab = 'skills'" :aria-selected="(tab === 'skills').toString()" :tabindex="tab === 'skills' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'skills' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Skill tracker">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>
-                                <span>Skills</span>
-                            </button>
-
-                            <button role="tab" type="button" @click="tab = 'pack'" :aria-selected="(tab === 'pack').toString()" :tabindex="tab === 'pack' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'pack' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Inventory">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
-                                <span>Pack</span>
-                            </button>
-
-                            <button role="tab" type="button" @click="tab = 'radio'" :aria-selected="(tab === 'radio').toString()" :tabindex="tab === 'radio' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'radio' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Radio comms">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
-                                <span>Radio</span>
-                            </button>
-
-                            <button role="tab" type="button" @click="tab = 'trade'" :aria-selected="(tab === 'trade').toString()" :tabindex="tab === 'trade' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'trade' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Trade board">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
-                                <span>Trade</span>
-                            </button>
-
-                            <button role="tab" type="button" @click="tab = 'contracts'" :aria-selected="(tab === 'contracts').toString()" :tabindex="tab === 'contracts' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'contracts' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Contracts">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
-                                <span>Jobs</span>
-                            </button>
-
-                            <button role="tab" type="button" @click="tab = 'premium'" :aria-selected="(tab === 'premium').toString()" :tabindex="tab === 'premium' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'premium' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Cosmetics">
-                                <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" /></svg>
-                                <span>Premium</span>
-                            </button>
-
-                            @if ($player->isModerator() || $player->isAdmin())
-                                <button role="tab" type="button" @click="tab = 'admin'" :aria-selected="(tab === 'admin').toString()" :tabindex="tab === 'admin' ? 0 : -1" class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === 'admin' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="Admin console">
-                                    <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
-                                    <span>Admin</span>
+                            @foreach ($tabs as $key => [$label, $name, $iconPath])
+                                <button role="tab" type="button" @click="tab = '{{ $key }}'" :aria-selected="(tab === '{{ $key }}').toString()" :tabindex="tab === '{{ $key }}' ? 0 : -1" class="relative flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === '{{ $key }}' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="{{ $name }}" data-test="pda-tab-{{ $key }}">
+                                    <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconPath }}" /></svg>
+                                    <span>{{ $label }}</span>
+                                    @if (array_key_exists($key, $alerts))
+                                        <span x-show="alerts.{{ $key }} > 0" @if ($alerts[$key] === 0) x-cloak @endif class="absolute top-1 right-[22%] size-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]" data-test="pda-tab-alert-{{ $key }}"></span>
+                                        <span class="sr-only" x-show="alerts.{{ $key }} > 0" x-text="`, ${alerts.{{ $key }}} new`"></span>
+                                    @endif
                                 </button>
-                            @endif
-
+                            @endforeach
                         </div>
                     </nav>
 

@@ -3,6 +3,7 @@
         'food' => 'Food',
         'medical' => 'Medical',
         'weapon' => 'Weapons',
+        'gear' => 'Gear',
         'quest' => 'Quest items',
         'material' => 'Materials',
     ];
@@ -11,6 +12,7 @@
         $item->isMedical() => 'medical',
         $item->isFood() => 'food',
         $item->isWeapon() => 'weapon',
+        $item->isWearable() => 'gear',
         default => 'material',
     };
     $rarityTone = [
@@ -56,7 +58,8 @@
                 >
                     <a href="{{ route('manual.item', $item->key) }}" @class(['ez-card group flex h-full flex-col p-4 transition hover:border-ez-signal/60', 'ez-heat' => $item->rarity->isScorcherExclusive()]) wire:navigate>
                         <div class="flex items-start justify-between gap-3">
-                            <p class="font-semibold text-ez-ink group-hover:text-ez-signal">{{ $item->name }}</p>
+                            <x-zone.item-image :item="$item" class="size-12" />
+                            <p class="min-w-0 flex-1 font-semibold text-ez-ink group-hover:text-ez-signal">{{ $item->name }}</p>
                             <span class="shrink-0 font-mono text-[10px] tracking-wider uppercase {{ $rarityTone[$item->rarity->value] }}">{{ $item->rarity->label() }}</span>
                         </div>
                         <p class="mt-1 line-clamp-2 text-sm text-ez-muted">{{ $item->description }}</p>

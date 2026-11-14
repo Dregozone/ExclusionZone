@@ -8,6 +8,7 @@ use App\Actions\Game\CommitTrade;
 use App\Actions\Game\FindNearestTradePost;
 use App\Actions\Game\RequestTrade;
 use App\Actions\Game\SetTradeOffer;
+use App\Actions\Game\TrackPdaAlerts;
 use App\Models\City;
 use App\Models\InventoryItem;
 use App\Models\Item;
@@ -19,6 +20,7 @@ use Flux\Flux;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class TradeBoard extends Component
@@ -240,7 +242,19 @@ class TradeBoard extends Component
             $this->toast('danger', $exception->getMessage());
         }
 
+        app(TrackPdaAlerts::class)->markSeen($this->player(), 'trade');
         $this->refreshTrades();
+    }
+
+    /**
+     * The trade tab is open on the PDA, so every trade change so far has been seen.
+     */
+    #[On('pda-tab-seen')]
+    public function markSeen(string $tab): void
+    {
+        if ($tab === 'trade' && $this->canTrade) {
+            app(TrackPdaAlerts::class)->markSeen($this->player(), 'trade');
+        }
     }
 
     private function toast(string $variant, string $text): void

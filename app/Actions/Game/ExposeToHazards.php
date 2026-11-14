@@ -28,7 +28,7 @@ class ExposeToHazards
 
         return $this->expose($user, [
             [HarmCause::Accident, (int) $action?->hazard_chance_pct, (int) $action?->hazard_damage],
-            ...$this->stormAndRadiation($work->weather, $action?->city),
+            ...$this->stormAndRadiation($user, $work->weather, $action?->city),
         ]);
     }
 
@@ -39,13 +39,13 @@ class ExposeToHazards
      */
     public function afterTravelLeg(User $user, City $arrival, Weather $weather): array
     {
-        return $this->expose($user, $this->stormAndRadiation($weather, $arrival));
+        return $this->expose($user, $this->stormAndRadiation($user, $weather, $arrival));
     }
 
     /**
      * @return list<array{0: HarmCause, 1: int, 2: int}>
      */
-    private function stormAndRadiation(?Weather $weather, ?City $city): array
+    private function stormAndRadiation(User $user, ?Weather $weather, ?City $city): array
     {
         return [
             [
@@ -53,8 +53,18 @@ class ExposeToHazards
                 $weather === Weather::Storm ? (int) config('survival.environment.storm_harm_chance_pct') : 0,
                 (int) config('survival.environment.storm_damage'),
             ],
-            [HarmCause::Radiation, 100, (int) $city?->radiation_damage],
+            [HarmCause::Radiation, 100, $this->radiationDamageFor($user, $city)],
         ];
+    }
+
+    /**
+     * The city's radiation damage, less what the survivor's gas mask, suit or other worn gear turns aside.
+     */
+    private function radiationDamageFor(User $user, ?City $city): int
+    {
+        $damage = (int) $city?->radiation_damage;
+
+        return (int) round($damage * (100 - $user->equipmentBonusPercent('radiation_protection')) / 100);
     }
 
     /**

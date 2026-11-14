@@ -14,12 +14,12 @@ return [
     | Blows can miss. The survivor lands a blow with the base hit chance, plus
     | the hit chance per skill level, minus the enemy's defence. The enemy lands
     | one with its accuracy, minus the evasion per skill level and the defence
-    | bonus of the best armour the survivor carries. Both chances stay between
+    | bonus of the best armour the survivor wears (see config/equipment.php). Both chances stay between
     | the minimum and maximum hit chance, so no fight is ever certain.
     |
     | A landed blow from the survivor hits for a roll between the base damage
     | values, plus the damage per skill level and the attack bonus of the best
-    | weapon they carry. Hurt survivors hit softer: at 0 health a blow lands at
+    | weapon they hold in an arm. Hurt survivors hit softer: at 0 health a blow lands at
     | half strength, rising to full strength at full health.
     |
     | Every combat skill level also turns aside some of each landed enemy blow,

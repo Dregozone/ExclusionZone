@@ -17,13 +17,16 @@ class TrackSurvivalNeeds
     private const DEFAULT_LABELS = ['health' => 'Healthy', 'hunger' => 'Fed', 'fatigue' => 'Rested'];
 
     /**
-     * Add hunger and fatigue from finished work or travel. Resting starts over from now.
-     * Pushing on while starving or spent then costs health.
+     * Add hunger and fatigue from finished work or travel, less what the survivor's worn gear eases.
+     * Resting starts over from now. Pushing on while starving or spent then costs health.
      *
      * @return bool Whether the survivor died from it.
      */
     public function exert(User $user, float $hunger, float $fatigue): bool
     {
+        $hunger *= (100 - $user->equipmentBonusPercent('hunger_reduction')) / 100;
+        $fatigue *= (100 - $user->equipmentBonusPercent('fatigue_reduction')) / 100;
+
         $this->change($user, $hunger, $fatigue, 0, restartsRest: true);
 
         $harms = [
@@ -41,11 +44,23 @@ class TrackSurvivalNeeds
     }
 
     /**
-     * Take hunger and fatigue away and give health back, such as when the survivor eats.
+     * Take hunger and fatigue away and give health back, such as when the survivor eats. Worn gear can boost the healing.
      */
     public function relieve(User $user, float $hunger, float $fatigue, int $health = 0): void
     {
-        $this->change($user, -$hunger, -$fatigue, $health, restartsRest: false);
+        $this->change($user, -$hunger, -$fatigue, $this->boostHealing($user, $health), restartsRest: false);
+    }
+
+    /**
+     * Health given back, plus the healing bonus of the survivor's worn gear.
+     */
+    public function boostHealing(User $user, int $health): int
+    {
+        if ($health <= 0) {
+            return $health;
+        }
+
+        return (int) round($health * (100 + $user->equipmentBonusPercent('healing_bonus')) / 100);
     }
 
     /**
@@ -101,7 +116,7 @@ class TrackSurvivalNeeds
 
         $recovered = $minutesRested * (float) config('survival.rest.fatigue_recovered_per_minute');
 
-        $healed = $healsWhileResting ? $minutesRested * (int) config('survival.rest.health_recovered_per_minute') : 0;
+        $healed = $healsWhileResting ? $this->boostHealing($user, $minutesRested * (int) config('survival.rest.health_recovered_per_minute')) : 0;
 
         $user->forceFill([
             'fatigue' => $this->clampNeed($user->fatigue - $recovered),

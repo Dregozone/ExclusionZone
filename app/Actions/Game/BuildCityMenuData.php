@@ -2,15 +2,18 @@
 
 namespace App\Actions\Game;
 
+use App\EquipSlot;
 use App\Models\City;
 use App\Models\CityAction;
 use App\Models\Enemy;
+use App\Models\InventoryItem;
 use App\Models\Item;
 use App\Models\PremiumCosmetic;
 use App\Models\Quest;
 use App\Models\QuestStep;
 use App\Models\Skill;
 use App\Models\User;
+use App\Models\UserEquipment;
 use App\Models\UserQuest;
 use App\Models\UserWork;
 use App\Weather;
@@ -27,7 +30,8 @@ class BuildCityMenuData
             'role.tasks',
             'location.city.country',
             'skills.skill',
-            'inventoryItems.item',
+            'inventoryItems.item.bonusSkill',
+            'equipment.item.bonusSkill',
             'activeWork.cityAction.skill',
             'activeWork.originCity',
             'activeWork.destinationCity',
@@ -48,7 +52,6 @@ class BuildCityMenuData
 
         $location = $user->location;
         $city = $location?->city?->loadMissing('country');
-        $neighbors = $city?->neighbors()->with('country')->orderBy('city')->get() ?? collect();
         $activeWork = $user->activeWork;
         $cityActionRestriction = $user->cityActionRestriction();
         $canPerformCityActions = $cityActionRestriction === null;
@@ -73,33 +76,46 @@ class BuildCityMenuData
             'location' => $location,
             'city' => $city,
             'country' => $city?->country,
-            'neighbors' => $neighbors,
             'can_perform_city_actions' => $canPerformCityActions,
             'city_action_restriction' => $cityActionRestriction,
             'active_work' => $activeWork === null ? null : $this->activeWorkData($user, $activeWork),
             'last_work_report' => $user->last_work_report,
             'death_report' => $user->death_report,
             'trouble' => $this->troubleDataFor($user),
-            'actions' => $cityActions->map(function (CityAction $action) use ($user, $canPerformCityActions, $enemiesBySkill): array {
-                $requiredItems = (new PerformCityAction)->requiredItemsFor($user, $action);
-                $hasRequiredItems = collect($requiredItems)->every(
-                    fn (array $requiredItem): bool => $requiredItem['owned'] >= $requiredItem['quantity'],
-                );
+            'recovery' => $this->recoveryFor($user),
+            'actions' => $cityActions->map(function (CityAction $action) use ($user, $cityActionRestriction, $enemiesBySkill): array {
+                $performCityAction = new PerformCityAction;
+                $requiredItems = $performCityAction->requiredItemsFor($user, $action);
+                $missingItems = array_values(array_filter($requiredItems, fn (array $requiredItem): bool => $requiredItem['owned'] < $requiredItem['quantity']));
+                $userLevel = $user->skillFor($action->skill_key)?->level ?? 1;
+                $isHealing = $performCityAction->healthRestoredBy($action) > 0;
+
+                [$unavailableLabel, $unavailableReason] = match (true) {
+                    $cityActionRestriction !== null => [$user->recoveryRestriction() !== null ? 'Recovering' : 'Unavailable', $cityActionRestriction],
+                    $userLevel < $action->min_level => ['Locked', "Needs {$action->skill?->display_name} level {$action->min_level}. You are level {$userLevel}."],
+                    $missingItems !== [] => ['Missing items', 'You need '.$performCityAction->describeRequiredItems($missingItems).' more. '.collect($missingItems)->map(fn (array $missing): string => "{$missing['item']->name}: {$missing['owned']} of {$missing['quantity']} carried")->implode(', ').'.'],
+                    $isHealing && $user->health >= (int) config('survival.maximum') => ['Not hurt', 'You are at full health, so there is nothing to patch up.'],
+                    default => [null, null],
+                };
 
                 return [
                     'action' => $action,
                     'required_level' => $action->min_level,
-                    'user_level' => $user->skillFor($action->skill_key)?->level ?? 1,
+                    'user_level' => $userLevel,
                     'required_items' => $requiredItems,
-                    'has_required_items' => $hasRequiredItems,
+                    'has_required_items' => $missingItems === [],
                     'enemies' => $enemiesBySkill->get($action->skill_key, []),
-                    'available' => $canPerformCityActions
-                        && $hasRequiredItems
-                        && ($user->skillFor($action->skill_key)?->level ?? 1) >= $action->min_level,
+                    'gear_speed_percent' => $user->equipmentBonusPercent('work_speed', $action->skill_key),
+                    'available' => $unavailableReason === null,
+                    'unavailable_label' => $unavailableLabel,
+                    'unavailable_reason' => $unavailableReason,
                 ];
             }),
             'skills' => $user->skills->sortBy(fn ($skill) => $skill->skill?->display_name)->values(),
-            'inventory' => $user->inventoryItems->sortBy(fn ($item) => $item->item?->name)->values(),
+            'inventory' => $user->inventoryItems->filter(fn (InventoryItem $inventoryItem): bool => $inventoryItem->item !== null && $inventoryItem->quantity > 0)->sortBy(fn ($item) => $item->item?->name)->values(),
+            'gear' => $this->gearFor($user),
+            'bazaar' => $this->bazaarFor($user),
+            'alerts' => (new TrackPdaAlerts)->counts($user),
             'condition' => $this->conditionFor($user),
             'brain_scorcher' => $this->brainScorcherDataFor($user, $city, $canPerformCityActions),
             'library' => $this->libraryDataFor($user, $city, $canPerformCityActions),
@@ -111,7 +127,6 @@ class BuildCityMenuData
                 ->get()
                 ->mapToGroups(fn (PremiumCosmetic $cosmetic): array => [$cosmetic->cosmetic_type => $cosmetic]),
             'loadout' => $user->cosmeticLoadout,
-            'map_data' => (new BuildWorldMapData)($user),
             'weather' => $city?->weather,
             'local_event' => $this->localEventFor($city?->weather, $city?->trouble_chance_pct),
             'hooks' => collect([
@@ -122,6 +137,96 @@ class BuildCityMenuData
                 ...$hook,
                 'available' => $user->canPerformTask($hook['key']),
             ]),
+        ];
+    }
+
+    /**
+     * When a survivor who died can work and travel again, so the city menu can count it down.
+     *
+     * @return array{until_iso: string, until_human: string, remaining_seconds: int}|null
+     */
+    private function recoveryFor(User $user): ?array
+    {
+        if ($user->recoveryRestriction() === null) {
+            return null;
+        }
+
+        return [
+            'until_iso' => $user->recovering_until->toIso8601String(),
+            'until_human' => $user->recovering_until->diffForHumans(),
+            'remaining_seconds' => (int) max(0, now()->diffInSeconds($user->recovering_until, false)),
+        ];
+    }
+
+    /**
+     * What the survivor wears in each slot, the wearable gear in their pack, and what it all adds up to.
+     *
+     * @return array{slots: list<array{slot: EquipSlot, item: ?Item}>, wearables: list<array{item: Item, owned: int, slots: list<EquipSlot>}>, effects: list<string>}
+     */
+    private function gearFor(User $user): array
+    {
+        $worn = $user->equipment->keyBy(fn (UserEquipment $equipment): string => $equipment->slot->value);
+
+        return [
+            'slots' => array_map(fn (EquipSlot $slot): array => [
+                'slot' => $slot,
+                'item' => $worn->get($slot->value)?->item,
+            ], EquipSlot::cases()),
+            'wearables' => $user->inventoryItems
+                ->filter(fn (InventoryItem $inventoryItem): bool => $inventoryItem->item?->isWearable() === true && $inventoryItem->quantity > 0)
+                ->sortBy(fn (InventoryItem $inventoryItem): string => $inventoryItem->item->name)
+                ->map(fn (InventoryItem $inventoryItem): array => [
+                    'item' => $inventoryItem->item,
+                    'owned' => $inventoryItem->quantity,
+                    'slots' => EquipSlot::fitting($inventoryItem->item),
+                ])
+                ->values()
+                ->all(),
+            'effects' => array_values(array_filter([
+                ...$user->equipment
+                    ->pluck('item')
+                    ->filter(fn (?Item $item): bool => $item !== null && $item->work_speed_bonus_percent > 0 && $item->bonus_skill_key !== null)
+                    ->groupBy('bonus_skill_key')
+                    ->map(fn (Collection $items, string $skillKey): string => ($items->first()->bonusSkill?->display_name ?? str($skillKey)->headline()).' work '.$user->equipmentBonusPercent('work_speed', $skillKey).'% faster')
+                    ->values()
+                    ->all(),
+                $user->heldWeapon() === null ? null : 'Fighting with your '.$user->heldWeapon()->name.' (attack +'.$user->heldWeapon()->attack_bonus.')',
+                $user->equipmentBonusPercent('hunger_reduction') > 0 ? 'Hunger -'.$user->equipmentBonusPercent('hunger_reduction').'% while working' : null,
+                $user->equipmentBonusPercent('fatigue_reduction') > 0 ? 'Fatigue -'.$user->equipmentBonusPercent('fatigue_reduction').'% while working' : null,
+                $user->equipmentBonusPercent('healing_bonus') > 0 ? 'Healing +'.$user->equipmentBonusPercent('healing_bonus').'%' : null,
+                $user->equipmentBonusPercent('radiation_protection') > 0 ? 'Radiation -'.$user->equipmentBonusPercent('radiation_protection').'%' : null,
+            ])),
+        ];
+    }
+
+    /**
+     * The trade post bazaar: whether the survivor can use it, what it sells, and what it pays for their goods.
+     *
+     * @return array{restriction: ?string, scrip: int, barter_sell_bonus_percent: int, barter_buy_discount_percent: int, stock: list<array{item: Item, price: int}>, sellable: list<array{item: Item, owned: int, unit_price: int}>}
+     */
+    private function bazaarFor(User $user): array
+    {
+        $tradeAtBazaar = new TradeAtBazaar;
+        $restriction = $tradeAtBazaar->restriction($user);
+
+        return [
+            'restriction' => $restriction,
+            'scrip' => (int) $user->scrip,
+            'barter_sell_bonus_percent' => $tradeAtBazaar->barterSellBonusPercent($user),
+            'barter_buy_discount_percent' => $tradeAtBazaar->barterBuyDiscountPercent($user),
+            'stock' => $restriction !== null ? [] : $tradeAtBazaar->stock()
+                ->map(fn (Item $item): array => ['item' => $item, 'price' => $tradeAtBazaar->buyPrice($user, $item)])
+                ->all(),
+            'sellable' => $restriction !== null ? [] : $user->inventoryItems
+                ->filter(fn (InventoryItem $inventoryItem): bool => $inventoryItem->item?->isSellable() === true && $inventoryItem->quantity > 0)
+                ->sortBy(fn (InventoryItem $inventoryItem): string => $inventoryItem->item->name)
+                ->map(fn (InventoryItem $inventoryItem): array => [
+                    'item' => $inventoryItem->item,
+                    'owned' => $inventoryItem->quantity,
+                    'unit_price' => $tradeAtBazaar->sellPrice($user, $inventoryItem->item, 1),
+                ])
+                ->values()
+                ->all(),
         ];
     }
 
@@ -243,7 +348,7 @@ class BuildCityMenuData
     /**
      * The survivor's health, hunger and fatigue, how much they slow work timers, and the food and medical items they carry.
      *
-     * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: float, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: float, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>, medical_items: list<array{item_id: int, name: string, owned: int, health_restored: int}>}
+     * @return array{health: array{value: int, maximum: int, label: string, timer_increase_percent: int}, hunger: array{value: float, maximum: int, label: string, timer_increase_percent: int}, fatigue: array{value: float, maximum: int, label: string, timer_increase_percent: int}, timer_increase_percent: int, foods: list<array{item_id: int, name: string, image_url: string, owned: int, health_restored: int, hunger_restored: int, fatigue_restored: int}>, medical_items: list<array{item_id: int, name: string, image_url: string, owned: int, health_restored: int}>}
      */
     private function conditionFor(User $user): array
     {
@@ -260,6 +365,7 @@ class BuildCityMenuData
                 ->map(fn ($inventoryItem): array => [
                     'item_id' => $inventoryItem->item->id,
                     'name' => $inventoryItem->item->name,
+                    'image_url' => $inventoryItem->item->imageUrl(),
                     'owned' => $inventoryItem->quantity,
                     'health_restored' => $inventoryItem->item->health_restored,
                     'hunger_restored' => $inventoryItem->item->hunger_restored,
@@ -273,6 +379,7 @@ class BuildCityMenuData
                 ->map(fn ($inventoryItem): array => [
                     'item_id' => $inventoryItem->item->id,
                     'name' => $inventoryItem->item->name,
+                    'image_url' => $inventoryItem->item->imageUrl(),
                     'owned' => $inventoryItem->quantity,
                     'health_restored' => $inventoryItem->item->health_restored,
                 ])

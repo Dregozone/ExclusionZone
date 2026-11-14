@@ -4,6 +4,7 @@
  */
 import './geo-map/geo-map.js';
 import './manual-search.js';
+import './quick-actions.js';
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening

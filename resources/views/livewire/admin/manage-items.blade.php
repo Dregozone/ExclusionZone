@@ -83,16 +83,67 @@
                     <flux:field>
                         <flux:label>{{ __('Attack bonus') }}</flux:label>
                         <flux:input type="number" wire:model="attack_bonus" min="0" max="100" />
-                        <flux:description>{{ __('Added to every blow in a fight. Survivors fight with the carried item with the highest bonus; 0 means it is not a weapon.') }}</flux:description>
+                        <flux:description>{{ __('Added to every blow in a fight. Survivors fight with the held item (worn in an arm) with the highest bonus; 0 means it is not a weapon.') }}</flux:description>
                         <flux:error name="attack_bonus" />
                     </flux:field>
 
                     <flux:field>
                         <flux:label>{{ __('Defence bonus') }}</flux:label>
                         <flux:input type="number" wire:model="defence_bonus" min="0" max="100" />
-                        <flux:description>{{ __('Taken off every enemy\'s chance to land a blow, in percent. Survivors wear the carried item with the highest bonus; 0 means it is not armour.') }}</flux:description>
+                        <flux:description>{{ __('Taken off every enemy\'s chance to land a blow, in percent. Only worn armour counts, and the worn item with the highest bonus is used; 0 means it is not armour.') }}</flux:description>
                         <flux:error name="defence_bonus" />
                     </flux:field>
+                </div>
+
+                <flux:field>
+                    <flux:label>{{ __('Base price (scrip)') }}</flux:label>
+                    <flux:input type="number" wire:model="base_price" min="0" />
+                    <flux:description>{{ __('What trade post bazaars buy and sell this item around. 0 means bazaars will not take it; quest items are never bought.') }}</flux:description>
+                    <flux:error name="base_price" />
+                </flux:field>
+
+                <div class="space-y-4 rounded-sm border border-zinc-700 p-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <flux:field>
+                            <flux:label>{{ __('Worn on') }}</flux:label>
+                            <flux:select wire:model="equip_slot">
+                                <flux:select.option value="">{{ __('Not wearable') }}</flux:select.option>
+                                @foreach (\App\EquipSlot::ITEM_SLOTS as $slotKey => $slotLabel)
+                                    <flux:select.option value="{{ $slotKey }}">{{ $slotLabel }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                            <flux:error name="equip_slot" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>{{ __('Speeds up skill') }}</flux:label>
+                            <flux:select wire:model="bonus_skill_key">
+                                <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                                @foreach ($this->skills as $skillKey => $skillName)
+                                    <flux:select.option value="{{ $skillKey }}">{{ $skillName }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                            <flux:error name="bonus_skill_key" />
+                        </flux:field>
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        @foreach ([
+                            'work_speed_bonus_percent' => [__('Work speed %'), __('How much faster that skill\'s work runs.')],
+                            'hunger_reduction_percent' => [__('Hunger eased %'), __('Less hunger from work and travel.')],
+                            'fatigue_reduction_percent' => [__('Fatigue eased %'), __('Less fatigue from work and travel.')],
+                            'healing_bonus_percent' => [__('Healing bonus %'), __('More health from food, medicine and rest.')],
+                            'radiation_protection_percent' => [__('Radiation protection %'), __('Less health lost to radiation.')],
+                        ] as $field => [$fieldLabel, $fieldDescription])
+                            <flux:field>
+                                <flux:label>{{ $fieldLabel }}</flux:label>
+                                <flux:input type="number" wire:model="{{ $field }}" min="0" max="100" />
+                                <flux:description>{{ $fieldDescription }}</flux:description>
+                                <flux:error name="{{ $field }}" />
+                            </flux:field>
+                        @endforeach
+                    </div>
+                    <p class="text-xs text-zinc-500">{{ __('Bonuses only apply while the item is worn, and add up across worn items up to the caps in config/equipment.php.') }}</p>
                 </div>
 
                 <flux:field>

@@ -30,6 +30,7 @@ class CalculateWorkDuration
         $skillLevel = $skillProgress?->level ?? 1;
         $reductionPercent = max(0, $skillLevel - 1);
         $scaledDuration = (int) ceil($baseDuration * ((100 - $reductionPercent) / 100));
+        $scaledDuration = (int) ceil($scaledDuration * (100 - $user->equipmentBonusPercent('work_speed', $action->skill_key)) / 100);
 
         return $this->applyTimerIncreases($user, max(self::MINIMUM_DURATION_SECONDS, $scaledDuration));
     }

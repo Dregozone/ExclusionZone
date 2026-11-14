@@ -6,16 +6,22 @@ use App\Actions\Game\CancelUserWork;
 use App\Actions\Game\CompleteUserWork;
 use App\Actions\Game\DealWithTrouble;
 use App\Actions\Game\EatFood;
+use App\Actions\Game\EquipItem;
 use App\Actions\Game\EquipPremiumCosmetic;
 use App\Actions\Game\StartUserWork;
+use App\Actions\Game\TradeAtBazaar;
 use App\Actions\Game\UseMedicalItem;
+use App\EquipSlot;
+use App\Http\Requests\BazaarTradeRequest;
 use App\Http\Requests\BuyWayPastTroubleRequest;
 use App\Http\Requests\EatFoodRequest;
 use App\Http\Requests\EquipCosmeticRequest;
+use App\Http\Requests\EquipItemRequest;
 use App\Http\Requests\FeedBrainScorcherRequest;
 use App\Http\Requests\PerformCityActionRequest;
 use App\Http\Requests\StudyAtLibraryRequest;
 use App\Http\Requests\TravelRequest;
+use App\Http\Requests\UnequipItemRequest;
 use App\Http\Requests\UseMedicalItemRequest;
 use App\Models\City;
 use App\Models\CityAction;
@@ -23,6 +29,7 @@ use App\Models\Item;
 use App\Models\PremiumCosmetic;
 use App\Models\Skill;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -95,14 +102,14 @@ class GameActionController extends Controller
         return to_route('dashboard')->with('status', "Your {$skill->display_name} lesson has started. It ends in ".max(10, $work->duration_seconds).' seconds, and you pay when it does. Cancel to keep your items.');
     }
 
-    public function eat(EatFoodRequest $request, EatFood $eatFood): RedirectResponse
+    public function eat(EatFoodRequest $request, EatFood $eatFood): RedirectResponse|JsonResponse
     {
         $item = Item::query()->findOrFail($request->integer('item_id'));
 
         try {
             $relieved = $eatFood($request->user(), $item);
         } catch (AuthorizationException $exception) {
-            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+            return $this->refuse($request, $exception->getMessage());
         }
 
         $effects = collect([
@@ -111,20 +118,74 @@ class GameActionController extends Controller
             'fatigue -'.$relieved['fatigue_relieved'] => $relieved['fatigue_relieved'],
         ])->filter()->keys()->implode(', ');
 
-        return to_route('dashboard')->with('status', "You ate 1x {$item->name}".($effects === '' ? '.' : " ({$effects})."));
+        return $this->respond($request, "You ate 1x {$item->name}".($effects === '' ? '.' : " ({$effects})."));
     }
 
-    public function useMedicalItem(UseMedicalItemRequest $request, UseMedicalItem $useMedicalItem): RedirectResponse
+    public function useMedicalItem(UseMedicalItemRequest $request, UseMedicalItem $useMedicalItem): RedirectResponse|JsonResponse
     {
         $item = Item::query()->findOrFail($request->integer('item_id'));
 
         try {
             $healthRestored = $useMedicalItem($request->user(), $item);
         } catch (AuthorizationException $exception) {
-            return back()->with('toast', $this->dangerToast($exception->getMessage()));
+            return $this->refuse($request, $exception->getMessage());
         }
 
-        return to_route('dashboard')->with('status', "You used 1x {$item->name} (health +{$healthRestored}).");
+        return $this->respond($request, "You used 1x {$item->name} (health +{$healthRestored}).");
+    }
+
+    public function equip(EquipItemRequest $request, EquipItem $equipItem): RedirectResponse|JsonResponse
+    {
+        $item = Item::query()->findOrFail($request->integer('item_id'));
+
+        try {
+            $equipped = $equipItem->equip($request->user(), $item, $request->enum('slot', EquipSlot::class));
+        } catch (AuthorizationException $exception) {
+            return $this->refuse($request, $exception->getMessage());
+        }
+
+        return $this->respond($request, $equipped['replaced'] === null
+            ? "You put on the {$item->name} ({$equipped['slot']->label()})."
+            : "You swapped your {$equipped['replaced']->name} for the {$item->name} ({$equipped['slot']->label()}).");
+    }
+
+    public function unequip(UnequipItemRequest $request, EquipItem $equipItem): RedirectResponse|JsonResponse
+    {
+        try {
+            $item = $equipItem->unequip($request->user(), $request->enum('slot', EquipSlot::class));
+        } catch (AuthorizationException $exception) {
+            return $this->refuse($request, $exception->getMessage());
+        }
+
+        return $this->respond($request, "You took off the {$item->name} and packed it away.");
+    }
+
+    public function sellToBazaar(BazaarTradeRequest $request, TradeAtBazaar $tradeAtBazaar): RedirectResponse|JsonResponse
+    {
+        $item = Item::query()->findOrFail($request->integer('item_id'));
+        $quantity = $request->integer('quantity');
+
+        try {
+            $sale = $tradeAtBazaar->sell($request->user(), $item, $quantity);
+        } catch (AuthorizationException $exception) {
+            return $this->refuse($request, $exception->getMessage());
+        }
+
+        return $this->respond($request, "You sold {$quantity}x {$item->name} for {$sale['scrip']} scrip (+{$sale['barter_xp']} Barter XP).");
+    }
+
+    public function buyFromBazaar(BazaarTradeRequest $request, TradeAtBazaar $tradeAtBazaar): RedirectResponse|JsonResponse
+    {
+        $item = Item::query()->findOrFail($request->integer('item_id'));
+        $quantity = $request->integer('quantity');
+
+        try {
+            $purchase = $tradeAtBazaar->buy($request->user(), $item, $quantity);
+        } catch (AuthorizationException $exception) {
+            return $this->refuse($request, $exception->getMessage());
+        }
+
+        return $this->respond($request, "You bought {$quantity}x {$item->name} for {$purchase['scrip']} scrip (+{$purchase['barter_xp']} Barter XP).");
     }
 
     public function attackTrouble(Request $request, DealWithTrouble $dealWithTrouble): RedirectResponse
@@ -233,6 +294,24 @@ class GameActionController extends Controller
         };
 
         return to_route('dashboard')->with('status', $message);
+    }
+
+    /**
+     * Quick actions on the city menu are sent in the background so the page keeps its scroll
+     * position; those get JSON back, and a plain form post is redirected to the city menu.
+     */
+    private function respond(Request $request, string $status): RedirectResponse|JsonResponse
+    {
+        return $request->expectsJson()
+            ? response()->json(['status' => $status])
+            : to_route('dashboard')->with('status', $status);
+    }
+
+    private function refuse(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        return $request->expectsJson()
+            ? response()->json(['message' => $message, 'toast' => $this->dangerToast($message)], 422)
+            : back()->with('toast', $this->dangerToast($message));
     }
 
     /**
