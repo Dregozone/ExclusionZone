@@ -51,7 +51,8 @@
         },
         init() {
             this.$watch('open', v => { sessionStorage.setItem('pda_open', v); this.seeCurrentTab(); });
-            this.$watch('tab', v => { sessionStorage.setItem('pda_tab', v); this.seeCurrentTab(); });
+            this.$watch('tab', v => { sessionStorage.setItem('pda_tab', v); this.seeCurrentTab(); this.showCurrentTab(); });
+            this.$watch('open', v => v && this.$nextTick(() => this.showCurrentTab()));
             this.$nextTick(() => this.seeCurrentTab());
 
             {{-- Counts come back with every live refresh of the city menu, such as after eating or a work cycle. --}}
@@ -62,14 +63,12 @@
                     return;
                 }
 
-                const counts = JSON.parse(fresh.dataset.pdaAlerts);
-
-                Object.keys(counts).forEach((alertTab) => {
-                    if (! (this.open && this.tab === alertTab)) {
-                        this.alerts[alertTab] = counts[alertTab];
-                    }
-                });
+                this.applyCounts(JSON.parse(fresh.dataset.pdaAlerts));
             });
+
+            {{-- Without a live broadcasting connection, ask for fresh counts every minute while the page is on screen. --}}
+            setInterval(() => this.poll(), 60000);
+            document.addEventListener('visibilitychange', () => this.poll());
 
             {{-- With live broadcasting, a new message or trade change raises the bell straight away. --}}
             if (window.Echo) {
@@ -87,6 +86,32 @@
                 } catch {}
             }
         },
+        isBroadcasting() {
+            return window.Echo?.connector?.pusher?.connection?.state === 'connected';
+        },
+        async poll() {
+            if (document.hidden || this.isBroadcasting()) {
+                return;
+            }
+
+            try {
+                const response = await fetch(@js(route('pda-alerts.index')), {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                });
+
+                if (response.ok) {
+                    this.applyCounts(await response.json());
+                }
+            } catch {}
+        },
+        applyCounts(counts) {
+            Object.keys(counts).forEach((alertTab) => {
+                if (! (this.open && this.tab === alertTab)) {
+                    this.alerts[alertTab] = counts[alertTab];
+                }
+            });
+        },
         raise(alertTab) {
             if (this.open && this.tab === alertTab) {
                 this.markSeen(alertTab);
@@ -96,6 +121,10 @@
 
             this.alerts[alertTab] = (this.alerts[alertTab] ?? 0) + 1;
         },
+        {{-- On a narrow phone the tab bar scrolls sideways, so keep the open tab in view. --}}
+        showCurrentTab() {
+            this.$root.querySelector('[role=tab][aria-selected=true]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        },
         seeCurrentTab() {
             if (this.open && (this.alerts[this.tab] ?? 0) > 0) {
                 this.markSeen(this.tab);
@@ -104,6 +133,15 @@
         markSeen(alertTab) {
             this.alerts[alertTab] = 0;
             window.Livewire?.dispatch('pda-tab-seen', { tab: alertTab });
+
+            {{-- The radio and trade tabs are Livewire components that hear the event above; the Jobs tab is not. --}}
+            if (alertTab === 'contracts') {
+                fetch(@js(route('pda-alerts.seen', 'contracts')), {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': @js(csrf_token()), Accept: 'application/json' },
+                    credentials: 'same-origin',
+                }).catch(() => {});
+            }
         },
     }"
     @keydown.escape.window="open = false"
@@ -439,7 +477,7 @@
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">Bazaar</p>
-                                    <p class="mt-1 text-xs text-zinc-500">Sell goods for scrip and buy supplies at any trade post. Other survivors usually pay more than the bazaar does.</p>
+                                    <p class="mt-1 text-xs text-zinc-500">Sell goods for scrip and buy supplies. Each trade post keeps its own stock, and other survivors usually pay more than the bazaar does.</p>
                                 </div>
                                 <x-zone.scrip :amount="$bazaar['scrip']" class="shrink-0 rounded-sm border border-amber-400/40 px-2 py-1 text-sm text-amber-200" data-test="bazaar-scrip" />
                             </div>
@@ -736,13 +774,13 @@
                     <nav
                         role="tablist"
                         aria-label="PDA navigation"
-                        class="relative z-10 flex shrink-0 overflow-x-auto border-t border-zinc-700 bg-zinc-900"
+                        class="relative z-10 flex shrink-0 overflow-x-auto border-t border-zinc-700 bg-zinc-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                         @keydown.arrow-right.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const next = tabs[(tabs.indexOf(document.activeElement) + 1) % tabs.length]; next.click(); next.focus()"
                         @keydown.arrow-left.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const previous = tabs[(tabs.indexOf(document.activeElement) - 1 + tabs.length) % tabs.length]; previous.click(); previous.focus()"
                     >
                         <div class="flex min-w-max w-full">
                             @foreach ($tabs as $key => [$label, $name, $iconPath])
-                                <button role="tab" type="button" @click="tab = '{{ $key }}'" :aria-selected="(tab === '{{ $key }}').toString()" :tabindex="tab === '{{ $key }}' ? 0 : -1" class="relative flex flex-1 flex-col items-center gap-0.5 px-2 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === '{{ $key }}' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="{{ $name }}" data-test="pda-tab-{{ $key }}">
+                                <button role="tab" type="button" @click="tab = '{{ $key }}'" :aria-selected="(tab === '{{ $key }}').toString()" :tabindex="tab === '{{ $key }}' ? 0 : -1" class="relative flex flex-1 flex-col items-center gap-0.5 px-1.5 py-2 sm:px-2 font-mono text-[10px] uppercase tracking-wide transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-emerald-500" :class="tab === '{{ $key }}' ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'" aria-label="{{ $name }}" data-test="pda-tab-{{ $key }}">
                                     <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconPath }}" /></svg>
                                     <span>{{ $label }}</span>
                                     @if (array_key_exists($key, $alerts))

@@ -108,6 +108,12 @@ class PerformCityAction
             throw new AuthorizationException('You need '.$this->describeRequiredItems($missingItems).' to do that.');
         }
 
+        $missingGear = $this->missingGearFor($user, $action);
+
+        if ($missingGear !== []) {
+            throw new AuthorizationException('You need to wear '.$this->describeGear($missingGear).' to do that.');
+        }
+
         if ($this->healthRestoredBy($action) > 0 && $user->health >= (int) config('survival.maximum')) {
             throw new AuthorizationException('You are not hurt, so there is nothing to patch up.');
         }
@@ -140,6 +146,50 @@ class PerformCityAction
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * The gear an action needs worn or held, with whether the survivor is wearing each piece. Gear is
+     * not used up, and every piece listed has to be worn at the same time.
+     *
+     * @return array<int, array{item: Item, worn: bool}>
+     */
+    public function requiredGearFor(User $user, CityAction $action): array
+    {
+        $itemKeys = $action->required_gear ?? [];
+
+        if ($itemKeys === []) {
+            return [];
+        }
+
+        $wornItemIds = $user->wornItems()->pluck('id')->all();
+
+        return Item::query()
+            ->whereIn('key', $itemKeys)
+            ->get()
+            ->sortBy(fn (Item $item): int => (int) array_search($item->key, $itemKeys, true))
+            ->map(fn (Item $item): array => ['item' => $item, 'worn' => in_array($item->id, $wornItemIds, true)])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, Item>
+     */
+    public function missingGearFor(User $user, CityAction $action): array
+    {
+        return collect($this->requiredGearFor($user, $action))
+            ->reject(fn (array $gear): bool => $gear['worn'])
+            ->pluck('item')
+            ->all();
+    }
+
+    /**
+     * @param  array<int, Item>  $items
+     */
+    public function describeGear(array $items): string
+    {
+        return collect($items)->pluck('name')->join(', ', ' and ');
     }
 
     /**

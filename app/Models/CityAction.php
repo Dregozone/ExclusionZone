@@ -25,6 +25,7 @@ class CityAction extends Model
         'fatigue_cost',
         'reward_profile',
         'required_items',
+        'required_gear',
     ];
 
     protected function casts(): array
@@ -37,6 +38,7 @@ class CityAction extends Model
             'fatigue_cost' => 'float',
             'reward_profile' => 'array',
             'required_items' => 'array',
+            'required_gear' => 'array',
         ];
     }
 

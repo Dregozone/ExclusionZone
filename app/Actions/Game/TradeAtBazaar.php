@@ -2,6 +2,7 @@
 
 namespace App\Actions\Game;
 
+use App\Models\City;
 use App\Models\Item;
 use App\Models\Skill;
 use App\Models\User;
@@ -11,19 +12,27 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Every trade post has a bazaar that buys goods for scrip and sells a fixed stock. Barter skill gets
- * better prices both ways, and selling a stack at once adds a small bulk bonus. The rates are set in
- * config/shop.php so the bazaar never pays more for an item than it charges.
+ * Every trade post has a bazaar that buys goods for scrip and sells a stock chosen for its city, or
+ * the default stock when none is chosen. Barter skill gets better prices both ways, and selling a
+ * stack at once adds a small bulk bonus. The rates are set in config/shop.php so the bazaar never
+ * pays more for an item than it charges.
  */
 class TradeAtBazaar
 {
     /**
-     * The items every bazaar sells, in the order they are listed.
+     * The items a city's bazaar sells: the ones chosen for it on the admin locations page, by name,
+     * or else the default stock in config/shop.php, in the order listed there.
      *
      * @return Collection<int, Item>
      */
-    public function stock(): Collection
+    public function stock(?City $city = null): Collection
     {
+        $cityStock = $city?->bazaarItems()->where('base_price', '>', 0)->orderBy('name')->get() ?? collect();
+
+        if ($cityStock->isNotEmpty()) {
+            return $cityStock->values();
+        }
+
         $keys = config('shop.stock', []);
 
         return Item::query()
@@ -145,7 +154,7 @@ class TradeAtBazaar
     {
         $this->authorize($user);
 
-        if (! $this->stock()->contains('id', $item->id)) {
+        if (! $this->stock($user->location?->city)->contains('id', $item->id)) {
             throw new AuthorizationException("The bazaar doesn't sell {$item->name}.");
         }
 

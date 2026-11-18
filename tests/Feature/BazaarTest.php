@@ -1,9 +1,11 @@
 <?php
 
+use App\Livewire\Admin\ManageLocations;
 use App\Models\City;
 use App\Models\Item;
 use App\Models\User;
 use App\Models\UserWork;
+use Livewire\Livewire;
 
 /**
  * A survivor at the Warsaw trade post with fixed bazaar rates: sales pay half the base price,
@@ -204,4 +206,77 @@ test('the city menu shows scrip and the bazaar at a trade post', function () {
 
 test('new survivors start with some scrip', function () {
     expect(User::factory()->create()->fresh()->scrip)->toBe(25);
+});
+
+// ── Stock per city ───────────────────────────────────────────────────────────
+
+test('a trade post with its own stock sells only that stock', function () {
+    $user = shopper(['scrip' => 500]);
+    $scrap = pricedItem('scrap_metal', 10);
+    $boots = pricedItem('wellington_boots', 20);
+    $user->location->city->bazaarItems()->attach($scrap);
+
+    $this->actingAs($user)
+        ->postJson(route('bazaar.buy'), ['item_id' => $scrap->id, 'quantity' => 2])
+        ->assertOk();
+    $this->actingAs($user)
+        ->postJson(route('bazaar.buy'), ['item_id' => $boots->id, 'quantity' => 1])
+        ->assertUnprocessable()
+        ->assertJson(['message' => 'The bazaar doesn\'t sell Wellington Boots.']);
+
+    expect(packed($user, $scrap))->toBe(2)
+        ->and(packed($user, $boots))->toBe(0)
+        ->and($user->fresh()->scrip)->toBe(470);
+});
+
+test('the city menu lists the trade post\'s own stock instead of the default', function () {
+    $user = shopper();
+    $user->location->city->bazaarItems()->attach(pricedItem('scrap_metal', 10));
+
+    $this->actingAs($user)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('data-test="buy-scrap_metal"', false)
+        ->assertDontSee('data-test="buy-gas_mask"', false);
+});
+
+test('admins choose what a trade post\'s bazaar sells', function () {
+    $warsaw = City::query()->where('city', 'Warsaw')->firstOrFail();
+    $scrap = pricedItem('scrap_metal', 10);
+
+    Livewire::actingAs(User::factory()->admin()->create())
+        ->test(ManageLocations::class)
+        ->call('edit', $warsaw->id)
+        ->set('bazaarItemIds', [$scrap->id])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($warsaw->bazaarItems()->pluck('items.id')->all())->toBe([$scrap->id]);
+});
+
+test('admins cannot stock an item without a base price', function () {
+    $warsaw = City::query()->where('city', 'Warsaw')->firstOrFail();
+    $unpriced = pricedItem('scrap_metal', 0);
+
+    Livewire::actingAs(User::factory()->admin()->create())
+        ->test(ManageLocations::class)
+        ->call('edit', $warsaw->id)
+        ->set('bazaarItemIds', [$unpriced->id])
+        ->call('save')
+        ->assertHasErrors(['bazaarItemIds.0' => 'exists']);
+
+    expect($warsaw->bazaarItems()->exists())->toBeFalse();
+});
+
+test('closing a trade post clears its bazaar stock', function () {
+    $warsaw = City::query()->where('city', 'Warsaw')->firstOrFail();
+    $warsaw->bazaarItems()->attach(pricedItem('scrap_metal', 10));
+
+    Livewire::actingAs(User::factory()->admin()->create())
+        ->test(ManageLocations::class)
+        ->call('edit', $warsaw->id)
+        ->set('has_trade_post', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($warsaw->bazaarItems()->exists())->toBeFalse();
 });

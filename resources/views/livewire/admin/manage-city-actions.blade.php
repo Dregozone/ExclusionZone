@@ -162,8 +162,8 @@
                             <div wire:key="required-item-{{ $index }}" class="grid items-start gap-4 sm:grid-cols-[1fr_8rem_auto]">
                                 <flux:field>
                                     <flux:label>{{ __('Item') }}</flux:label>
-                                    <flux:select wire:model="required_items.{{ $index }}.item_key" placeholder="{{ __('Select an item…') }}" searchable>
-                                        <flux:select.option value="">{{ __('Select an item…') }}</flux:select.option>
+                                    <flux:select wire:model="required_items.{{ $index }}.item_key" placeholder="{{ __('Select an itemâ€¦') }}" searchable>
+                                        <flux:select.option value="">{{ __('Select an itemâ€¦') }}</flux:select.option>
                                         @foreach ($this->items as $item)
                                             <flux:select.option value="{{ $item->key }}">{{ $item->name }}</flux:select.option>
                                         @endforeach
@@ -183,6 +183,30 @@
                             <flux:text class="text-sm">{{ __('No items needed.') }}</flux:text>
                         @endforelse
                     </div>
+                </div>
+
+                <div class="ez-card p-4">
+                    <div class="mb-3">
+                        <flux:heading size="sm">{{ __('Required Gear') }}</flux:heading>
+                        <flux:text class="mt-1 text-xs">{{ __('Gear the player must wear or hold to start and keep doing this action. Tick more than one to need them all at once. Gear is not used up.') }}</flux:text>
+                    </div>
+
+                    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($this->wearableItems as $item)
+                            <label wire:key="required-gear-{{ $item->key }}" class="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 {{ in_array($item->key, $required_gear, true) ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30' : '' }}">
+                                <input
+                                    type="checkbox"
+                                    wire:model="required_gear"
+                                    value="{{ $item->key }}"
+                                    class="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 dark:border-zinc-600"
+                                    data-test="required-gear-{{ $item->key }}"
+                                />
+                                <span class="text-zinc-800 dark:text-zinc-200">{{ $item->name }}</span>
+                                <span class="ml-auto text-xs text-zinc-500">{{ ucfirst($item->equip_slot) }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <flux:error name="required_gear" />
                 </div>
 
                 <div class="flex gap-3">

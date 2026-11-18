@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\Skill;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -61,6 +62,13 @@ class ManageCityActions extends Component
      */
     public array $required_items = [];
 
+    /**
+     * Keys of the items that must all be worn at once.
+     *
+     * @var array<int, string>
+     */
+    public array $required_gear = [];
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -98,6 +106,15 @@ class ManageCityActions extends Component
         return Item::query()->orderBy('name')->get(['id', 'key', 'name']);
     }
 
+    /**
+     * Items that can be worn or held, for the required gear choices.
+     */
+    #[Computed]
+    public function wearableItems(): Collection
+    {
+        return Item::query()->whereNotNull('equip_slot')->orderBy('name')->get(['id', 'key', 'name', 'equip_slot']);
+    }
+
     public function create(): void
     {
         $this->resetForm();
@@ -128,6 +145,7 @@ class ManageCityActions extends Component
         $this->reward_loot_tier = $reward['loot_tier'] ?? 'medium';
         $this->reward_health = $reward['health'] ?? 0;
         $this->required_items = $action->required_items ?? [];
+        $this->required_gear = $action->required_gear ?? [];
         $this->showForm = true;
     }
 
@@ -154,6 +172,8 @@ class ManageCityActions extends Component
             'required_items' => ['array'],
             'required_items.*.item_key' => ['required', 'string', 'distinct', 'exists:items,key'],
             'required_items.*.quantity' => ['required', 'integer', 'min:1'],
+            'required_gear' => ['array'],
+            'required_gear.*' => ['string', 'distinct', Rule::exists('items', 'key')->whereNotNull('equip_slot')],
         ]);
 
         $data = [
@@ -182,6 +202,7 @@ class ManageCityActions extends Component
                     'item_key' => $requiredItem['item_key'],
                     'quantity' => (int) $requiredItem['quantity'],
                 ], array_values($validated['required_items'] ?? [])),
+            'required_gear' => ($validated['required_gear'] ?? []) === [] ? null : array_values($validated['required_gear']),
         ];
 
         if ($this->editingId !== null) {
@@ -248,5 +269,6 @@ class ManageCityActions extends Component
         $this->reward_loot_tier = 'medium';
         $this->reward_health = 0;
         $this->required_items = [];
+        $this->required_gear = [];
     }
 }

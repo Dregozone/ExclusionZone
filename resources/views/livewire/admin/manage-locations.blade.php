@@ -82,11 +82,35 @@
                 </div>
 
                 <flux:field variant="inline">
-                    <flux:checkbox wire:model="has_trade_post" />
+                    <flux:checkbox wire:model.live="has_trade_post" />
                     <flux:label>{{ __('Trade post') }}</flux:label>
                     <flux:description>{{ __('Players standing here together can trade items. Aim for one key city per continent.') }}</flux:description>
                     <flux:error name="has_trade_post" />
                 </flux:field>
+
+                @if ($has_trade_post)
+                    <flux:field data-test="bazaar-stock">
+                        <flux:label>{{ __('Bazaar stock') }}</flux:label>
+                        <flux:text class="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            {{ __('Items the bazaar here sells. Only items with a base price are listed. Leave all unticked to sell the default stock: :items.', ['items' => implode(', ', $this->defaultStockNames)]) }}
+                        </flux:text>
+                        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach ($this->pricedItems as $item)
+                                <label wire:key="bazaar-item-{{ $item->id }}" class="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 {{ in_array($item->id, $bazaarItemIds) ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30' : '' }}">
+                                    <input
+                                        type="checkbox"
+                                        wire:model="bazaarItemIds"
+                                        value="{{ $item->id }}"
+                                        class="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 dark:border-zinc-600"
+                                    />
+                                    <span class="text-zinc-800 dark:text-zinc-200">{{ $item->name }}</span>
+                                    <span class="ml-auto text-xs text-zinc-500">{{ $item->base_price }} {{ __('scrip') }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <flux:error name="bazaarItemIds" />
+                    </flux:field>
+                @endif
 
                 <flux:field>
                     <flux:label>{{ __('Neighbour Locations') }}</flux:label>

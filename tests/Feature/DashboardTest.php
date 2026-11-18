@@ -43,6 +43,14 @@ test('unavailable city actions say why they cannot be started', function () {
         ->assertSeeText("Needs Scavenging level {$pharmacyRaid->min_level}. You are level 1.");
 });
 
+test('city action cards name the item they reward rather than its key', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('reward Scrap Metal')
+        ->assertDontSee('reward scrap_metal');
+});
+
 test('a survivor recovering from death sees the countdown and why work is locked', function () {
     $user = User::factory()->create(['recovering_until' => now()->addMinutes(7)]);
 

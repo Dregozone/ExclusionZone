@@ -1,10 +1,12 @@
 <?php
 
+use App\Actions\Game\TrackPdaAlerts;
 use App\Http\Controllers\AdminRoleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GameActionController;
 use App\Http\Controllers\ManualController;
 use App\Http\Controllers\ModerationController;
+use App\Http\Controllers\PdaAlertController;
 use App\Http\Controllers\QuestController;
 use App\Livewire\Admin\ChangeUserRole;
 use App\Livewire\Admin\GiveItem;
@@ -59,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('dashboard/gear/unequip', [GameActionController::class, 'unequip'])->name('gear.unequip');
     Route::post('dashboard/bazaar/sell', [GameActionController::class, 'sellToBazaar'])->name('bazaar.sell');
     Route::post('dashboard/bazaar/buy', [GameActionController::class, 'buyFromBazaar'])->name('bazaar.buy');
+    Route::get('dashboard/pda-alerts', [PdaAlertController::class, 'index'])->name('pda-alerts.index');
+    Route::post('dashboard/pda-alerts/{tab}/seen', [PdaAlertController::class, 'markSeen'])->whereIn('tab', TrackPdaAlerts::TABS)->name('pda-alerts.seen');
     Route::post('dashboard/death-report/dismiss', [GameActionController::class, 'dismissDeathReport'])->name('death-report.dismiss');
     Route::post('dashboard/work/complete', [GameActionController::class, 'completeWork'])->name('work.complete');
     Route::post('dashboard/work/cancel', [GameActionController::class, 'cancelWork'])->name('work.cancel');
