@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Admin;
 
+use App\Actions\Game\TradeAtBazaar;
 use App\Models\City;
 use App\Models\Country;
+use App\Models\Item;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -43,6 +47,13 @@ class ManageLocations extends Component
     /** @var array<int> */
     public array $neighborIds = [];
 
+    /**
+     * Items the bazaar here sells. Left empty, it sells the default stock from config/shop.php.
+     *
+     * @var array<int>
+     */
+    public array $bazaarItemIds = [];
+
     public function boot(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -78,6 +89,29 @@ class ManageLocations extends Component
             ->get(['id', 'city']);
     }
 
+    /**
+     * Items with a base price, which are the only ones a bazaar can sell.
+     */
+    #[Computed]
+    public function pricedItems(): Collection
+    {
+        return Item::query()
+            ->where('base_price', '>', 0)
+            ->orderBy('name')
+            ->get(['id', 'key', 'name', 'base_price']);
+    }
+
+    /**
+     * Names of the items every bazaar sells when no stock is chosen for its city.
+     *
+     * @return array<int, string>
+     */
+    #[Computed]
+    public function defaultStockNames(): array
+    {
+        return (new TradeAtBazaar)->stock()->pluck('name')->all();
+    }
+
     public function create(): void
     {
         $this->resetForm();
@@ -88,7 +122,7 @@ class ManageLocations extends Component
     public function edit(int $id): void
     {
         $city = City::query()
-            ->with('neighbors:id')
+            ->with(['neighbors:id', 'bazaarItems:id'])
             ->findOrFail($id);
 
         $this->editingId = $id;
@@ -103,6 +137,7 @@ class ManageLocations extends Component
         $this->lat = $city->lat;
         $this->lng = $city->lng;
         $this->neighborIds = $city->neighbors->pluck('id')->map(fn ($v) => (int) $v)->toArray();
+        $this->bazaarItemIds = $city->bazaarItems->pluck('id')->map(fn ($id): int => (int) $id)->toArray();
         $this->showForm = true;
     }
 
@@ -121,6 +156,8 @@ class ManageLocations extends Component
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
             'neighborIds' => ['array'],
             'neighborIds.*' => ['integer', 'exists:cities,id'],
+            'bazaarItemIds' => ['array'],
+            'bazaarItemIds.*' => ['integer', 'distinct', Rule::exists('items', 'id')->where(fn (Builder $query): Builder => $query->where('base_price', '>', 0))],
         ]);
 
         $cityData = [
@@ -145,6 +182,7 @@ class ManageLocations extends Component
         }
 
         $location->neighbors()->sync($validated['neighborIds']);
+        $location->bazaarItems()->sync($validated['has_trade_post'] ? $validated['bazaarItemIds'] : []);
 
         Flux::toast(variant: 'success', text: $this->editingId ? __('Location updated.') : __('Location created.'));
 
@@ -186,6 +224,7 @@ class ManageLocations extends Component
         $this->lat = null;
         $this->lng = null;
         $this->neighborIds = [];
+        $this->bazaarItemIds = [];
         $this->editingId = null;
     }
 }

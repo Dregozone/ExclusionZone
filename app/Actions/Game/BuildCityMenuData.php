@@ -62,6 +62,9 @@ class BuildCityMenuData
                 ->whereBelongsTo($city)
                 ->orderBy('label')
                 ->get();
+        $rewardItemNames = Item::query()
+            ->whereIn('key', $cityActions->map(fn (CityAction $action): ?string => data_get($action->reward_profile, 'item_key'))->filter()->unique())
+            ->pluck('name', 'key');
         $fightEnemy = app(FightEnemy::class);
         $enemiesBySkill = $city === null
             ? collect()
@@ -83,16 +86,19 @@ class BuildCityMenuData
             'death_report' => $user->death_report,
             'trouble' => $this->troubleDataFor($user),
             'recovery' => $this->recoveryFor($user),
-            'actions' => $cityActions->map(function (CityAction $action) use ($user, $cityActionRestriction, $enemiesBySkill): array {
+            'actions' => $cityActions->map(function (CityAction $action) use ($user, $cityActionRestriction, $enemiesBySkill, $rewardItemNames): array {
                 $performCityAction = new PerformCityAction;
                 $requiredItems = $performCityAction->requiredItemsFor($user, $action);
                 $missingItems = array_values(array_filter($requiredItems, fn (array $requiredItem): bool => $requiredItem['owned'] < $requiredItem['quantity']));
+                $requiredGear = $performCityAction->requiredGearFor($user, $action);
+                $missingGear = $performCityAction->missingGearFor($user, $action);
                 $userLevel = $user->skillFor($action->skill_key)?->level ?? 1;
                 $isHealing = $performCityAction->healthRestoredBy($action) > 0;
 
                 [$unavailableLabel, $unavailableReason] = match (true) {
                     $cityActionRestriction !== null => [$user->recoveryRestriction() !== null ? 'Recovering' : 'Unavailable', $cityActionRestriction],
                     $userLevel < $action->min_level => ['Locked', "Needs {$action->skill?->display_name} level {$action->min_level}. You are level {$userLevel}."],
+                    $missingGear !== [] => ['Needs gear', 'Wear '.$performCityAction->describeGear($missingGear).' first. Gear is not used up.'],
                     $missingItems !== [] => ['Missing items', 'You need '.$performCityAction->describeRequiredItems($missingItems).' more. '.collect($missingItems)->map(fn (array $missing): string => "{$missing['item']->name}: {$missing['owned']} of {$missing['quantity']} carried")->implode(', ').'.'],
                     $isHealing && $user->health >= (int) config('survival.maximum') => ['Not hurt', 'You are at full health, so there is nothing to patch up.'],
                     default => [null, null],
@@ -104,6 +110,8 @@ class BuildCityMenuData
                     'user_level' => $userLevel,
                     'required_items' => $requiredItems,
                     'has_required_items' => $missingItems === [],
+                    'required_gear' => $requiredGear,
+                    'reward_item_name' => $rewardItemNames->get(data_get($action->reward_profile, 'item_key')),
                     'enemies' => $enemiesBySkill->get($action->skill_key, []),
                     'gear_speed_percent' => $user->equipmentBonusPercent('work_speed', $action->skill_key),
                     'available' => $unavailableReason === null,
@@ -214,7 +222,7 @@ class BuildCityMenuData
             'scrip' => (int) $user->scrip,
             'barter_sell_bonus_percent' => $tradeAtBazaar->barterSellBonusPercent($user),
             'barter_buy_discount_percent' => $tradeAtBazaar->barterBuyDiscountPercent($user),
-            'stock' => $restriction !== null ? [] : $tradeAtBazaar->stock()
+            'stock' => $restriction !== null ? [] : $tradeAtBazaar->stock($user->location?->city)
                 ->map(fn (Item $item): array => ['item' => $item, 'price' => $tradeAtBazaar->buyPrice($user, $item)])
                 ->all(),
             'sellable' => $restriction !== null ? [] : $user->inventoryItems
@@ -482,9 +490,11 @@ class BuildCityMenuData
     }
 
     /**
-     * @return Collection<int, array{step: QuestStep, quest_name: string, requirements: array<int, array{item: ?Item, quantity: int}>}>
+     * Job steps the survivor can hand in right here: in this city, with any required work done and the items carried.
+     *
+     * @return Collection<int, array{step: QuestStep, user_quest_id: int, quest_name: string, requirements: array<int, array{item: ?Item, quantity: int}>}>
      */
-    private function questStepActionsFor(User $user, ?City $city): Collection
+    public function questStepActionsFor(User $user, ?City $city): Collection
     {
         if ($city === null || $user->isHeldByTrouble()) {
             return collect();
@@ -520,6 +530,7 @@ class BuildCityMenuData
 
                 return [[
                     'step' => $step,
+                    'user_quest_id' => $userQuest->id,
                     'quest_name' => $userQuest->quest->name,
                     'requirements' => $requirements,
                 ]];
@@ -562,9 +573,11 @@ class BuildCityMenuData
     }
 
     /**
-     * @return array{available: array<int, array{quest: Quest, type: string, completion_count: ?int, userQuest: ?UserQuest}>, active: array<int, array{userQuest: UserQuest, quest: Quest, current_step: ?QuestStep, requirements: array<int, array{item: ?Item, quantity: int}>, action_progress: ?array{action: ?CityAction, progress: int, count: int}}>, completed: array<int, UserQuest>}
+     * Story chapters the survivor can start now: not yet taken, and either the first chapter or one whose earlier chapter is done.
+     *
+     * @return Collection<int, Quest>
      */
-    private function jobsDataFor(User $user): array
+    public function availableStoryQuests(User $user): Collection
     {
         $activeOrCompletedQuestIds = $user->userQuests
             ->whereIn('status', ['active', 'completed'])
@@ -577,8 +590,7 @@ class BuildCityMenuData
             ->pluck('quest_id')
             ->all();
 
-        // Story quests: only show the next unlocked one (prerequisite completed or none)
-        $availableStoryQuests = Quest::query()
+        return Quest::query()
             ->where('is_active', true)
             ->where('quest_type', 'story')
             ->whereNotIn('id', $activeOrCompletedQuestIds)
@@ -587,7 +599,15 @@ class BuildCityMenuData
                     ->orWhereIn('prerequisite_quest_id', $completedStoryQuestIds);
             })
             ->orderBy('sequence_order')
-            ->get()
+            ->get();
+    }
+
+    /**
+     * @return array{available: array<int, array{quest: Quest, type: string, completion_count: ?int, userQuest: ?UserQuest}>, active: array<int, array{userQuest: UserQuest, quest: Quest, current_step: ?QuestStep, requirements: array<int, array{item: ?Item, quantity: int}>, action_progress: ?array{action: ?CityAction, progress: int, count: int}}>, completed: array<int, UserQuest>}
+     */
+    private function jobsDataFor(User $user): array
+    {
+        $availableStoryQuests = $this->availableStoryQuests($user)
             ->map(fn (Quest $quest): array => [
                 'quest' => $quest,
                 'type' => 'story',

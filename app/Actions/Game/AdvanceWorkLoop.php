@@ -68,7 +68,7 @@ class AdvanceWorkLoop
         }
 
         // Another request may have settled a cycle since these relations were loaded.
-        $user->load('location.city', 'skills.skill');
+        $user->load('location.city', 'skills.skill', 'equipment.item');
 
         try {
             $cycle = $this->rewardCycle($user, $work);

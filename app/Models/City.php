@@ -49,6 +49,14 @@ class City extends Model
         return $this->hasMany(CityAction::class);
     }
 
+    /**
+     * The items this city's bazaar sells instead of the default stock in config/shop.php.
+     */
+    public function bazaarItems(): BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'city_bazaar_items')->withTimestamps();
+    }
+
     public function neighbors(): BelongsToMany
     {
         return $this->belongsToMany(self::class, 'city_connections', 'city_id', 'neighbor_city_id')

@@ -60,6 +60,7 @@ class User extends Authenticatable
             'scrip' => 'integer',
             'radio_seen_message_id' => 'integer',
             'trades_seen_at' => 'datetime',
+            'contracts_seen_keys' => 'array',
         ];
     }
 
@@ -258,9 +259,11 @@ class User extends Authenticatable
     }
 
     /**
+     * Everything the survivor is wearing or holding.
+     *
      * @return Collection<int, Item>
      */
-    private function wornItems(): Collection
+    public function wornItems(): Collection
     {
         $this->loadMissing('equipment.item');
 

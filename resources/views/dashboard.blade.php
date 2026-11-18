@@ -622,7 +622,7 @@
                 </p>
             </div>
 
-            <div class="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+            <div class="grid gap-5 md:grid-cols-2 2xl:grid-cols-3" data-work-live="city-actions">
                 @foreach ($actions as $entry)
                     @php($isHostile = $entry['enemies'] !== [])
                     <div @class(['ez-card ez-pin flex min-w-0 flex-col gap-3 p-4 pt-5', 'ez-pin-heat ez-heat' => $isHostile, 'opacity-80' => ! $entry['available']])>
@@ -637,7 +637,7 @@
                         </div>
                         <p class="text-sm text-ez-muted">{{ $entry['action']->description }}</p>
                         <p class="font-mono text-[11px] uppercase tracking-[0.12em] text-zinc-400">
-                            {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ collect([data_get($entry['action']->reward_profile, 'item_key'), data_get($entry['action']->reward_profile, 'health') ? 'health +'.data_get($entry['action']->reward_profile, 'health') : null])->filter()->implode(', ') }}
+                            {{ $entry['action']->skill?->display_name }} · level {{ $entry['required_level'] }} required · reward {{ collect([$entry['reward_item_name'] ?? data_get($entry['action']->reward_profile, 'item_key'), data_get($entry['action']->reward_profile, 'health') ? 'health +'.data_get($entry['action']->reward_profile, 'health') : null])->filter()->implode(', ') }}
                         </p>
                         <div class="grid gap-1 text-xs">
                             <p class="text-ez-muted" data-test="action-costs-{{ $entry['action']->action_key }}">
@@ -662,6 +662,17 @@
                                             'text-emerald-300' => $requiredItem['owned'] >= $requiredItem['quantity'],
                                             'text-amber-300' => $requiredItem['owned'] < $requiredItem['quantity'],
                                         ])>{{ $requiredItem['item']->name }} ×{{ $requiredItem['quantity'] }} ({{ $requiredItem['owned'] }} carried)</span>@if (! $loop->last), @endif
+                                    @endforeach
+                                </p>
+                            @endif
+                            @if (count($entry['required_gear']) > 0)
+                                <p class="text-ez-muted" data-test="required-gear-{{ $entry['action']->action_key }}">
+                                    Wear:
+                                    @foreach ($entry['required_gear'] as $requiredGear)
+                                        <span @class([
+                                            'text-emerald-300' => $requiredGear['worn'],
+                                            'text-amber-300' => ! $requiredGear['worn'],
+                                        ])>{{ $requiredGear['item']->name }} ({{ $requiredGear['worn'] ? 'worn' : 'not worn' }})</span>@if (! $loop->last), @endif
                                     @endforeach
                                 </p>
                             @endif
